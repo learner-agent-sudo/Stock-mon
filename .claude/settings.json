@@ -1,0 +1,14 @@
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "pip install -q yfinance pandas jinja2 python-dotenv requests >/dev/null 2>&1 && pip install -q --no-deps feedparser >/dev/null 2>&1 && python scripts/init_db.py >/dev/null && python scripts/load_seed.py && echo 'Stock-mon session ready: deps installed, DB seeded.'"
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -1,5 +1,7 @@
 yfinance>=0.2.40
 pandas>=2.0.0
+# feedparser's sgmllib3k sub-dep fails to build with newer setuptools.
+# We only need RSS 2.0 parsing, which doesn't need sgmllib3k. Install with --no-deps.
 feedparser>=6.0.10
 jinja2>=3.1.0
 python-dotenv>=1.0.0

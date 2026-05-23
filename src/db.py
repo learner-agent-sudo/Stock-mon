@@ -59,12 +59,12 @@ CREATE INDEX IF NOT EXISTS idx_stocks_active   ON stocks(active);
 
 
 DEFAULT_SETTINGS = {
-    "large_cap_threshold_pct": "3",
-    "small_cap_threshold_pct": "5",
-    "mid_cap_threshold_pct": "4",
+    "large_cap_threshold_pct": "1.5",
+    "small_cap_threshold_pct": "2.5",
+    "mid_cap_threshold_pct": "2",
     "small_cap_marketcap_usd": "2000000000",
     "large_cap_marketcap_usd": "10000000000",
-    "gain_threshold_pct": "5",
+    "gain_threshold_pct": "2",
     "small_cap_rank_boost": "1.5",
     "briefing_time": "07:30",
     "email_to": "",

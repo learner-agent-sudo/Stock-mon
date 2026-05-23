@@ -44,6 +44,28 @@ def _parse_published(entry) -> datetime | None:
     return None
 
 
+_yahoo_available: bool | None = None
+
+
+def check_yahoo_availability() -> bool:
+    """Probe Yahoo RSS with a known-good ticker. Cache the result."""
+    global _yahoo_available
+    if _yahoo_available is not None:
+        return _yahoo_available
+    if feedparser is None:
+        _yahoo_available = False
+        return False
+    try:
+        feed = feedparser.parse(YAHOO_RSS.format(symbol="AAPL"))
+        status = getattr(feed, "status", 0)
+        _yahoo_available = status == 200 and len(feed.entries) > 0
+    except Exception:  # noqa: BLE001
+        _yahoo_available = False
+    label = "available" if _yahoo_available else "NOT available"
+    print(f"  [news] Yahoo Finance RSS: {label}")
+    return _yahoo_available
+
+
 def _fetch_feed(url: str, source: str, symbol: str) -> list[NewsItem]:
     if feedparser is None:
         return []
@@ -106,8 +128,10 @@ def fetch_news(symbol: str, *, since_hours: int = 48, query_hint: str | None = N
     hours = _effective_since_hours(since_hours)
     cutoff = datetime.now(timezone.utc) - timedelta(hours=hours)
 
-    yahoo_items = _fetch_feed(YAHOO_RSS.format(symbol=symbol), "yahoo", symbol)
-    time.sleep(REQUEST_DELAY)
+    yahoo_items: list[NewsItem] = []
+    if check_yahoo_availability():
+        yahoo_items = _fetch_feed(YAHOO_RSS.format(symbol=symbol), "yahoo", symbol)
+        time.sleep(REQUEST_DELAY)
 
     query = f"{query_hint} {symbol}" if query_hint else symbol
     encoded = urllib.parse.quote_plus(query)
@@ -132,9 +156,22 @@ def fetch_news(symbol: str, *, since_hours: int = 48, query_hint: str | None = N
 def fetch_news_for_symbols(
     symbols_with_hints: dict[str, str | None],
     *,
-    since_hours: int = 36,
-) -> dict[str, list[NewsItem]]:
-    return {
-        symbol: fetch_news(symbol, since_hours=since_hours, query_hint=hint)
-        for symbol, hint in symbols_with_hints.items()
+    since_hours: int = 48,
+) -> tuple[dict[str, list[NewsItem]], dict[str, Any]]:
+    """Returns (news_map, news_stats) where news_stats tracks source availability."""
+    check_yahoo_availability()
+    result: dict[str, list[NewsItem]] = {}
+    total_articles = 0
+    for symbol, hint in symbols_with_hints.items():
+        items = fetch_news(symbol, since_hours=since_hours, query_hint=hint)
+        result[symbol] = items
+        total_articles += len(items)
+    tickers_with_news = sum(1 for v in result.values() if v)
+    stats = {
+        "yahoo_available": bool(_yahoo_available),
+        "total_articles": total_articles,
+        "tickers_with_news": tickers_with_news,
+        "tickers_without_news": len(result) - tickers_with_news,
     }
+    print(f"  [news] {total_articles} articles across {tickers_with_news}/{len(result)} tickers")
+    return result, stats

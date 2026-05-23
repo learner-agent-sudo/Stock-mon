@@ -42,6 +42,7 @@ class DropWithoutNewsSignal(Signal):
                 "prior_close": price.prior_close,
                 "threshold": threshold,
                 "cap_tier": stock["cap_tier"],
+                "description": stock["description"],
             },
         )
 

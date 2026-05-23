@@ -61,6 +61,7 @@ class WatchlistTargetHitSignal(Signal):
                 "pct_change": price.pct_change,
                 "target_price": target_price,
                 "drop_pct_threshold": drop_threshold,
+                "description": stock["description"],
             },
             news=news[:5],
         )

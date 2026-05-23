@@ -30,40 +30,67 @@ SECTION_ORDER = [
 
 
 CSS = """
-* { box-sizing: border-box; }
+* { box-sizing: border-box; margin: 0; padding: 0; }
 body {
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  max-width: 880px; margin: 2rem auto; padding: 0 1.25rem;
+  max-width: 880px; margin: 0 auto; padding: 1rem;
   color: #1f2328; background: #f6f8fa; line-height: 1.5;
 }
-header { margin-bottom: 1.5rem; }
-h1 { margin: 0 0 .25rem; font-size: 1.5rem; }
-.meta { color: #57606a; font-size: .9rem; }
-.stats { color: #57606a; font-size: .85rem; margin-top: .25rem; }
+header { margin-bottom: 1.25rem; }
+h1 { font-size: 1.35rem; margin-bottom: .2rem; }
+.meta { color: #57606a; font-size: .85rem; }
+.stats { color: #57606a; font-size: .8rem; margin-top: .2rem; }
+nav { margin-top: .4rem; font-size: .85rem; }
+nav a { color: #0969da; text-decoration: none; margin-right: .75rem; }
+nav a:hover { text-decoration: underline; }
+.banner { padding: .5rem .75rem; border-radius: 6px; font-size: .82rem;
+          margin-bottom: .75rem; }
+.banner.warn { background: #fff8c5; border: 1px solid #d4a72c; color: #7d4e00; }
+.banner.ok   { background: #dafbe1; border: 1px solid #4ac26b; color: #116329; }
 .section { background: #fff; border: 1px solid #d0d7de; border-radius: 8px;
-           margin-bottom: 1rem; overflow: hidden; }
-.section h2 { margin: 0; padding: .75rem 1rem; font-size: 1rem;
+           margin-bottom: .75rem; overflow: hidden; }
+.section h2 { padding: .6rem .75rem; font-size: .95rem;
               background: #f6f8fa; border-bottom: 1px solid #d0d7de; }
 .section.alerts h2       { background: #ddf4ff; border-color: #54aeff; }
 .section.drop-no-news h2 { background: #ffebe9; border-color: #ff8182; }
 .section.drop-news h2    { background: #fff8c5; border-color: #d4a72c; }
 .section.gain h2         { background: #dafbe1; border-color: #4ac26b; }
-.result { padding: .75rem 1rem; border-top: 1px solid #eaeef2; }
+.result { padding: .6rem .75rem; border-top: 1px solid #eaeef2; }
 .result:first-of-type { border-top: 0; }
-.symbol { font-weight: 600; font-size: 1.05rem; }
-.tier   { color: #57606a; font-size: .75rem; margin-left: .5rem;
-          text-transform: uppercase; letter-spacing: .04em; }
-.pct.up   { color: #1a7f37; font-weight: 600; }
-.pct.down { color: #cf222e; font-weight: 600; }
-.price { color: #57606a; }
-.headline { margin: .3rem 0 0; color: #1f2328; }
-.news { margin: .4rem 0 0; padding-left: 1.1rem; font-size: .9rem; }
+.stock-header { display: flex; flex-wrap: wrap; align-items: baseline;
+                gap: .25rem .5rem; }
+.symbol { font-weight: 700; font-size: 1rem; }
+.stock-name { color: #57606a; font-size: .82rem; }
+.pct { font-weight: 600; font-size: .95rem; }
+.pct.up   { color: #1a7f37; }
+.pct.down { color: #cf222e; }
+.price { color: #57606a; font-size: .85rem; }
+.headline { margin-top: .25rem; font-size: .88rem; color: #424a53; }
+.news { margin-top: .3rem; padding-left: 1rem; font-size: .82rem;
+        list-style: disc; }
 .news li { margin: .15rem 0; }
 .news a { color: #0969da; text-decoration: none; }
 .news a:hover { text-decoration: underline; }
-.news .src { color: #57606a; font-size: .8rem; margin-left: .25rem; }
+.news .src { color: #57606a; font-size: .75rem; margin-left: .2rem; }
 .empty { color: #57606a; font-style: italic; padding: 1rem; }
-footer { color: #57606a; font-size: .8rem; margin-top: 1.5rem; text-align: center; }
+footer { color: #57606a; font-size: .75rem; margin-top: 1rem;
+         text-align: center; padding-bottom: .5rem; }
+
+@media (max-width: 600px) {
+  body { padding: .6rem; }
+  h1 { font-size: 1.15rem; }
+  .section h2 { padding: .5rem .6rem; font-size: .88rem; }
+  .result { padding: .5rem .6rem; }
+  .stock-header { gap: .15rem .35rem; }
+  .symbol { font-size: .92rem; }
+  .stock-name { font-size: .78rem; }
+  .pct { font-size: .88rem; }
+  .price { font-size: .8rem; }
+  .headline { font-size: .82rem; }
+  .news { font-size: .78rem; padding-left: .8rem; }
+  nav a { margin-right: .5rem; font-size: .8rem; }
+  footer { font-size: .7rem; }
+}
 """
 
 
@@ -80,7 +107,7 @@ def _redact_watchlist_headline(r: SignalResult) -> str:
 def _render_result(r: SignalResult) -> str:
     pct = r.details.get("pct_change")
     last = r.details.get("last_close")
-    tier = r.details.get("cap_tier") or ""
+    desc = r.details.get("description") or ""
 
     pct_html = ""
     if pct is not None:
@@ -88,21 +115,24 @@ def _render_result(r: SignalResult) -> str:
         pct_html = f'<span class="pct {cls}">{pct:+.2f}%</span>'
 
     price_html = f'<span class="price">@ {last:.2f}</span>' if last is not None else ""
-    tier_html = f'<span class="tier">{escape(tier)}</span>' if tier else ""
+    name_html = f'<span class="stock-name">{escape(desc)}</span>' if desc else ""
     headline = _redact_watchlist_headline(r)
 
     news_html = ""
     if r.news:
         items = "".join(
             f'<li><a href="{escape(n.url)}" target="_blank" rel="noopener">{escape(n.headline)}</a>'
-            f' <span class="src">({escape(n.source)})</span></li>'
+            f'<span class="src">({escape(n.source)})</span></li>'
             for n in r.news[:3]
         )
         news_html = f'<ul class="news">{items}</ul>'
 
     return (
         f'<div class="result">'
-        f'<span class="symbol">{escape(r.symbol)}</span>{tier_html} {pct_html} {price_html}'
+        f'<div class="stock-header">'
+        f'<span class="symbol">{escape(r.symbol)}</span>'
+        f'{name_html} {pct_html} {price_html}'
+        f'</div>'
         f'<p class="headline">{escape(headline)}</p>'
         f'{news_html}'
         f'</div>'
@@ -131,6 +161,15 @@ def render(b: Briefing) -> str:
     body_html = "".join(sections) or '<div class="empty">No signals matched. Quiet day.</div>'
     stats = b.stats
 
+    yahoo_ok = stats.get("yahoo_available", True)
+    total_articles = stats.get("total_articles", 0)
+    tickers_with_news = stats.get("tickers_with_news", 0)
+    banner = ""
+    if not yahoo_ok:
+        banner = '<div class="banner warn">Yahoo Finance RSS is not available. News sourced from Google News only.</div>'
+
+    news_line = f"{total_articles} articles from {tickers_with_news} tickers" if total_articles else "no articles found"
+
     return f"""<!doctype html>
 <html lang="en">
 <head>
@@ -145,16 +184,18 @@ def render(b: Briefing) -> str:
   <h1>Stock Briefing</h1>
   <div class="meta">Generated {when}</div>
   <div class="stats">
-    {stats.get('stocks_checked', 0)} stocks checked &middot;
-    {stats.get('prices_ok', 0)} prices ok &middot;
+    {stats.get('stocks_checked', 0)} stocks &middot;
+    {stats.get('prices_ok', 0)} ok &middot;
     {stats.get('prices_failed', 0)} failed &middot;
-    {stats.get('signals_matched', 0)} signals matched
+    {stats.get('signals_matched', 0)} signals &middot;
+    {news_line}
   </div>
-  <nav style="margin-top:.5rem;font-size:.9rem;">
-    <a href="./manage.html" style="color:#0969da;text-decoration:none;margin-right:1rem;">Manage tickers &rarr;</a>
-    <a href="./demo.html"   style="color:#0969da;text-decoration:none;">View demo</a>
+  <nav>
+    <a href="./manage.html">Manage tickers &rarr;</a>
+    <a href="./demo.html">View demo</a>
   </nav>
 </header>
+{banner}
 {body_html}
 <footer>Personal monitoring tool. Not investment advice.</footer>
 </body>

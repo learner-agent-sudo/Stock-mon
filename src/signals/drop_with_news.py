@@ -43,6 +43,7 @@ class DropWithNewsSignal(Signal):
                 "prior_close": price.prior_close,
                 "threshold": threshold,
                 "cap_tier": stock["cap_tier"],
+                "description": stock["description"],
             },
             news=news[:5],
         )

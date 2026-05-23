@@ -48,7 +48,7 @@ def build() -> Briefing:
 
     price_map = prices_layer.fetch_prices(symbols)
     hints = {s["symbol"]: s["description"] for s in stocks}
-    news_map = news_layer.fetch_news_for_symbols(hints)
+    news_map, news_stats = news_layer.fetch_news_for_symbols(hints)
 
     context = _build_context()
     results: list[SignalResult] = []
@@ -79,6 +79,7 @@ def build() -> Briefing:
             "prices_ok": ok,
             "prices_failed": failed,
             "signals_matched": len(ranked),
+            **news_stats,
         },
     )
 

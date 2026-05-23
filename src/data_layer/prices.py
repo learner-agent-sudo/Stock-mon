@@ -1,14 +1,20 @@
 """Fetch yesterday's price data from yfinance with retries and gentle error handling."""
 from __future__ import annotations
 
+import json
+import os
 import time
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Iterable
 
 try:
     import yfinance as yf
 except ImportError:  # pragma: no cover - dependency may be missing in early dev
     yf = None  # type: ignore
+
+FIXTURE_ENV = "STOCKMON_USE_FIXTURE"
+FIXTURE_PATH = Path(__file__).resolve().parent.parent.parent / "tests" / "fixtures" / "prices_snapshot.json"
 
 
 @dataclass
@@ -80,6 +86,31 @@ def _fetch_one(symbol: str, retries: int = 3, backoff: float = 1.5) -> PriceData
     return PriceData(symbol, None, None, None, None, None, False, last_err)
 
 
+def _fetch_from_fixture(symbol: str, snapshot: dict) -> PriceData:
+    raw = snapshot.get(symbol)
+    if raw is None:
+        return PriceData(symbol, None, None, None, None, None, False, "not in fixture")
+    last_close = raw.get("last_close")
+    prior_close = raw.get("prior_close")
+    pct = ((last_close - prior_close) / prior_close * 100.0) if (last_close and prior_close) else None
+    return PriceData(
+        symbol=symbol,
+        last_close=last_close,
+        prior_close=prior_close,
+        pct_change=pct,
+        volume=raw.get("volume"),
+        last_date=raw.get("last_date"),
+        ok=True,
+    )
+
+
 def fetch_prices(symbols: Iterable[str]) -> dict[str, PriceData]:
-    """Fetch price data for each symbol; never raises."""
+    """Fetch price data for each symbol; never raises.
+
+    If STOCKMON_USE_FIXTURE=1, read from tests/fixtures/prices_snapshot.json
+    instead of hitting yfinance. Used for offline dev iteration.
+    """
+    if os.environ.get(FIXTURE_ENV) == "1":
+        snapshot = json.loads(FIXTURE_PATH.read_text())
+        return {sym: _fetch_from_fixture(sym, snapshot) for sym in symbols}
     return {sym: _fetch_one(sym) for sym in symbols}

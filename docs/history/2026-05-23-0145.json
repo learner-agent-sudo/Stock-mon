@@ -1,0 +1,148 @@
+{
+  "generated_at": "2026-05-23T01:45:28.866273+00:00",
+  "stats": {
+    "stocks_checked": 11,
+    "prices_ok": 11,
+    "prices_failed": 0,
+    "signals_matched": 8
+  },
+  "results": [
+    {
+      "signal_name": "watchlist_target_hit",
+      "symbol": "TXT.WA",
+      "severity": 109.70149253731344,
+      "headline": "WATCHLIST TXT.WA hit: drop -9.70% breached -7.00%",
+      "details": {
+        "last_close": 12.1,
+        "pct_change": -9.701492537313436,
+        "target_price": null,
+        "drop_pct_threshold": 7.0
+      },
+      "news": []
+    },
+    {
+      "signal_name": "watchlist_target_hit",
+      "symbol": "BHP.AX",
+      "severity": 101.53452685421995,
+      "headline": "WATCHLIST BHP.AX hit: price 38.50 <= target 40.00",
+      "details": {
+        "last_close": 38.5,
+        "pct_change": -1.5345268542199524,
+        "target_price": 40.0,
+        "drop_pct_threshold": 5.0
+      },
+      "news": []
+    },
+    {
+      "signal_name": "drop_without_news",
+      "symbol": "TXT.WA",
+      "severity": 9.701492537313436,
+      "headline": "TXT.WA dropped 9.70% with NO news found",
+      "details": {
+        "pct_change": -9.701492537313436,
+        "last_close": 12.1,
+        "prior_close": 13.4,
+        "threshold": 4.0,
+        "cap_tier": null
+      },
+      "news": []
+    },
+    {
+      "signal_name": "drop_without_news",
+      "symbol": "TSLA",
+      "severity": 8.564102564102559,
+      "headline": "TSLA dropped 8.56% with NO news found",
+      "details": {
+        "pct_change": -8.564102564102559,
+        "last_close": 178.3,
+        "prior_close": 195.0,
+        "threshold": 4.0,
+        "cap_tier": null
+      },
+      "news": []
+    },
+    {
+      "signal_name": "drop_without_news",
+      "symbol": "9988.HK",
+      "severity": 4.081632653061227,
+      "headline": "9988.HK dropped 4.08% with NO news found",
+      "details": {
+        "pct_change": -4.081632653061227,
+        "last_close": 75.2,
+        "prior_close": 78.4,
+        "threshold": 4.0,
+        "cap_tier": null
+      },
+      "news": []
+    },
+    {
+      "signal_name": "drop_with_news",
+      "symbol": "META",
+      "severity": 6.2352941176470615,
+      "headline": "META dropped 6.24% \u2014 1 headline(s) found",
+      "details": {
+        "pct_change": -6.2352941176470615,
+        "last_close": 478.2,
+        "prior_close": 510.0,
+        "threshold": 4.0,
+        "cap_tier": null
+      },
+      "news": [
+        {
+          "headline": "Meta ad spend guidance disappoints",
+          "url": "https://example.com/meta1",
+          "source": "yahoo",
+          "published_at": null
+        }
+      ]
+    },
+    {
+      "signal_name": "drop_with_news",
+      "symbol": "NFLX",
+      "severity": 5.421027964380572,
+      "headline": "NFLX dropped 5.42% \u2014 2 headline(s) found",
+      "details": {
+        "pct_change": -5.421027964380572,
+        "last_close": 605.4,
+        "prior_close": 640.1,
+        "threshold": 4.0,
+        "cap_tier": null
+      },
+      "news": [
+        {
+          "headline": "Netflix subscriber growth slows in Q2 update",
+          "url": "https://example.com/nflx1",
+          "source": "yahoo",
+          "published_at": null
+        },
+        {
+          "headline": "Streaming competition intensifies, analysts cut targets",
+          "url": "https://example.com/nflx2",
+          "source": "google",
+          "published_at": null
+        }
+      ]
+    },
+    {
+      "signal_name": "significant_gain",
+      "symbol": "NVDA",
+      "severity": 6.321839080459771,
+      "headline": "NVDA gained +6.32%",
+      "details": {
+        "pct_change": 6.321839080459771,
+        "last_close": 925.0,
+        "prior_close": 870.0,
+        "threshold": 5.0,
+        "cap_tier": null
+      },
+      "news": [
+        {
+          "headline": "NVIDIA beats earnings, raises full-year outlook",
+          "url": "https://example.com/nvda1",
+          "source": "yahoo",
+          "published_at": null
+        }
+      ]
+    }
+  ]
+}

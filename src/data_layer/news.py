@@ -1,14 +1,20 @@
 """Fetch recent news headlines per ticker from Yahoo Finance and Google News RSS."""
 from __future__ import annotations
 
+import json
+import os
 import urllib.parse
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
+from pathlib import Path
 
 try:
     import feedparser
 except ImportError:  # pragma: no cover
     feedparser = None  # type: ignore
+
+FIXTURE_ENV = "STOCKMON_USE_FIXTURE"
+FIXTURE_PATH = Path(__file__).resolve().parent.parent.parent / "tests" / "fixtures" / "news_snapshot.json"
 
 
 YAHOO_RSS = "https://feeds.finance.yahoo.com/rss/2.0/headline?s={symbol}&region=US&lang=en-US"
@@ -56,12 +62,29 @@ def _fetch_feed(url: str, source: str, symbol: str) -> list[NewsItem]:
     return items
 
 
+def _fetch_from_fixture(symbol: str) -> list[NewsItem]:
+    snapshot = json.loads(FIXTURE_PATH.read_text())
+    items = snapshot.get(symbol, [])
+    return [
+        NewsItem(
+            symbol=symbol,
+            headline=i.get("headline", ""),
+            url=i.get("url", ""),
+            source=i.get("source", "fixture"),
+            published_at=None,
+        )
+        for i in items
+    ]
+
+
 def fetch_news(symbol: str, *, since_hours: int = 36, query_hint: str | None = None) -> list[NewsItem]:
     """Fetch recent news for a symbol from Yahoo Finance and Google News.
 
     Returns items newer than `since_hours`. If a publish timestamp is missing,
     the item is kept (RSS sometimes omits it).
     """
+    if os.environ.get(FIXTURE_ENV) == "1":
+        return _fetch_from_fixture(symbol)
     cutoff = datetime.now(timezone.utc) - timedelta(hours=since_hours)
 
     yahoo_items = _fetch_feed(YAHOO_RSS.format(symbol=symbol), "yahoo", symbol)

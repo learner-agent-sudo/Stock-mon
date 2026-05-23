@@ -1,0 +1,52 @@
+name: Stock Briefing
+
+on:
+  workflow_dispatch:
+  schedule:
+    # 23:30 UTC Mon-Fri  =  07:30 Hong Kong time Tue-Sat (UTC+8)
+    # Edit the cron if you want a different time. Cron uses UTC.
+    # Examples:
+    #   "30 11 * * 1-5" = 07:30 New York (winter / EST, UTC-5) Mon-Fri
+    #   "30 06 * * 1-5" = 07:30 London   (winter / GMT, UTC+0) Mon-Fri
+    - cron: "30 23 * * 1-5"
+
+permissions:
+  contents: write   # so the workflow can commit docs/ back to the repo
+
+jobs:
+  briefing:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install dependencies
+        run: |
+          pip install --quiet yfinance pandas jinja2 python-dotenv requests
+          pip install --quiet --no-deps feedparser
+
+      - name: Initialize DB and load seed
+        run: |
+          python scripts/init_db.py
+          python scripts/load_seed.py
+
+      - name: Build briefing
+        run: python scripts/run_briefing_to_html.py
+
+      - name: Commit and push briefing output
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/
+          if git diff --cached --quiet; then
+            echo "No changes to commit."
+          else
+            git commit -m "briefing: $(date -u +%Y-%m-%d_%H:%M)"
+            git push
+          fi

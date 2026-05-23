@@ -1,0 +1,320 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Manage — Stock Briefing</title>
+<style>
+* { box-sizing: border-box; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  max-width: 980px; margin: 2rem auto; padding: 0 1.25rem;
+  color: #1f2328; background: #f6f8fa; line-height: 1.5;
+}
+header { margin-bottom: 1rem; }
+h1 { margin: 0 0 .25rem; font-size: 1.5rem; }
+.meta { color: #57606a; font-size: .9rem; }
+.notice { background: #fff8c5; border: 1px solid #d4a72c; border-radius: 6px;
+          padding: .6rem .8rem; margin: 1rem 0; font-size: .9rem; }
+.notice b { color: #7d4e00; }
+.card { background: #fff; border: 1px solid #d0d7de; border-radius: 8px;
+        padding: 1rem 1.25rem; margin-bottom: 1rem; }
+.card h2 { margin: 0 0 .75rem; font-size: 1.05rem; }
+form.add { display: grid; grid-template-columns: repeat(4, 1fr) auto;
+           gap: .5rem; align-items: end; }
+form.add label { display: block; font-size: .8rem; color: #57606a;
+                 margin-bottom: .2rem; }
+form.add input, form.add select {
+  width: 100%; padding: .45rem .55rem; border: 1px solid #d0d7de;
+  border-radius: 6px; font-size: .9rem; background: #fff;
+}
+form.add button { background: #1f883d; color: #fff; border: 0;
+  padding: .5rem .9rem; border-radius: 6px; font-weight: 600;
+  cursor: pointer; font-size: .9rem; }
+form.add button:hover { background: #1a7f37; }
+table { width: 100%; border-collapse: collapse; font-size: .88rem; }
+th, td { padding: .45rem .5rem; text-align: left;
+         border-bottom: 1px solid #eaeef2; }
+th { color: #57606a; font-weight: 600; font-size: .8rem;
+     text-transform: uppercase; letter-spacing: .03em; }
+.tag { display: inline-block; padding: .1rem .4rem; border-radius: 4px;
+       font-size: .72rem; font-weight: 600; }
+.tag.HOLDING   { background: #ddf4ff; color: #0550ae; }
+.tag.WATCHLIST { background: #fff8c5; color: #7d4e00; }
+.row-actions button {
+  background: none; border: 1px solid #d0d7de; border-radius: 4px;
+  padding: .2rem .5rem; cursor: pointer; font-size: .75rem; color: #57606a;
+  margin-left: .25rem;
+}
+.row-actions button:hover { background: #f6f8fa; }
+.row-actions button.danger { color: #cf222e; border-color: #ffcecb; }
+.row-actions button.danger:hover { background: #ffebe9; }
+.thresholds { display: grid; grid-template-columns: 1fr 1fr; gap: .75rem; }
+.thresholds label { font-size: .85rem; color: #57606a; }
+.thresholds input { width: 100%; padding: .4rem .5rem; border: 1px solid #d0d7de;
+  border-radius: 6px; font-size: .9rem; margin-top: .2rem; }
+textarea { width: 100%; min-height: 220px; padding: .6rem .75rem;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: .82rem;
+  border: 1px solid #d0d7de; border-radius: 6px; background: #f6f8fa;
+}
+.apply { display: flex; gap: .5rem; margin-top: .75rem; flex-wrap: wrap; }
+.apply button, .apply a {
+  background: #0969da; color: #fff; border: 0;
+  padding: .5rem .9rem; border-radius: 6px; font-weight: 600;
+  cursor: pointer; font-size: .9rem; text-decoration: none;
+  display: inline-block;
+}
+.apply button:hover, .apply a:hover { background: #0550ae; }
+.apply .secondary { background: #6e7781; }
+.apply .secondary:hover { background: #57606a; }
+.empty { color: #57606a; font-style: italic; padding: .5rem 0; }
+.error { background: #ffebe9; border: 1px solid #ff8182; color: #cf222e;
+         padding: .5rem .75rem; border-radius: 6px; margin: .5rem 0; }
+nav a { color: #0969da; text-decoration: none; margin-right: 1rem; font-size: .9rem; }
+nav a:hover { text-decoration: underline; }
+.status { font-size: .85rem; color: #57606a; margin-top: .25rem; }
+.status.ok { color: #1a7f37; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Manage Monitored Stocks</h1>
+  <div class="meta">Edit the watchlist and thresholds locally, then commit the changes to GitHub.</div>
+  <nav style="margin-top:.5rem;">
+    <a href="./">&larr; Back to briefing</a>
+    <a href="./demo.html">View demo</a>
+  </nav>
+</header>
+
+<div class="notice">
+  <b>How this works:</b> Edits are kept in your browser only.
+  When you're ready, click <b>Generate CSV</b> and then <b>Open in GitHub</b>
+  to paste the updated content and commit. The next scheduled briefing will pick up the changes.
+</div>
+
+<div id="loadError" class="error" style="display:none;"></div>
+
+<section class="card">
+  <h2>Add a stock</h2>
+  <form class="add" id="addForm" autocomplete="off">
+    <div>
+      <label>Symbol</label>
+      <input name="symbol" placeholder="AAPL or 9988.HK" required>
+    </div>
+    <div>
+      <label>Category</label>
+      <select name="category">
+        <option>HOLDING</option>
+        <option>WATCHLIST</option>
+      </select>
+    </div>
+    <div>
+      <label>Target price (watchlist)</label>
+      <input name="target_price" type="number" step="0.01" placeholder="optional">
+    </div>
+    <div>
+      <label>Drop % threshold</label>
+      <input name="drop_pct_threshold" type="number" step="0.1" placeholder="e.g. 7">
+    </div>
+    <button type="submit">Add</button>
+  </form>
+</section>
+
+<section class="card">
+  <h2>Currently monitored</h2>
+  <table id="rowsTable">
+    <thead>
+      <tr>
+        <th>Symbol</th><th>Cat</th><th>Exch</th><th>Ccy</th>
+        <th>Target</th><th>Drop %</th><th>Description</th><th></th>
+      </tr>
+    </thead>
+    <tbody id="rowsBody"></tbody>
+  </table>
+  <div id="rowsEmpty" class="empty" style="display:none;">No tickers yet.</div>
+</section>
+
+<section class="card">
+  <h2>Global thresholds (apply to all holdings)</h2>
+  <p class="meta" style="margin:0 0 .5rem;">
+    These edit <code>data/seed_holdings.csv</code> defaults indirectly &mdash;
+    for now they're hints in the output panel below. Persistence in v2.
+  </p>
+  <div class="thresholds">
+    <div>
+      <label>Default drop alert (%)</label>
+      <input id="defaultDrop" type="number" step="0.1" value="5">
+    </div>
+    <div>
+      <label>Significant gain (%)</label>
+      <input id="defaultGain" type="number" step="0.1" value="5">
+    </div>
+  </div>
+</section>
+
+<section class="card">
+  <h2>Generated CSV</h2>
+  <p class="meta" style="margin:0 0 .5rem;">
+    This is what <code>data/seed_holdings.csv</code> should contain after your edits.
+  </p>
+  <textarea id="csvOut" readonly></textarea>
+  <div class="apply">
+    <button id="copyBtn">Copy to clipboard</button>
+    <a id="editLink" href="#" target="_blank" rel="noopener">Open in GitHub editor &rarr;</a>
+    <button id="resetBtn" class="secondary">Discard my changes</button>
+  </div>
+  <div id="copyStatus" class="status"></div>
+</section>
+
+<script>
+const REPO  = "learner-agent-sudo/stock-mon";
+const BRANCH = "claude/plan-v1-architecture-7beEc";
+const FILE  = "data/seed_holdings.csv";
+const RAW   = `https://raw.githubusercontent.com/${REPO}/${BRANCH}/${FILE}`;
+const EDIT  = `https://github.com/${REPO}/edit/${BRANCH}/${FILE}`;
+const STORAGE_KEY = "stockmon_pending_csv_v1";
+
+const HEADER = "symbol,exchange,currency,category,description,target_price,drop_pct_threshold,quantity";
+const COLS   = HEADER.split(",");
+
+let rows = [];
+
+function parseCSV(text) {
+  const lines = text.trim().split(/\r?\n/);
+  const out = [];
+  for (let i = 1; i < lines.length; i++) {
+    const cells = lines[i].split(",");
+    const row = {};
+    COLS.forEach((c, idx) => row[c] = (cells[idx] ?? "").trim());
+    out.push(row);
+  }
+  return out;
+}
+
+function toCSV(rows) {
+  const body = rows.map(r => COLS.map(c => r[c] ?? "").join(",")).join("\n");
+  return HEADER + "\n" + body + (body ? "\n" : "");
+}
+
+function render() {
+  const body = document.getElementById("rowsBody");
+  body.innerHTML = "";
+  if (rows.length === 0) {
+    document.getElementById("rowsEmpty").style.display = "block";
+  } else {
+    document.getElementById("rowsEmpty").style.display = "none";
+    rows.forEach((r, idx) => {
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td><b>${r.symbol}</b></td>
+        <td><span class="tag ${r.category}">${r.category}</span></td>
+        <td>${r.exchange ?? ""}</td>
+        <td>${r.currency ?? ""}</td>
+        <td>${r.target_price ?? ""}</td>
+        <td>${r.drop_pct_threshold ?? ""}</td>
+        <td>${r.description ?? ""}</td>
+        <td class="row-actions">
+          <button data-act="edit"   data-i="${idx}">Edit</button>
+          <button data-act="delete" data-i="${idx}" class="danger">Delete</button>
+        </td>`;
+      body.appendChild(tr);
+    });
+  }
+  document.getElementById("csvOut").value = toCSV(rows);
+  document.getElementById("editLink").href = EDIT;
+  saveLocal();
+}
+
+function saveLocal() {
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(rows)); } catch (e) {}
+}
+
+function loadLocal() {
+  try {
+    const s = localStorage.getItem(STORAGE_KEY);
+    if (s) return JSON.parse(s);
+  } catch (e) {}
+  return null;
+}
+
+async function loadFromRemote() {
+  try {
+    const res = await fetch(RAW, { cache: "no-store" });
+    if (!res.ok) throw new Error("HTTP " + res.status);
+    const text = await res.text();
+    rows = parseCSV(text);
+    render();
+  } catch (e) {
+    const el = document.getElementById("loadError");
+    el.style.display = "block";
+    el.textContent = `Couldn't load current CSV from GitHub (${e.message}). Starting empty.`;
+    rows = [];
+    render();
+  }
+}
+
+document.getElementById("addForm").addEventListener("submit", (e) => {
+  e.preventDefault();
+  const f = new FormData(e.target);
+  const symbol = (f.get("symbol") || "").toString().trim().toUpperCase();
+  if (!symbol) return;
+  rows.push({
+    symbol,
+    exchange: "",
+    currency: "",
+    category: f.get("category"),
+    description: "",
+    target_price: f.get("target_price") || "",
+    drop_pct_threshold: f.get("drop_pct_threshold") || "",
+    quantity: "",
+  });
+  e.target.reset();
+  render();
+});
+
+document.getElementById("rowsBody").addEventListener("click", (e) => {
+  const btn = e.target.closest("button");
+  if (!btn) return;
+  const i = parseInt(btn.dataset.i, 10);
+  if (btn.dataset.act === "delete") {
+    if (confirm(`Remove ${rows[i].symbol}?`)) { rows.splice(i, 1); render(); }
+  } else if (btn.dataset.act === "edit") {
+    const r = rows[i];
+    const newSymbol = prompt("Symbol", r.symbol);  if (newSymbol === null) return;
+    const newCat    = prompt("Category (HOLDING/WATCHLIST)", r.category); if (newCat === null) return;
+    const newTarget = prompt("Target price", r.target_price); if (newTarget === null) return;
+    const newDrop   = prompt("Drop % threshold", r.drop_pct_threshold); if (newDrop === null) return;
+    rows[i] = { ...r, symbol: newSymbol.trim().toUpperCase(),
+                category: newCat.trim().toUpperCase(),
+                target_price: newTarget.trim(),
+                drop_pct_threshold: newDrop.trim() };
+    render();
+  }
+});
+
+document.getElementById("copyBtn").addEventListener("click", async () => {
+  const txt = document.getElementById("csvOut").value;
+  try {
+    await navigator.clipboard.writeText(txt);
+    const s = document.getElementById("copyStatus");
+    s.textContent = "Copied. Now click 'Open in GitHub editor' and paste over the file content.";
+    s.className = "status ok";
+  } catch (e) {
+    document.getElementById("copyStatus").textContent = "Copy failed — select the textarea and copy manually.";
+  }
+});
+
+document.getElementById("resetBtn").addEventListener("click", async () => {
+  if (!confirm("Discard local edits and reload from GitHub?")) return;
+  localStorage.removeItem(STORAGE_KEY);
+  await loadFromRemote();
+});
+
+const cached = loadLocal();
+if (cached && cached.length) { rows = cached; render(); }
+else { loadFromRemote(); }
+</script>
+
+</body>
+</html>

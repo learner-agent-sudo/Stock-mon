@@ -150,6 +150,10 @@ def render(b: Briefing) -> str:
     {stats.get('prices_failed', 0)} failed &middot;
     {stats.get('signals_matched', 0)} signals matched
   </div>
+  <nav style="margin-top:.5rem;font-size:.9rem;">
+    <a href="./manage.html" style="color:#0969da;text-decoration:none;margin-right:1rem;">Manage tickers &rarr;</a>
+    <a href="./demo.html"   style="color:#0969da;text-decoration:none;">View demo</a>
+  </nav>
 </header>
 {body_html}
 <footer>Personal monitoring tool. Not investment advice.</footer>

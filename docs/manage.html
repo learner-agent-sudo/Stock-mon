@@ -168,10 +168,10 @@ nav a:hover { text-decoration: underline; }
 </section>
 
 <script>
-const REPO  = "learner-agent-sudo/stock-mon";
+const REPO  = "learner-agent-sudo/Stock-mon";
 const BRANCH = "claude/plan-v1-architecture-7beEc";
 const FILE  = "data/seed_holdings.csv";
-const RAW   = `https://raw.githubusercontent.com/${REPO}/${BRANCH}/${FILE}`;
+const RAW   = `https://raw.githubusercontent.com/${REPO}/${BRANCH}/${FILE}?t=${Date.now()}`;
 const EDIT  = `https://github.com/${REPO}/edit/${BRANCH}/${FILE}`;
 const STORAGE_KEY = "stockmon_pending_csv_v1";
 

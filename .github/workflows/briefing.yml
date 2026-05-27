@@ -3,12 +3,9 @@ name: Stock Briefing
 on:
   workflow_dispatch:
   schedule:
-    # 23:30 UTC Mon-Fri  =  07:30 Hong Kong time Tue-Sat (UTC+8)
-    # Edit the cron if you want a different time. Cron uses UTC.
-    # Examples:
-    #   "30 11 * * 1-5" = 07:30 New York (winter / EST, UTC-5) Mon-Fri
-    #   "30 06 * * 1-5" = 07:30 London   (winter / GMT, UTC+0) Mon-Fri
-    - cron: "30 23 * * 1-5"
+    # 11:00 UTC daily = 07:00 EDT (summer) / 06:00 EST (winter)
+    # GitHub cron is UTC-only, so this shifts by 1 hour with DST.
+    - cron: "0 11 * * *"
 
 permissions:
   contents: write   # so the workflow can commit docs/ back to the repo

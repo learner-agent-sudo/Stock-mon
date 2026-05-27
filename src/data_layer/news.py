@@ -41,6 +41,45 @@ def _effective_since_hours(base: int) -> int:
     return base
 
 
+def _extract_article(article: dict) -> tuple[str, str, str, Any]:
+    """Extract title, link, publisher, publish_time from a yfinance news dict.
+
+    yfinance has changed its news format across versions. Try multiple
+    key patterns to handle both old and new structures.
+    """
+    title = (
+        article.get("title")
+        or _deep_get(article, "content", "title")
+        or ""
+    )
+    link = (
+        article.get("link")
+        or article.get("url")
+        or _deep_get(article, "content", "canonicalUrl", "url")
+        or _deep_get(article, "content", "clickThroughUrl", "url")
+        or ""
+    )
+    publisher = (
+        article.get("publisher")
+        or _deep_get(article, "content", "provider", "displayName")
+        or "yahoo"
+    )
+    pub_ts = (
+        article.get("providerPublishTime")
+        or article.get("publishedAt")
+        or _deep_get(article, "content", "pubDate")
+    )
+    return title, link, publisher, pub_ts
+
+
+def _deep_get(d: dict, *keys: str) -> Any:
+    for key in keys:
+        if not isinstance(d, dict):
+            return None
+        d = d.get(key)  # type: ignore
+    return d
+
+
 def _fetch_yfinance_news(symbol: str, since_hours: int) -> list[NewsItem]:
     if yf is None:
         return []
@@ -53,22 +92,30 @@ def _fetch_yfinance_news(symbol: str, since_hours: int) -> list[NewsItem]:
         print(f"  [news] yfinance {symbol}: {exc}", file=sys.stderr)
         return []
 
+    if raw_news and symbol in ("AAPL", "MSFT"):
+        first = raw_news[0]
+        print(f"  [news-debug] {symbol} keys: {list(first.keys())}")
+        print(f"  [news-debug] {symbol} sample: {json.dumps(first, default=str)[:500]}")
+
     items: list[NewsItem] = []
     seen: set[str] = set()
     for article in raw_news:
-        title = article.get("title") or ""
-        link = article.get("link") or ""
-        publisher = article.get("publisher") or "yahoo"
-        pub_ts = article.get("providerPublishTime")
+        title, link, publisher, pub_ts = _extract_article(article)
 
         published_at = None
         if pub_ts:
             try:
-                published_at = datetime.fromtimestamp(pub_ts, tz=timezone.utc)
+                if isinstance(pub_ts, (int, float)):
+                    published_at = datetime.fromtimestamp(pub_ts, tz=timezone.utc)
+                elif isinstance(pub_ts, str):
+                    published_at = datetime.fromisoformat(pub_ts.replace("Z", "+00:00"))
             except (TypeError, ValueError, OSError):
                 pass
 
         if published_at is not None and published_at < cutoff:
+            continue
+
+        if not title:
             continue
 
         key = link or title

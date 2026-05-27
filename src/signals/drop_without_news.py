@@ -43,6 +43,7 @@ class DropWithoutNewsSignal(Signal):
                 "threshold": threshold,
                 "cap_tier": stock["cap_tier"],
                 "description": stock["description"],
+                "category": stock["category"],
             },
         )
 

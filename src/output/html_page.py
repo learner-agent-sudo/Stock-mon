@@ -63,6 +63,12 @@ nav a:hover { color: #ffb74d; border-bottom-color: #ffb74d; }
 .result:first-of-type { border-top: 0; }
 .stock-header { display: flex; flex-wrap: wrap; align-items: baseline;
                 gap: .15rem .4rem; }
+.cat-tag { display: inline-block; font-size: .6rem; font-weight: 700;
+           width: 1.1rem; text-align: center; border-radius: 3px;
+           padding: .05rem 0; margin-right: .35rem; vertical-align: baseline;
+           letter-spacing: .03em; }
+.cat-tag.holding  { background: #1a3a2a; color: #69f0ae; border: 1px solid #2e7d53; }
+.cat-tag.watching { background: #1a2a3a; color: #42a5f5; border: 1px solid #1565c0; }
 .symbol { font-weight: 700; font-size: .92rem; color: #fff; }
 .stock-name { color: #6b7d8e; font-size: .75rem; }
 .pct { font-weight: 700; font-size: .88rem; }
@@ -120,6 +126,7 @@ def _render_result(r: SignalResult) -> str:
     pct = r.details.get("pct_change")
     last = r.details.get("last_close")
     desc = r.details.get("description") or ""
+    category = r.details.get("category") or ""
 
     pct_html = ""
     if pct is not None:
@@ -128,6 +135,9 @@ def _render_result(r: SignalResult) -> str:
 
     price_html = f'<span class="price">@ {last:.2f}</span>' if last is not None else ""
     name_html = f'<span class="stock-name">{escape(desc)}</span>' if desc else ""
+    cat_cls = "holding" if category == "HOLDING" else "watching"
+    cat_label = "H" if category == "HOLDING" else "W"
+    cat_html = f'<span class="cat-tag {cat_cls}">{cat_label}</span>' if category else ""
     headline = _redact_watchlist_headline(r)
 
     news_html = ""
@@ -148,7 +158,7 @@ def _render_result(r: SignalResult) -> str:
     return (
         f'<div class="result">'
         f'<div class="stock-header">'
-        f'<span class="symbol">{escape(r.symbol)}</span>'
+        f'{cat_html}<span class="symbol">{escape(r.symbol)}</span>'
         f'{name_html} {pct_html} {price_html}'
         f'</div>'
         f'<p class="headline">{escape(headline)}</p>'

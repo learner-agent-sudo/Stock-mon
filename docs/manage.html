@@ -6,75 +6,97 @@
 <meta name="robots" content="noindex, nofollow">
 <title>Manage — Stock Briefing</title>
 <style>
-* { box-sizing: border-box; }
+* { box-sizing: border-box; margin: 0; padding: 0; }
 body {
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  max-width: 980px; margin: 2rem auto; padding: 0 1.25rem;
-  color: #1f2328; background: #f6f8fa; line-height: 1.5;
+  font-family: "SF Mono", "Cascadia Mono", "Fira Code", "Consolas", monospace;
+  max-width: 980px; margin: 0 auto; padding: 1rem;
+  color: #e8e6e3; background: #0a0e17; line-height: 1.5;
 }
-header { margin-bottom: 1rem; }
-h1 { margin: 0 0 .25rem; font-size: 1.5rem; }
-.meta { color: #57606a; font-size: .9rem; }
-.notice { background: #fff8c5; border: 1px solid #d4a72c; border-radius: 6px;
-          padding: .6rem .8rem; margin: 1rem 0; font-size: .9rem; }
-.notice b { color: #7d4e00; }
-.card { background: #fff; border: 1px solid #d0d7de; border-radius: 8px;
-        padding: 1rem 1.25rem; margin-bottom: 1rem; }
-.card h2 { margin: 0 0 .75rem; font-size: 1.05rem; }
+header { margin-bottom: 1rem; border-bottom: 1px solid #1e2d3d;
+         padding-bottom: .75rem; }
+h1 { margin: 0 0 .25rem; font-size: 1.1rem; color: #ff9800;
+     letter-spacing: .06em; text-transform: uppercase; }
+.meta { color: #6b7d8e; font-size: .82rem; }
+.notice { background: #1a1400; border-left: 3px solid #ff9800;
+          padding: .5rem .75rem; margin: .75rem 0; font-size: .78rem;
+          color: #ffb74d; border-radius: 3px; }
+.notice b { color: #ff9800; }
+.card { background: #0f1923; border: 1px solid #1e2d3d; border-radius: 4px;
+        padding: .75rem 1rem; margin-bottom: .75rem; }
+.card h2 { margin: 0 0 .6rem; font-size: .88rem; color: #ff9800;
+           text-transform: uppercase; letter-spacing: .06em; }
 form.add { display: grid; grid-template-columns: repeat(4, 1fr) auto;
            gap: .5rem; align-items: end; }
-form.add label { display: block; font-size: .8rem; color: #57606a;
-                 margin-bottom: .2rem; }
+form.add label { display: block; font-size: .72rem; color: #6b7d8e;
+                 margin-bottom: .15rem; text-transform: uppercase;
+                 letter-spacing: .04em; }
 form.add input, form.add select {
-  width: 100%; padding: .45rem .55rem; border: 1px solid #d0d7de;
-  border-radius: 6px; font-size: .9rem; background: #fff;
+  width: 100%; padding: .4rem .5rem; border: 1px solid #1e2d3d;
+  border-radius: 4px; font-size: .82rem; background: #152233;
+  color: #e8e6e3; font-family: inherit;
 }
-form.add button { background: #1f883d; color: #fff; border: 0;
-  padding: .5rem .9rem; border-radius: 6px; font-weight: 600;
-  cursor: pointer; font-size: .9rem; }
-form.add button:hover { background: #1a7f37; }
-table { width: 100%; border-collapse: collapse; font-size: .88rem; }
-th, td { padding: .45rem .5rem; text-align: left;
-         border-bottom: 1px solid #eaeef2; }
-th { color: #57606a; font-weight: 600; font-size: .8rem;
-     text-transform: uppercase; letter-spacing: .03em; }
-.tag { display: inline-block; padding: .1rem .4rem; border-radius: 4px;
-       font-size: .72rem; font-weight: 600; }
-.tag.HOLDING   { background: #ddf4ff; color: #0550ae; }
-.tag.WATCHLIST { background: #fff8c5; color: #7d4e00; }
+form.add input::placeholder { color: #4a5568; }
+form.add select { appearance: auto; }
+form.add button { background: #1a7f37; color: #fff; border: 0;
+  padding: .45rem .8rem; border-radius: 4px; font-weight: 600;
+  cursor: pointer; font-size: .82rem; font-family: inherit; }
+form.add button:hover { background: #2ea04f; }
+table { width: 100%; border-collapse: collapse; font-size: .78rem; }
+th, td { padding: .4rem .45rem; text-align: left;
+         border-bottom: 1px solid #152233; }
+th { color: #6b7d8e; font-weight: 600; font-size: .68rem;
+     text-transform: uppercase; letter-spacing: .05em; }
+td { color: #c0bfbc; }
+.tag { display: inline-block; padding: .05rem .35rem; border-radius: 3px;
+       font-size: .65rem; font-weight: 700; letter-spacing: .03em; }
+.tag.HOLDING   { background: #1a3a2a; color: #69f0ae; border: 1px solid #2e7d53; }
+.tag.WATCHLIST { background: #1a2a3a; color: #42a5f5; border: 1px solid #1565c0; }
 .row-actions button {
-  background: none; border: 1px solid #d0d7de; border-radius: 4px;
-  padding: .2rem .5rem; cursor: pointer; font-size: .75rem; color: #57606a;
-  margin-left: .25rem;
+  background: none; border: 1px solid #1e2d3d; border-radius: 3px;
+  padding: .15rem .4rem; cursor: pointer; font-size: .68rem; color: #6b7d8e;
+  margin-left: .2rem; font-family: inherit;
 }
-.row-actions button:hover { background: #f6f8fa; }
-.row-actions button.danger { color: #cf222e; border-color: #ffcecb; }
-.row-actions button.danger:hover { background: #ffebe9; }
-.thresholds { display: grid; grid-template-columns: 1fr 1fr; gap: .75rem; }
-.thresholds label { font-size: .85rem; color: #57606a; }
-.thresholds input { width: 100%; padding: .4rem .5rem; border: 1px solid #d0d7de;
-  border-radius: 6px; font-size: .9rem; margin-top: .2rem; }
-textarea { width: 100%; min-height: 220px; padding: .6rem .75rem;
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: .82rem;
-  border: 1px solid #d0d7de; border-radius: 6px; background: #f6f8fa;
+.row-actions button:hover { background: #152233; color: #e8e6e3; }
+.row-actions button.danger { color: #ff1744; border-color: #5c1a1a; }
+.row-actions button.danger:hover { background: #2a0a0a; }
+.thresholds { display: grid; grid-template-columns: 1fr 1fr; gap: .6rem; }
+.thresholds label { font-size: .75rem; color: #6b7d8e; }
+.thresholds input { width: 100%; padding: .35rem .45rem; border: 1px solid #1e2d3d;
+  border-radius: 4px; font-size: .82rem; margin-top: .15rem;
+  background: #152233; color: #e8e6e3; font-family: inherit; }
+textarea { width: 100%; min-height: 220px; padding: .5rem .65rem;
+  font-family: inherit; font-size: .75rem;
+  border: 1px solid #1e2d3d; border-radius: 4px; background: #152233;
+  color: #e8e6e3;
 }
-.apply { display: flex; gap: .5rem; margin-top: .75rem; flex-wrap: wrap; }
+.apply { display: flex; gap: .5rem; margin-top: .6rem; flex-wrap: wrap; }
 .apply button, .apply a {
-  background: #0969da; color: #fff; border: 0;
-  padding: .5rem .9rem; border-radius: 6px; font-weight: 600;
-  cursor: pointer; font-size: .9rem; text-decoration: none;
-  display: inline-block;
+  background: #ff9800; color: #0a0e17; border: 0;
+  padding: .4rem .75rem; border-radius: 4px; font-weight: 700;
+  cursor: pointer; font-size: .78rem; text-decoration: none;
+  display: inline-block; font-family: inherit;
 }
-.apply button:hover, .apply a:hover { background: #0550ae; }
-.apply .secondary { background: #6e7781; }
-.apply .secondary:hover { background: #57606a; }
-.empty { color: #57606a; font-style: italic; padding: .5rem 0; }
-.error { background: #ffebe9; border: 1px solid #ff8182; color: #cf222e;
-         padding: .5rem .75rem; border-radius: 6px; margin: .5rem 0; }
-nav a { color: #0969da; text-decoration: none; margin-right: 1rem; font-size: .9rem; }
-nav a:hover { text-decoration: underline; }
-.status { font-size: .85rem; color: #57606a; margin-top: .25rem; }
-.status.ok { color: #1a7f37; }
+.apply button:hover, .apply a:hover { background: #ffb74d; }
+.apply .secondary { background: #1e2d3d; color: #6b7d8e; }
+.apply .secondary:hover { background: #2a3a4a; color: #e8e6e3; }
+.empty { color: #6b7d8e; font-style: italic; padding: .4rem 0; font-size: .78rem; }
+.error { background: #2a0a0a; border-left: 3px solid #ff1744; color: #ff8a80;
+         padding: .4rem .65rem; border-radius: 3px; margin: .4rem 0;
+         font-size: .78rem; }
+nav a { color: #ff9800; text-decoration: none; margin-right: .75rem;
+        font-size: .82rem; border-bottom: 1px dotted #ff980050; }
+nav a:hover { color: #ffb74d; border-bottom-color: #ffb74d; }
+.status { font-size: .75rem; color: #6b7d8e; margin-top: .2rem; }
+.status.ok { color: #69f0ae; }
+
+@media (max-width: 600px) {
+  body { padding: .5rem; }
+  h1 { font-size: .95rem; }
+  form.add { grid-template-columns: 1fr 1fr; }
+  table { font-size: .7rem; }
+  th, td { padding: .3rem .3rem; }
+  .tag { font-size: .6rem; }
+}
 </style>
 </head>
 <body>

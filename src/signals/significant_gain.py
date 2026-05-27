@@ -40,6 +40,7 @@ class SignificantGainSignal(Signal):
                 "threshold": threshold,
                 "cap_tier": stock["cap_tier"],
                 "description": stock["description"],
+                "category": stock["category"],
             },
             news=news[:5],
         )

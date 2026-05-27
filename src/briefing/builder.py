@@ -94,6 +94,7 @@ def to_json_payload(b: Briefing) -> dict[str, Any]:
                 "news": [
                     {
                         "headline": n.headline,
+                        "summary": n.summary,
                         "url": n.url,
                         "source": n.source,
                         "published_at": n.published_at.isoformat() if n.published_at else None,

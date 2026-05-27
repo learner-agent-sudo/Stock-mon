@@ -70,13 +70,14 @@ nav a:hover { color: #ffb74d; border-bottom-color: #ffb74d; }
 .pct.down { color: #ff1744; }
 .price { color: #6b7d8e; font-size: .78rem; }
 .headline { margin-top: .2rem; font-size: .78rem; color: #8899aa; }
-.news { margin-top: .25rem; padding-left: .9rem; font-size: .72rem;
-        list-style: none; }
-.news li { margin: .1rem 0; }
-.news li::before { content: "\\25B8 "; color: #ff9800; }
-.news a { color: #42a5f5; text-decoration: none; }
-.news a:hover { color: #90caf9; text-decoration: underline; }
-.news .src { color: #4a5568; font-size: .68rem; margin-left: .15rem; }
+.news { margin-top: .3rem; }
+.news-item { padding: .3rem 0 .3rem .65rem; border-left: 2px solid #1e2d3d;
+             margin: .2rem 0; }
+.news-title { color: #e8e6e3; font-size: .78rem; font-weight: 600; }
+.news .src { color: #4a5568; font-size: .65rem; margin-left: .3rem;
+             font-style: italic; }
+.news-summary { color: #8899aa; font-size: .72rem; margin: .15rem 0 0;
+                line-height: 1.4; }
 .empty { color: #6b7d8e; font-style: italic; padding: .75rem; font-size: .82rem; }
 footer { color: #3a4a5a; font-size: .68rem; margin-top: .75rem;
          text-align: center; padding-bottom: .4rem;
@@ -93,7 +94,9 @@ footer { color: #3a4a5a; font-size: .68rem; margin-top: .75rem;
   .pct { font-size: .82rem; }
   .price { font-size: .72rem; }
   .headline { font-size: .72rem; }
-  .news { font-size: .68rem; padding-left: .7rem; }
+  .news-item { padding-left: .5rem; }
+  .news-title { font-size: .72rem; }
+  .news-summary { font-size: .68rem; }
   nav a { margin-right: .4rem; font-size: .72rem; }
   footer { font-size: .62rem; }
 }
@@ -126,12 +129,16 @@ def _render_result(r: SignalResult) -> str:
 
     news_html = ""
     if r.news:
-        items = "".join(
-            f'<li><a href="{escape(n.url)}" target="_blank" rel="noopener">{escape(n.headline)}</a>'
-            f'<span class="src">({escape(n.source)})</span></li>'
-            for n in r.news[:3]
-        )
-        news_html = f'<ul class="news">{items}</ul>'
+        parts: list[str] = []
+        for n in r.news[:3]:
+            title_html = f'<span class="news-title">{escape(n.headline)}</span>'
+            src_html = f'<span class="src">{escape(n.source)}</span>'
+            summary_html = ""
+            if n.summary:
+                short = n.summary[:200] + ("..." if len(n.summary) > 200 else "")
+                summary_html = f'<p class="news-summary">{escape(short)}</p>'
+            parts.append(f'<div class="news-item">{title_html} {src_html}{summary_html}</div>')
+        news_html = f'<div class="news">{"".join(parts)}</div>'
 
     return (
         f'<div class="result">'

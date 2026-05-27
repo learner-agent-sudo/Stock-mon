@@ -42,6 +42,13 @@ def _effective_since_hours(base: int) -> int:
     return base
 
 
+def _strip_html(text: str) -> str:
+    """Remove HTML tags from a string."""
+    import re
+    clean = re.sub(r"<[^>]+>", " ", text)
+    return re.sub(r"\s+", " ", clean).strip()
+
+
 def _extract_article(article: dict) -> tuple[str, str, str, Any, str]:
     """Extract title, link, publisher, publish_time, summary from a yfinance news dict."""
     title = (
@@ -66,11 +73,19 @@ def _extract_article(article: dict) -> tuple[str, str, str, Any, str]:
         or article.get("publishedAt")
         or _deep_get(article, "content", "pubDate")
     )
-    summary = (
+    summary_raw = (
         article.get("summary")
         or _deep_get(article, "content", "summary")
         or ""
     )
+    desc_raw = (
+        article.get("description")
+        or _deep_get(article, "content", "description")
+        or ""
+    )
+    summary_clean = _strip_html(summary_raw) if "<" in summary_raw else summary_raw
+    desc_clean = _strip_html(desc_raw) if "<" in desc_raw else desc_raw
+    summary = summary_clean if len(summary_clean) >= len(desc_clean) else desc_clean
     return title, link, publisher, pub_ts, summary
 
 

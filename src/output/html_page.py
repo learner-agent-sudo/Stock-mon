@@ -138,8 +138,7 @@ def _render_result(r: SignalResult) -> str:
             src_html = f'<span class="src">{escape(n.source)}</span>'
             summary_html = ""
             if n.summary:
-                short = n.summary[:500] + ("..." if len(n.summary) > 500 else "")
-                summary_html = f'<p class="news-summary">{escape(short)}</p>'
+                summary_html = f'<p class="news-summary">{escape(n.summary)}</p>'
             link_html = ""
             if n.url:
                 link_html = f'<a class="read-more" href="{escape(n.url)}" target="_blank" rel="noopener">Read more &rarr;</a>'

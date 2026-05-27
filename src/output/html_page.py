@@ -167,13 +167,8 @@ def render(b: Briefing) -> str:
     body_html = "".join(sections) or '<div class="empty">No signals matched. Quiet day.</div>'
     stats = b.stats
 
-    yahoo_ok = stats.get("yahoo_available", True)
     total_articles = stats.get("total_articles", 0)
     tickers_with_news = stats.get("tickers_with_news", 0)
-    banner = ""
-    if not yahoo_ok:
-        banner = '<div class="banner warn">Yahoo Finance RSS is not available. News sourced from Google News only.</div>'
-
     news_line = f"{total_articles} articles from {tickers_with_news} tickers" if total_articles else "no articles found"
 
     return f"""<!doctype html>
@@ -201,7 +196,6 @@ def render(b: Briefing) -> str:
     <a href="./demo.html">View demo</a>
   </nav>
 </header>
-{banner}
 {body_html}
 <footer>Personal monitoring tool. Not investment advice.</footer>
 </body>

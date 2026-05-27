@@ -27,9 +27,7 @@ jobs:
           cache: pip
 
       - name: Install dependencies
-        run: |
-          pip install --quiet yfinance pandas jinja2 python-dotenv requests
-          pip install --quiet --no-deps feedparser
+        run: pip install --quiet yfinance pandas python-dotenv requests
 
       - name: Initialize DB and load seed
         run: |

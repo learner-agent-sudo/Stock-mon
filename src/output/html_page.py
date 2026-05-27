@@ -78,6 +78,9 @@ nav a:hover { color: #ffb74d; border-bottom-color: #ffb74d; }
              font-style: italic; }
 .news-summary { color: #8899aa; font-size: .72rem; margin: .15rem 0 0;
                 line-height: 1.4; }
+.read-more { color: #ff9800; font-size: .68rem; text-decoration: none;
+             display: inline-block; margin-top: .15rem; }
+.read-more:hover { color: #ffb74d; text-decoration: underline; }
 .empty { color: #6b7d8e; font-style: italic; padding: .75rem; font-size: .82rem; }
 footer { color: #3a4a5a; font-size: .68rem; margin-top: .75rem;
          text-align: center; padding-bottom: .4rem;
@@ -135,9 +138,12 @@ def _render_result(r: SignalResult) -> str:
             src_html = f'<span class="src">{escape(n.source)}</span>'
             summary_html = ""
             if n.summary:
-                short = n.summary[:200] + ("..." if len(n.summary) > 200 else "")
+                short = n.summary[:500] + ("..." if len(n.summary) > 500 else "")
                 summary_html = f'<p class="news-summary">{escape(short)}</p>'
-            parts.append(f'<div class="news-item">{title_html} {src_html}{summary_html}</div>')
+            link_html = ""
+            if n.url:
+                link_html = f'<a class="read-more" href="{escape(n.url)}" target="_blank" rel="noopener">Read more &rarr;</a>'
+            parts.append(f'<div class="news-item">{title_html} {src_html}{summary_html}{link_html}</div>')
         news_html = f'<div class="news">{"".join(parts)}</div>'
 
     return (

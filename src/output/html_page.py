@@ -7,7 +7,7 @@ quantities, cost basis, or watchlist target prices.
 from __future__ import annotations
 
 from collections import defaultdict
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from html import escape
 
 from ..briefing.builder import Briefing
@@ -158,8 +158,11 @@ def _render_result(r: SignalResult) -> str:
 
 
 def render(b: Briefing) -> str:
-    generated_local = datetime.fromisoformat(b.generated_at).astimezone(timezone.utc)
-    when = generated_local.strftime("%Y-%m-%d %H:%M UTC")
+    generated_utc = datetime.fromisoformat(b.generated_at).astimezone(timezone.utc)
+    est = timezone(timedelta(hours=-5))
+    edt = timezone(timedelta(hours=-4))
+    generated_et = generated_utc.astimezone(edt)
+    when = generated_et.strftime("%Y-%m-%d %H:%M ET")
 
     grouped: dict[str, list[SignalResult]] = defaultdict(list)
     for r in b.results:

@@ -43,6 +43,9 @@ jobs:
           python scripts/load_seed.py
 
       - name: Build briefing
+        env:
+          FINNHUB_API_KEY: ${{ secrets.FINNHUB_API_KEY }}
+          FMP_API_KEY: ${{ secrets.FMP_API_KEY }}
         run: python scripts/run_briefing_to_html.py
 
       - name: Commit history archive back to the repo

@@ -1,6 +1,8 @@
 """Fetch yesterday's price data from yfinance with retries and gentle error handling."""
 from __future__ import annotations
 
+import csv
+import io
 import json
 import os
 import time
@@ -13,8 +15,14 @@ try:
 except ImportError:  # pragma: no cover - dependency may be missing in early dev
     yf = None  # type: ignore
 
+try:
+    import requests
+except ImportError:  # pragma: no cover
+    requests = None  # type: ignore
+
 FIXTURE_ENV = "STOCKMON_USE_FIXTURE"
 FIXTURE_PATH = Path(__file__).resolve().parent.parent.parent / "tests" / "fixtures" / "prices_snapshot.json"
+STOOQ_URL = "https://stooq.com/q/d/l/?s={symbol}&i=d"
 
 
 @dataclass
@@ -86,6 +94,47 @@ def _fetch_one(symbol: str, retries: int = 3, backoff: float = 1.5) -> PriceData
     return PriceData(symbol, None, None, None, None, None, False, last_err)
 
 
+def _stooq_symbol(symbol: str) -> str | None:
+    """Map an internal symbol to a Stooq symbol. Only US tickers are reliable."""
+    if "." in symbol:
+        # Suffixed (e.g. 0700.HK, ATD.TO) — Stooq's free intl coverage is unreliable.
+        return None
+    return f"{symbol.lower()}.us"
+
+
+def _fetch_from_stooq(symbol: str) -> PriceData:
+    """Fallback price source. Daily CSV, no API key. Best-effort, US only."""
+    if requests is None:
+        return PriceData(symbol, None, None, None, None, None, False, "requests not installed")
+    stooq_sym = _stooq_symbol(symbol)
+    if stooq_sym is None:
+        return PriceData(symbol, None, None, None, None, None, False, "no stooq mapping")
+    try:
+        resp = requests.get(STOOQ_URL.format(symbol=stooq_sym), timeout=15)
+        if resp.status_code != 200 or not resp.text.startswith("Date"):
+            return PriceData(symbol, None, None, None, None, None, False, "stooq no data")
+        rows = list(csv.DictReader(io.StringIO(resp.text)))
+        if len(rows) < 2:
+            return PriceData(symbol, None, None, None, None, None, False, "stooq <2 rows")
+        last, prior = rows[-1], rows[-2]
+        last_close = float(last["Close"])
+        prior_close = float(prior["Close"])
+        pct = ((last_close - prior_close) / prior_close * 100.0) if prior_close else None
+        volume = int(float(last["Volume"])) if last.get("Volume") else None
+        return PriceData(
+            symbol=symbol,
+            last_close=last_close,
+            prior_close=prior_close,
+            pct_change=pct,
+            volume=volume,
+            last_date=last["Date"],
+            ok=True,
+            error="via stooq fallback",
+        )
+    except Exception as exc:  # noqa: BLE001
+        return PriceData(symbol, None, None, None, None, None, False, f"stooq: {exc}")
+
+
 def _fetch_from_fixture(symbol: str, snapshot: dict) -> PriceData:
     raw = snapshot.get(symbol)
     if raw is None:
@@ -113,4 +162,17 @@ def fetch_prices(symbols: Iterable[str]) -> dict[str, PriceData]:
     if os.environ.get(FIXTURE_ENV) == "1":
         snapshot = json.loads(FIXTURE_PATH.read_text())
         return {sym: _fetch_from_fixture(sym, snapshot) for sym in symbols}
-    return {sym: _fetch_one(sym) for sym in symbols}
+
+    result: dict[str, PriceData] = {}
+    stooq_recovered = 0
+    for sym in symbols:
+        data = _fetch_one(sym)
+        if not data.ok:
+            fallback = _fetch_from_stooq(sym)
+            if fallback.ok:
+                data = fallback
+                stooq_recovered += 1
+        result[sym] = data
+    if stooq_recovered:
+        print(f"  [prices] recovered {stooq_recovered} ticker(s) via Stooq fallback")
+    return result

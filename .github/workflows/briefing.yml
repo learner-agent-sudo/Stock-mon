@@ -7,12 +7,23 @@ on:
     # GitHub cron is UTC-only, so this shifts by 1 hour with DST.
     - cron: "0 11 * * *"
 
+# Allow committing the history archive AND deploying to Pages directly.
 permissions:
-  contents: write   # so the workflow can commit docs/ back to the repo
+  contents: write
+  pages: write
+  id-token: write
+
+# Don't let two runs (e.g. a manual run overlapping the cron) collide.
+concurrency:
+  group: "stock-briefing"
+  cancel-in-progress: false
 
 jobs:
   briefing:
     runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -34,14 +45,31 @@ jobs:
       - name: Build briefing
         run: python scripts/run_briefing_to_html.py
 
-      - name: Commit and push briefing output
+      - name: Commit history archive back to the repo
         run: |
           git config user.name  "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git pull --rebase origin "${GITHUB_REF_NAME}" || true
           git add docs/
           if git diff --cached --quiet; then
             echo "No changes to commit."
           else
             git commit -m "briefing: $(date -u +%Y-%m-%d_%H:%M)"
-            git push
+            git push origin "HEAD:${GITHUB_REF_NAME}"
           fi
+
+      # Deploy the docs/ folder to GitHub Pages from within this run.
+      # This is what makes the live site update reliably — it does not
+      # depend on the bot's commit triggering a separate Pages rebuild
+      # (which GITHUB_TOKEN pushes do not do).
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: docs
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

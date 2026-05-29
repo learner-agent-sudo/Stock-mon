@@ -12,6 +12,7 @@ from __future__ import annotations
 import json
 import os
 import sys
+import time
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
@@ -36,9 +37,12 @@ FINNHUB_URL = "https://finnhub.io/api/v1/company-news"
 FMP_URL = "https://financialmodelingprep.com/stable/news/stock"
 FMP_DAILY_BUDGET = 240  # stay under the 250/day free limit
 GDELT_URL = "https://api.gdeltproject.org/api/v2/doc/doc"
+GDELT_CALL_CAP = 150  # safety cap on per-run GDELT calls (it's a gap-filler)
+GDELT_THROTTLE_SEC = 0.3  # politeness delay; GDELT throttles bursty callers
 HEALTH_CANARY = "AAPL"  # liquid US ticker used to probe source availability
 HEALTH_CANARY_HINT = "Apple Inc"  # company-name canary for name-based sources
 _fmp_calls_made = 0
+_gdelt_calls_made = 0
 
 
 @dataclass
@@ -266,8 +270,12 @@ def _fetch_gdelt_news(symbol: str, query_hint: str | None, since_hours: int) -> 
     """Global news via GDELT DOC 2.0. Keyless, worldwide coverage — the best
     fit for non-US tickers that Finnhub/FMP don't cover. Queried by company
     name when available."""
-    if requests is None:
+    global _gdelt_calls_made
+    if requests is None or _gdelt_calls_made >= GDELT_CALL_CAP:
         return []
+    _gdelt_calls_made += 1
+    # Be polite to GDELT's rate limiter — it throttles bursty callers.
+    time.sleep(GDELT_THROTTLE_SEC)
     hours = _effective_since_hours(since_hours)
     params = {
         "query": f"{_gdelt_query(symbol, query_hint)} sourcelang:english",
@@ -278,11 +286,11 @@ def _fetch_gdelt_news(symbol: str, query_hint: str | None, since_hours: int) -> 
         "timespan": f"{hours}h",
     }
     try:
-        resp = requests.get(GDELT_URL, params=params, timeout=20)
+        resp = requests.get(GDELT_URL, params=params, timeout=10)
         if resp.status_code != 200 or not resp.text.strip():
             return []
         data = resp.json()
-    except Exception:  # noqa: BLE001 — GDELT occasionally returns non-JSON
+    except Exception:  # noqa: BLE001 — GDELT occasionally returns non-JSON / times out
         return []
     items: list[NewsItem] = []
     for a in data.get("articles", []) if isinstance(data, dict) else []:
@@ -420,11 +428,15 @@ def fetch_news(symbol: str, *, since_hours: int = 48, query_hint: str | None = N
 
     yahoo = _fetch_yfinance_news(symbol, since_hours)
     finnhub = _fetch_finnhub_news(symbol, since_hours)
-    gdelt = _fetch_gdelt_news(symbol, query_hint, since_hours)
-    merged = _merge_news(yahoo, finnhub, gdelt)
+    merged = _merge_news(yahoo, finnhub)
 
-    # FMP only as a gap-filler when nothing else found anything, to respect
-    # the 250/day free limit.
+    # Gap-fillers — only run when the fast primary sources found nothing, so
+    # we don't fire an extra HTTP call per ticker across the whole portfolio.
+    # GDELT first (keyless, global — best for the non-US tickers that Yahoo/
+    # Finnhub miss), then FMP as the budget-limited last resort.
+    if not merged:
+        gdelt = _fetch_gdelt_news(symbol, query_hint, since_hours)
+        merged = _merge_news(gdelt)
     if not merged:
         merged = _merge_news(_fetch_fmp_news(symbol))
     return merged

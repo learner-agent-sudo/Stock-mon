@@ -35,7 +35,9 @@ FINNHUB_URL = "https://finnhub.io/api/v1/company-news"
 # legacy endpoint that returns non-200 on the free tier.
 FMP_URL = "https://financialmodelingprep.com/stable/news/stock"
 FMP_DAILY_BUDGET = 240  # stay under the 250/day free limit
+GDELT_URL = "https://api.gdeltproject.org/api/v2/doc/doc"
 HEALTH_CANARY = "AAPL"  # liquid US ticker used to probe source availability
+HEALTH_CANARY_HINT = "Apple Inc"  # company-name canary for name-based sources
 _fmp_calls_made = 0
 
 
@@ -242,6 +244,62 @@ def _fetch_fmp_news(symbol: str, limit: int = 5) -> list[NewsItem]:
     return items
 
 
+def _gdelt_query(symbol: str, query_hint: str | None) -> str:
+    """Build a GDELT query. Prefer the company name (works for non-US tickers);
+    fall back to the bare symbol."""
+    name = (query_hint or "").strip()
+    if name:
+        return f'"{name}"'
+    return symbol
+
+
+def _parse_gdelt_date(raw: str | None) -> datetime | None:
+    if not raw:
+        return None
+    try:
+        return datetime.strptime(raw, "%Y%m%dT%H%M%SZ").replace(tzinfo=timezone.utc)
+    except (TypeError, ValueError):
+        return None
+
+
+def _fetch_gdelt_news(symbol: str, query_hint: str | None, since_hours: int) -> list[NewsItem]:
+    """Global news via GDELT DOC 2.0. Keyless, worldwide coverage — the best
+    fit for non-US tickers that Finnhub/FMP don't cover. Queried by company
+    name when available."""
+    if requests is None:
+        return []
+    hours = _effective_since_hours(since_hours)
+    params = {
+        "query": f"{_gdelt_query(symbol, query_hint)} sourcelang:english",
+        "mode": "ArtList",
+        "format": "json",
+        "maxrecords": 10,
+        "sort": "DateDesc",
+        "timespan": f"{hours}h",
+    }
+    try:
+        resp = requests.get(GDELT_URL, params=params, timeout=20)
+        if resp.status_code != 200 or not resp.text.strip():
+            return []
+        data = resp.json()
+    except Exception:  # noqa: BLE001 — GDELT occasionally returns non-JSON
+        return []
+    items: list[NewsItem] = []
+    for a in data.get("articles", []) if isinstance(data, dict) else []:
+        title = (a.get("title") or "").strip()
+        if not title:
+            continue
+        items.append(NewsItem(
+            symbol=symbol,
+            headline=title,
+            url=a.get("url") or "",
+            source=a.get("domain") or "gdelt",
+            published_at=_parse_gdelt_date(a.get("seendate")),
+            summary="",
+        ))
+    return items
+
+
 def _merge_news(*lists: list[NewsItem]) -> list[NewsItem]:
     combined: list[NewsItem] = []
     seen: set[str] = set()
@@ -315,10 +373,30 @@ def _probe_fmp() -> dict[str, str]:
     return {"name": "fmp", "status": "error", "detail": f"HTTP {resp.status_code}: {resp.text[:60]}"}
 
 
+def _probe_gdelt() -> dict[str, str]:
+    if requests is None:
+        return {"name": "gdelt", "status": "error", "detail": "requests not installed"}
+    params = {
+        "query": f'"{HEALTH_CANARY_HINT}" sourcelang:english',
+        "mode": "ArtList", "format": "json", "maxrecords": 5, "timespan": "168h",
+    }
+    try:
+        resp = requests.get(GDELT_URL, params=params, timeout=20)
+    except Exception as exc:  # noqa: BLE001
+        return {"name": "gdelt", "status": "error", "detail": str(exc)[:80]}
+    if resp.status_code != 200:
+        return {"name": "gdelt", "status": "error", "detail": f"HTTP {resp.status_code}: {resp.text[:60]}"}
+    try:
+        n = len(resp.json().get("articles", []))
+    except Exception:  # noqa: BLE001 — non-JSON body counts as a failure
+        return {"name": "gdelt", "status": "error", "detail": f"non-JSON body: {resp.text[:50]}"}
+    return {"name": "gdelt", "status": "ok", "detail": f"{n} canary articles"}
+
+
 def check_source_health() -> list[dict[str, str]]:
     """Probe each news source once with a canary ticker so the page can show
     which sources are live, disabled (no key), or erroring (and why)."""
-    return [_probe_yahoo(), _probe_finnhub(), _probe_fmp()]
+    return [_probe_yahoo(), _probe_finnhub(), _probe_fmp(), _probe_gdelt()]
 
 
 def _fetch_from_fixture(symbol: str) -> list[NewsItem]:
@@ -342,7 +420,8 @@ def fetch_news(symbol: str, *, since_hours: int = 48, query_hint: str | None = N
 
     yahoo = _fetch_yfinance_news(symbol, since_hours)
     finnhub = _fetch_finnhub_news(symbol, since_hours)
-    merged = _merge_news(yahoo, finnhub)
+    gdelt = _fetch_gdelt_news(symbol, query_hint, since_hours)
+    merged = _merge_news(yahoo, finnhub, gdelt)
 
     # FMP only as a gap-filler when nothing else found anything, to respect
     # the 250/day free limit.
@@ -357,7 +436,11 @@ def fetch_news_for_symbols(
     since_hours: int = 48,
 ) -> tuple[dict[str, list[NewsItem]], dict[str, Any]]:
     # Probe each source once up front so the page can report availability.
-    source_health = check_source_health()
+    # Skip in fixture/offline mode — no network calls there.
+    if os.environ.get(FIXTURE_ENV) == "1":
+        source_health = [{"name": "fixture", "status": "ok", "detail": "offline fixture mode"}]
+    else:
+        source_health = check_source_health()
     for h in source_health:
         print(f"  [news] source {h['name']}: {h['status']} ({h['detail']})")
     active = [h["name"] for h in source_health if h["status"] == "ok"]

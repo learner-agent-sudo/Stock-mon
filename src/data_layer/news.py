@@ -37,12 +37,20 @@ FINNHUB_URL = "https://finnhub.io/api/v1/company-news"
 FMP_URL = "https://financialmodelingprep.com/stable/news/stock"
 FMP_DAILY_BUDGET = 240  # stay under the 250/day free limit
 GDELT_URL = "https://api.gdeltproject.org/api/v2/doc/doc"
-GDELT_CALL_CAP = 150  # safety cap on per-run GDELT calls (it's a gap-filler)
-GDELT_THROTTLE_SEC = 0.3  # politeness delay; GDELT throttles bursty callers
+GDELT_CALL_CAP = 60  # safety cap on per-run GDELT calls (it's a gap-filler)
+GDELT_TIMEOUT_SEC = 5  # GDELT can be slow/blocked from CI IPs — fail fast
+GDELT_THROTTLE_SEC = 0.2  # politeness delay; GDELT throttles bursty callers
+# Hard wall-clock budget for ALL gap-filler calls (GDELT + FMP) combined.
+# Primary sources (Yahoo/Finnhub) always run; gap-fillers stop once this is
+# exhausted so a slow/blocked source can never run the job to its timeout.
+GAP_FILLER_BUDGET_SEC = 150
 HEALTH_CANARY = "AAPL"  # liquid US ticker used to probe source availability
 HEALTH_CANARY_HINT = "Apple Inc"  # company-name canary for name-based sources
 _fmp_calls_made = 0
 _gdelt_calls_made = 0
+_gap_filler_deadline = 0.0  # monotonic deadline; set per run
+_gdelt_enabled = True  # disabled for the run if its health probe fails
+_fmp_enabled = True
 
 
 @dataclass
@@ -209,10 +217,17 @@ def _fetch_finnhub_news(symbol: str, since_hours: int) -> list[NewsItem]:
     return items
 
 
+def _gap_filler_budget_ok() -> bool:
+    """True while the shared gap-filler time budget for this run remains."""
+    return time.monotonic() < _gap_filler_deadline
+
+
 def _fetch_fmp_news(symbol: str, limit: int = 5) -> list[NewsItem]:
     global _fmp_calls_made
     key = os.environ.get("FMP_API_KEY")
-    if not key or requests is None or _fmp_calls_made >= FMP_DAILY_BUDGET:
+    if not key or requests is None or not _fmp_enabled or _fmp_calls_made >= FMP_DAILY_BUDGET:
+        return []
+    if not _gap_filler_budget_ok():
         return []
     _fmp_calls_made += 1
     try:
@@ -447,6 +462,9 @@ def fetch_news_for_symbols(
     *,
     since_hours: int = 48,
 ) -> tuple[dict[str, list[NewsItem]], dict[str, Any]]:
+    global _gap_filler_deadline, _gdelt_enabled, _fmp_enabled, _gdelt_calls_made, _fmp_calls_made
+    _gdelt_calls_made = 0
+    _fmp_calls_made = 0
     # Probe each source once up front so the page can report availability.
     # Skip in fixture/offline mode — no network calls there.
     if os.environ.get(FIXTURE_ENV) == "1":
@@ -455,6 +473,15 @@ def fetch_news_for_symbols(
         source_health = check_source_health()
     for h in source_health:
         print(f"  [news] source {h['name']}: {h['status']} ({h['detail']})")
+
+    # If a gap-filler's canary probe failed (e.g. GDELT blocked from this IP),
+    # disable it for the whole run so we don't waste a call per ticker. Cap the
+    # combined gap-filler time so a slow source can never run out the job clock.
+    health_by_name = {h["name"]: h["status"] for h in source_health}
+    _gdelt_enabled = health_by_name.get("gdelt") == "ok"
+    _fmp_enabled = health_by_name.get("fmp") == "ok"
+    _gap_filler_deadline = time.monotonic() + GAP_FILLER_BUDGET_SEC
+
     active = [h["name"] for h in source_health if h["status"] == "ok"]
     sources_label = "+".join(active) if active else "none"
 

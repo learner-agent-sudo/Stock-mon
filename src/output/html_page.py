@@ -246,8 +246,8 @@ def render(b: Briefing) -> str:
   </div>
   {sources_html}
   <nav>
-    <a href="./manage.html">Manage tickers &rarr;</a>
-    <a href="./demo.html">View demo</a>
+    <a href="./13f.html">13F net flow &rarr;</a>
+    <a href="./manage.html">Manage tickers</a>
   </nav>
 </header>
 {body_html}

@@ -1,0 +1,76 @@
+name: 13F Net Flow
+
+on:
+  workflow_dispatch:
+  schedule:
+    # Weekly, Saturdays 12:00 UTC. 13F data is quarterly with a ~45-day lag,
+    # so weekly is plenty to catch new filings without wasted runs.
+    - cron: "0 12 * * 6"
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+# Share the Pages concurrency group with the daily briefing so the two
+# workflows never deploy on top of each other.
+concurrency:
+  group: "stock-briefing"
+  cancel-in-progress: false
+
+jobs:
+  thirteen-f:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install dependencies
+        run: pip install --quiet requests
+
+      - name: Initialize DB and load seed
+        run: |
+          python scripts/init_db.py
+          python scripts/load_seed.py
+
+      - name: Build 13F page
+        env:
+          # Identifies us to SEC EDGAR (required) and lifts OpenFIGI limits.
+          SEC_USER_AGENT: ${{ secrets.SEC_USER_AGENT }}
+          OPENFIGI_API_KEY: ${{ secrets.OPENFIGI_API_KEY }}
+        run: python scripts/run_13f_to_html.py
+
+      - name: Commit results back to the repo
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git pull --rebase origin "${GITHUB_REF_NAME}" || true
+          git add docs/ data/cusip_map.json
+          if git diff --cached --quiet; then
+            echo "No changes to commit."
+          else
+            git commit -m "13f: $(date -u +%Y-%m-%d)"
+            git push origin "HEAD:${GITHUB_REF_NAME}"
+          fi
+
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: docs
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

@@ -27,9 +27,10 @@ def test_infotable_parse_skips_options():
 
 
 def test_aggregate_net_flow():
-    berk = h.fetch_investor_holdings("Berkshire Hathaway", 1067983)
-    scion = h.fetch_investor_holdings("Scion Asset Management", 1649339)
+    berk = h.fetch_investor_holdings("Berkshire Hathaway", 1067983, "Warren Buffett")
+    scion = h.fetch_investor_holdings("Scion Asset Management", 1649339, "Michael Burry")
     assert berk.status == "ok" and scion.status == "ok"
+    assert berk.manager == "Warren Buffett"
 
     cusip_to_ticker = {
         "037833100": "AAPL", "594918104": "MSFT",
@@ -45,6 +46,9 @@ def test_aggregate_net_flow():
     assert s["037833100"]["net_shares"] == 10
     assert s["037833100"]["net_value"] == 2000
     assert s["037833100"]["in_watchlist"] is True
+    # Manager surfaces in the per-investor detail.
+    managers = {d["manager"] for d in s["037833100"]["detail"]}
+    assert "Warren Buffett" in managers and "Michael Burry" in managers
 
     # MSFT: new Berkshire position.
     assert s["594918104"]["net_investors"] == 1

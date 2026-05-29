@@ -45,6 +45,7 @@ SEC_THROTTLE_SEC = 0.2  # SEC fair-access: stay well under 10 req/s
 class InvestorHoldings:
     name: str
     cik: int
+    manager: str = ""
     status: str = "ok"          # ok | error | mismatch
     detail: str = ""
     as_of: str | None = None    # report date of latest filing
@@ -165,11 +166,11 @@ def _parse_infotable(xml_text: str) -> dict[str, dict]:
     return holdings
 
 
-def fetch_investor_holdings(name: str, cik: int) -> InvestorHoldings:
+def fetch_investor_holdings(name: str, cik: int, manager: str = "") -> InvestorHoldings:
     """Fetch and parse an investor's latest two 13F-HR filings."""
-    inv = InvestorHoldings(name=name, cik=cik)
+    inv = InvestorHoldings(name=name, cik=cik, manager=manager)
     if os.environ.get(FIXTURE_ENV) == "1":
-        return _fixture_investor(name, cik)
+        return _fixture_investor(name, cik, manager)
     try:
         entity_name, filings = _latest_two_13f(cik)
     except Exception as exc:  # noqa: BLE001
@@ -312,6 +313,7 @@ def aggregate(investors: list[InvestorHoldings], cusip_to_ticker: dict[str, str]
             st["net_value"] += cur_val - prv_val
             st["detail"].append({
                 "investor": inv.name,
+                "manager": inv.manager,
                 "action": action,
                 "shares_delta": cur_sh - prv_sh,
                 "value_delta": cur_val - prv_val,
@@ -335,7 +337,7 @@ def build_dataset(watchlist_tickers: set[str] | None = None) -> dict[str, Any]:
     config = json.loads(INVESTORS_PATH.read_text())
     investors: list[InvestorHoldings] = []
     for entry in config.get("investors", []):
-        inv = fetch_investor_holdings(entry["name"], int(entry["cik"]))
+        inv = fetch_investor_holdings(entry["name"], int(entry["cik"]), entry.get("manager", ""))
         print(f"  [13f] {inv.name}: {inv.status}"
               + (f" ({inv.detail})" if inv.detail else "")
               + (f" — {len(inv.latest)} holdings, as of {inv.as_of}" if inv.status == "ok" else ""))
@@ -354,8 +356,9 @@ def build_dataset(watchlist_tickers: set[str] | None = None) -> dict[str, Any]:
         "as_of": max(latest_dates) if latest_dates else None,
         "investor_count": len(ok),
         "investors": [
-            {"name": i.name, "cik": i.cik, "status": i.status, "detail": i.detail,
-             "as_of": i.as_of, "prior_as_of": i.prior_as_of, "holdings": len(i.latest)}
+            {"name": i.name, "manager": i.manager, "cik": i.cik, "status": i.status,
+             "detail": i.detail, "as_of": i.as_of, "prior_as_of": i.prior_as_of,
+             "holdings": len(i.latest)}
             for i in investors
         ],
         "stocks": stocks,
@@ -369,8 +372,8 @@ def build_dataset(watchlist_tickers: set[str] | None = None) -> dict[str, Any]:
 # Fixture mode (offline testing)
 # --------------------------------------------------------------------------
 
-def _fixture_investor(name: str, cik: int) -> InvestorHoldings:
-    inv = InvestorHoldings(name=name, cik=cik)
+def _fixture_investor(name: str, cik: int, manager: str = "") -> InvestorHoldings:
+    inv = InvestorHoldings(name=name, cik=cik, manager=manager)
     latest_p = FIXTURE_DIR / f"{cik}_latest.xml"
     prior_p = FIXTURE_DIR / f"{cik}_prior.xml"
     if not latest_p.exists():

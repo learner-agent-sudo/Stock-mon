@@ -49,7 +49,9 @@ tr.stock-row:hover { background: #0f1923; }
 .act { font-weight: 700; width: 3.2rem; display: inline-block; }
 .act-NEW { color: #00e676; } .act-ADD { color: #69f0ae; }
 .act-TRIM { color: #ffb74d; } .act-EXIT { color: #ff1744; }
-.inv-name { color: #e8e6e3; flex: 1; }
+.inv-name { flex: 1; }
+.inv-name .mgr { color: #fff; font-weight: 700; }
+.inv-name .firm { color: #6b7d8e; font-size: .7rem; margin-left: .35rem; }
 .empty { color: #6b7d8e; font-style: italic; padding: 1rem; }
 footer { color: #3a4a5a; font-size: .68rem; margin-top: 1rem; text-align: center;
   border-top: 1px solid #1e2d3d; padding-top: .5rem; }
@@ -121,9 +123,10 @@ def _render_source_health(dataset: dict) -> str:
         status = inv.get("status")
         cls = {"ok": "src-ok", "mismatch": "src-warn"}.get(status, "src-err")
         icon = {"ok": "✓", "mismatch": "!"}.get(status, "✗")
-        title = inv.get("detail") or (f"{inv.get('holdings',0)} holdings, as of {inv.get('as_of')}")
+        label = inv.get("manager") or inv.get("name", "")
+        title = inv.get("detail") or (f"{inv.get('name','')} — {inv.get('holdings',0)} holdings, as of {inv.get('as_of')}")
         tags.append(f'<span class="src-tag {cls}" title="{escape(str(title))}">'
-                    f'{icon} {escape(inv.get("name",""))}</span>')
+                    f'{icon} {escape(label)}</span>')
     return f'<div class="sources">Investors: {"".join(tags)}</div>' if tags else ""
 
 
@@ -131,9 +134,15 @@ def _render_detail(stock: dict) -> str:
     items = []
     for d in stock.get("detail", []):
         act = d["action"]
+        manager = d.get("manager") or ""
+        firm = d.get("investor") or ""
+        if manager:
+            who = f'<span class="mgr">{escape(manager)}</span><span class="firm">{escape(firm)}</span>'
+        else:
+            who = f'<span class="mgr">{escape(firm)}</span>'
         items.append(
             f'<div class="detail-item">'
-            f'<span class="inv-name"><span class="act act-{act}">{act}</span>{escape(d["investor"])}</span>'
+            f'<span class="inv-name"><span class="act act-{act}">{act}</span>{who}</span>'
             f'<span class="{_cls(d["shares_delta"])}">{_fmt_shares(d["shares_delta"])} sh</span>'
             f'<span class="{_cls(d["value_delta"])}">{_fmt_money(d["value_delta"])}</span>'
             f'</div>'

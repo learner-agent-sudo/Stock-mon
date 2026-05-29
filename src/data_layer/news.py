@@ -31,8 +31,11 @@ FIXTURE_ENV = "STOCKMON_USE_FIXTURE"
 FIXTURE_PATH = Path(__file__).resolve().parent.parent.parent / "tests" / "fixtures" / "news_snapshot.json"
 
 FINNHUB_URL = "https://finnhub.io/api/v1/company-news"
-FMP_URL = "https://financialmodelingprep.com/api/v3/stock_news"
+# Current stable endpoint. The old /api/v3/stock_news (param "tickers") is a
+# legacy endpoint that returns non-200 on the free tier.
+FMP_URL = "https://financialmodelingprep.com/stable/news/stock"
 FMP_DAILY_BUDGET = 240  # stay under the 250/day free limit
+HEALTH_CANARY = "AAPL"  # liquid US ticker used to probe source availability
 _fmp_calls_made = 0
 
 
@@ -209,7 +212,7 @@ def _fetch_fmp_news(symbol: str, limit: int = 5) -> list[NewsItem]:
     try:
         resp = requests.get(
             FMP_URL,
-            params={"tickers": symbol, "limit": limit, "apikey": key},
+            params={"symbols": symbol, "limit": limit, "apikey": key},
             timeout=15,
         )
         if resp.status_code != 200:
@@ -255,6 +258,69 @@ def _merge_news(*lists: list[NewsItem]) -> list[NewsItem]:
     return combined
 
 
+def _probe_yahoo() -> dict[str, str]:
+    if yf is None:
+        return {"name": "yahoo", "status": "error", "detail": "yfinance not installed"}
+    try:
+        items = _fetch_yfinance_news(HEALTH_CANARY, since_hours=168)
+        return {"name": "yahoo", "status": "ok", "detail": f"{len(items)} canary articles"}
+    except Exception as exc:  # noqa: BLE001
+        return {"name": "yahoo", "status": "error", "detail": str(exc)[:80]}
+
+
+def _probe_finnhub() -> dict[str, str]:
+    key = os.environ.get("FINNHUB_API_KEY")
+    if not key:
+        return {"name": "finnhub", "status": "disabled", "detail": "no API key set"}
+    if requests is None:
+        return {"name": "finnhub", "status": "error", "detail": "requests not installed"}
+    now = datetime.now(timezone.utc)
+    frm = (now - timedelta(days=7)).strftime("%Y-%m-%d")
+    to = now.strftime("%Y-%m-%d")
+    try:
+        resp = requests.get(
+            FINNHUB_URL,
+            params={"symbol": HEALTH_CANARY, "from": frm, "to": to, "token": key},
+            timeout=15,
+        )
+    except Exception as exc:  # noqa: BLE001
+        return {"name": "finnhub", "status": "error", "detail": str(exc)[:80]}
+    if resp.status_code == 200:
+        data = resp.json() if resp.text else []
+        n = len(data) if isinstance(data, list) else 0
+        return {"name": "finnhub", "status": "ok", "detail": f"{n} canary articles"}
+    return {"name": "finnhub", "status": "error", "detail": f"HTTP {resp.status_code}: {resp.text[:60]}"}
+
+
+def _probe_fmp() -> dict[str, str]:
+    global _fmp_calls_made
+    key = os.environ.get("FMP_API_KEY")
+    if not key:
+        return {"name": "fmp", "status": "disabled", "detail": "no API key set"}
+    if requests is None:
+        return {"name": "fmp", "status": "error", "detail": "requests not installed"}
+    _fmp_calls_made += 1
+    try:
+        resp = requests.get(
+            FMP_URL,
+            params={"symbols": HEALTH_CANARY, "limit": 1, "apikey": key},
+            timeout=15,
+        )
+    except Exception as exc:  # noqa: BLE001
+        return {"name": "fmp", "status": "error", "detail": str(exc)[:80]}
+    if resp.status_code == 200:
+        data = resp.json() if resp.text else []
+        n = len(data) if isinstance(data, list) else 0
+        return {"name": "fmp", "status": "ok", "detail": f"{n} canary articles"}
+    return {"name": "fmp", "status": "error", "detail": f"HTTP {resp.status_code}: {resp.text[:60]}"}
+
+
+def check_source_health() -> list[dict[str, str]]:
+    """Probe each news source once with a canary ticker so the page can show
+    which sources are live, disabled (no key), or erroring (and why)."""
+    return [_probe_yahoo(), _probe_finnhub(), _probe_fmp()]
+
+
 def _fetch_from_fixture(symbol: str) -> list[NewsItem]:
     snapshot = json.loads(FIXTURE_PATH.read_text())
     raw = snapshot.get(symbol, [])
@@ -290,12 +356,12 @@ def fetch_news_for_symbols(
     *,
     since_hours: int = 48,
 ) -> tuple[dict[str, list[NewsItem]], dict[str, Any]]:
-    active = ["yahoo"]
-    if os.environ.get("FINNHUB_API_KEY"):
-        active.append("finnhub")
-    if os.environ.get("FMP_API_KEY"):
-        active.append("fmp")
-    sources_label = "+".join(active)
+    # Probe each source once up front so the page can report availability.
+    source_health = check_source_health()
+    for h in source_health:
+        print(f"  [news] source {h['name']}: {h['status']} ({h['detail']})")
+    active = [h["name"] for h in source_health if h["status"] == "ok"]
+    sources_label = "+".join(active) if active else "none"
 
     result: dict[str, list[NewsItem]] = {}
     total_articles = 0
@@ -306,6 +372,7 @@ def fetch_news_for_symbols(
     tickers_with_news = sum(1 for v in result.values() if v)
     stats: dict[str, Any] = {
         "news_source": sources_label,
+        "source_health": source_health,
         "total_articles": total_articles,
         "tickers_with_news": tickers_with_news,
         "tickers_without_news": len(result) - tickers_with_news,

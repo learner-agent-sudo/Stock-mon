@@ -42,6 +42,11 @@ h1 { font-size: 1.1rem; color: #ff9800; letter-spacing: .06em;
      text-transform: uppercase; margin-bottom: .15rem; }
 .meta { color: #6b7d8e; font-size: .78rem; }
 .stats { color: #6b7d8e; font-size: .72rem; margin-top: .15rem; }
+.sources { font-size: .72rem; margin-top: .2rem; color: #6b7d8e; }
+.src-tag { margin-right: .6rem; white-space: nowrap; }
+.src-ok  { color: #69f0ae; }
+.src-off { color: #6b7d8e; }
+.src-err { color: #ff6e6e; }
 nav { margin-top: .35rem; font-size: .78rem; }
 nav a { color: #ff9800; text-decoration: none; margin-right: .75rem;
         border-bottom: 1px dotted #ff980050; }
@@ -167,6 +172,27 @@ def _render_result(r: SignalResult) -> str:
     )
 
 
+def _render_source_health(health: list[dict]) -> str:
+    """Render a compact 'News sources:' line with a status per source.
+
+    ok = live (green), disabled = no API key (grey), error = reachable but
+    failing (red, with the reason on hover via title=).
+    """
+    if not health:
+        return ""
+    icon = {"ok": "✓", "disabled": "○", "error": "✗"}
+    cls = {"ok": "src-ok", "disabled": "src-off", "error": "src-err"}
+    tags: list[str] = []
+    for h in health:
+        status = h.get("status", "error")
+        detail = h.get("detail", "")
+        tags.append(
+            f'<span class="src-tag {cls.get(status, "src-err")}" title="{escape(detail)}">'
+            f'{icon.get(status, "?")} {escape(h.get("name", "?"))}</span>'
+        )
+    return f'<div class="sources">News sources: {"".join(tags)}</div>'
+
+
 def render(b: Briefing) -> str:
     generated_utc = datetime.fromisoformat(b.generated_at).astimezone(timezone.utc)
     est = timezone(timedelta(hours=-5))
@@ -196,6 +222,8 @@ def render(b: Briefing) -> str:
     tickers_with_news = stats.get("tickers_with_news", 0)
     news_line = f"{total_articles} articles from {tickers_with_news} tickers" if total_articles else "no articles found"
 
+    sources_html = _render_source_health(stats.get("source_health", []))
+
     return f"""<!doctype html>
 <html lang="en">
 <head>
@@ -216,6 +244,7 @@ def render(b: Briefing) -> str:
     {stats.get('signals_matched', 0)} signals &middot;
     {news_line}
   </div>
+  {sources_html}
   <nav>
     <a href="./manage.html">Manage tickers &rarr;</a>
     <a href="./demo.html">View demo</a>

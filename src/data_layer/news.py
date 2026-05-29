@@ -286,7 +286,9 @@ def _fetch_gdelt_news(symbol: str, query_hint: str | None, since_hours: int) -> 
     fit for non-US tickers that Finnhub/FMP don't cover. Queried by company
     name when available."""
     global _gdelt_calls_made
-    if requests is None or _gdelt_calls_made >= GDELT_CALL_CAP:
+    if requests is None or not _gdelt_enabled or _gdelt_calls_made >= GDELT_CALL_CAP:
+        return []
+    if not _gap_filler_budget_ok():
         return []
     _gdelt_calls_made += 1
     # Be polite to GDELT's rate limiter — it throttles bursty callers.
@@ -404,7 +406,7 @@ def _probe_gdelt() -> dict[str, str]:
         "mode": "ArtList", "format": "json", "maxrecords": 5, "timespan": "168h",
     }
     try:
-        resp = requests.get(GDELT_URL, params=params, timeout=20)
+        resp = requests.get(GDELT_URL, params=params, timeout=GDELT_TIMEOUT_SEC)
     except Exception as exc:  # noqa: BLE001
         return {"name": "gdelt", "status": "error", "detail": str(exc)[:80]}
     if resp.status_code != 200:

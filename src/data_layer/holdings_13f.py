@@ -37,7 +37,11 @@ SUBMISSIONS_URL = "https://data.sec.gov/submissions/CIK{cik:010d}.json"
 ARCHIVE_BASE = "https://www.sec.gov/Archives/edgar/data/{cik}/{acc}"
 OPENFIGI_URL = "https://api.openfigi.com/v3/mapping"
 # SEC asks for a descriptive UA with contact info or it returns 403.
-SEC_USER_AGENT = os.environ.get("SEC_USER_AGENT", "stock-mon/1.0 (contact: fredchan31@gmail.com)")
+# `os.environ.get(KEY, default)` returns "" when the env var is set to an
+# empty string (which is what GitHub Actions does for an unset secret), so
+# the default only kicks in for an actually-unset key — use `or` instead.
+SEC_USER_AGENT = (os.environ.get("SEC_USER_AGENT")
+                  or "stock-mon/1.0 (contact: fredchan31@gmail.com)")
 SEC_THROTTLE_SEC = 0.2  # SEC fair-access: stay well under 10 req/s
 
 

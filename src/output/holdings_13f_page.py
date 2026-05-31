@@ -184,13 +184,23 @@ def render(dataset: dict[str, Any]) -> str:
     stocks = dataset.get("stocks", [])
 
     rows = "".join(_render_row(s) for s in stocks) if stocks else ""
-    body = (f'<table><thead><tr>'
-            f'<th class="stock">Stock</th>'
-            f'<th class="sorted" onclick="sortBy(\'net_investors\', this)">Investors net</th>'
-            f'<th onclick="sortBy(\'net_value\', this)">$ net</th>'
-            f'<th onclick="sortBy(\'net_shares\', this)">Shares net</th>'
-            f'</tr></thead><tbody>{rows}</tbody></table>') if stocks else \
-           '<div class="empty">No holdings changes found. (If all investors show errors above, the data source may be unreachable from the runner.)</div>'
+    if stocks:
+        body = (f'<table><thead><tr>'
+                f'<th class="stock">Stock</th>'
+                f'<th class="sorted" onclick="sortBy(\'net_investors\', this)">Investors net</th>'
+                f'<th onclick="sortBy(\'net_value\', this)">$ net</th>'
+                f'<th onclick="sortBy(\'net_shares\', this)">Shares net</th>'
+                f'</tr></thead><tbody>{rows}</tbody></table>')
+    else:
+        # Surface the actual error reason — one investor's detail is usually
+        # representative when they all fail the same way (e.g. SEC HTTP 403).
+        errs = [i.get("detail") for i in dataset.get("investors", [])
+                if i.get("status") != "ok" and i.get("detail")]
+        reason = f'<div class="empty"><strong>Error:</strong> {escape(errs[0])}<br>' \
+                 f'<span class="issuer">All {len(dataset.get("investors", []))} investors failed with the same/similar error. ' \
+                 f'Hover any ✗ above for that investor’s specific message.</span></div>' if errs \
+                 else '<div class="empty">No holdings changes found.</div>'
+        body = reason
 
     return f"""<!doctype html>
 <html lang="en">

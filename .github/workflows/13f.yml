@@ -55,7 +55,10 @@ jobs:
           git config user.name  "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git pull --rebase origin "${GITHUB_REF_NAME}" || true
-          git add docs/ data/cusip_map.json
+          git add docs/
+          # cusip_map.json only exists once OpenFIGI has resolved at least
+          # one CUSIP; on a first/blocked run it's absent — that's fine.
+          if [ -f data/cusip_map.json ]; then git add data/cusip_map.json; fi
           if git diff --cached --quiet; then
             echo "No changes to commit."
           else

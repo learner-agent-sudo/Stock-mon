@@ -92,6 +92,10 @@ def _load_holdings_cache() -> dict:
 
 
 def _save_holdings_cache(cache: dict) -> None:
+    # Don't create an empty stub file; that would just clutter local checkouts
+    # after fixture/test runs.
+    if not cache:
+        return
     try:
         HOLDINGS_CACHE_PATH.write_text(json.dumps(cache, separators=(",", ":"), sort_keys=True))
     except Exception:  # noqa: BLE001

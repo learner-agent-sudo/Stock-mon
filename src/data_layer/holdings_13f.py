@@ -30,6 +30,7 @@ REPO_ROOT = Path(__file__).resolve().parent.parent.parent
 DATA_DIR = REPO_ROOT / "data"
 INVESTORS_PATH = DATA_DIR / "super_investors.json"
 CUSIP_CACHE_PATH = DATA_DIR / "cusip_map.json"
+HOLDINGS_CACHE_PATH = DATA_DIR / "13f_holdings_cache.json"
 FIXTURE_ENV = "STOCKMON_USE_FIXTURE"
 FIXTURE_DIR = REPO_ROOT / "tests" / "fixtures" / "edgar"
 
@@ -43,6 +44,10 @@ OPENFIGI_URL = "https://api.openfigi.com/v3/mapping"
 SEC_USER_AGENT = (os.environ.get("SEC_USER_AGENT")
                   or "stock-mon/1.0 (contact: fredchan31@gmail.com)")
 SEC_THROTTLE_SEC = 0.2  # SEC fair-access: stay well under 10 req/s
+# Hard wall-clock budget on the SEC fetch phase so big-fund downloads
+# (Citadel, Point72, etc. — 5-10 MB info tables) can never blow the job.
+SEC_PHASE_BUDGET_SEC = 720
+_sec_phase_deadline = 0.0  # set per run from build_dataset()
 
 
 @dataclass
@@ -65,11 +70,32 @@ class InvestorHoldings:
 def _sec_get(url: str) -> requests.Response | None:
     if requests is None:
         return None
+    # Once the SEC phase budget is exhausted, every further call returns
+    # immediately so the next investor's try/except marks it as skipped
+    # rather than spending more wall-clock on SEC.
+    if _sec_phase_deadline and time.monotonic() > _sec_phase_deadline:
+        return None
     time.sleep(SEC_THROTTLE_SEC)
     try:
         return requests.get(url, headers={"User-Agent": SEC_USER_AGENT}, timeout=20)
     except Exception:  # noqa: BLE001
         return None
+
+
+def _load_holdings_cache() -> dict:
+    if HOLDINGS_CACHE_PATH.exists():
+        try:
+            return json.loads(HOLDINGS_CACHE_PATH.read_text())
+        except Exception:  # noqa: BLE001
+            return {}
+    return {}
+
+
+def _save_holdings_cache(cache: dict) -> None:
+    try:
+        HOLDINGS_CACHE_PATH.write_text(json.dumps(cache, separators=(",", ":"), sort_keys=True))
+    except Exception:  # noqa: BLE001
+        pass
 
 
 def _strip_ns(tag: str) -> str:
@@ -170,8 +196,20 @@ def _parse_infotable(xml_text: str) -> dict[str, dict]:
     return holdings
 
 
-def fetch_investor_holdings(name: str, cik: int, manager: str = "") -> InvestorHoldings:
-    """Fetch and parse an investor's latest two 13F-HR filings."""
+def _parsed_from_cache_entry(entry: dict | None) -> tuple[str | None, str | None, dict]:
+    if not entry:
+        return None, None, {}
+    return entry.get("accession"), entry.get("report_date"), entry.get("holdings") or {}
+
+
+def fetch_investor_holdings(name: str, cik: int, manager: str = "",
+                            holdings_cache: dict | None = None) -> InvestorHoldings:
+    """Fetch and parse an investor's latest two 13F-HR filings.
+
+    Uses an accession-keyed cache so repeated weekly runs don't re-download
+    the same multi-MB info tables. The cache is mutated in-place when new
+    filings are fetched; caller persists it.
+    """
     inv = InvestorHoldings(name=name, cik=cik, manager=manager)
     if os.environ.get(FIXTURE_ENV) == "1":
         return _fixture_investor(name, cik, manager)
@@ -181,7 +219,6 @@ def fetch_investor_holdings(name: str, cik: int, manager: str = "") -> InvestorH
         inv.status = "error"
         inv.detail = str(exc)[:120]
         return inv
-    # Sanity-check the CIK actually belongs to who we think it does.
     if entity_name and not _name_matches(name, entity_name):
         inv.status = "mismatch"
         inv.detail = f"CIK resolves to '{entity_name}', expected '{name}'"
@@ -190,18 +227,44 @@ def fetch_investor_holdings(name: str, cik: int, manager: str = "") -> InvestorH
         inv.status = "error"
         inv.detail = "no 13F-HR filings found"
         return inv
-    parsed: list[dict] = []
-    for f in filings:
-        xml_text = _find_infotable_xml(cik, f["accession"])
-        parsed.append(_parse_infotable(xml_text) if xml_text else {})
-    inv.latest = parsed[0]
+
+    cache_for_cik = (holdings_cache or {}).get(str(cik), {})
+    cached_latest_acc, _, cached_latest_h = _parsed_from_cache_entry(cache_for_cik.get("latest"))
+    cached_prior_acc, _, cached_prior_h = _parsed_from_cache_entry(cache_for_cik.get("prior"))
+
+    def _get_holdings(filing: dict) -> dict:
+        """Return parsed holdings for a filing — from cache if accession matches,
+        else fetch the info table XML and parse it."""
+        acc = filing["accession"]
+        if acc == cached_latest_acc and cached_latest_h:
+            return cached_latest_h
+        if acc == cached_prior_acc and cached_prior_h:
+            return cached_prior_h
+        xml_text = _find_infotable_xml(cik, acc)
+        return _parse_infotable(xml_text) if xml_text else {}
+
+    inv.latest = _get_holdings(filings[0])
     inv.as_of = filings[0]["report_date"]
     if len(filings) > 1:
-        inv.prior = parsed[1]
+        inv.prior = _get_holdings(filings[1])
         inv.prior_as_of = filings[1]["report_date"]
     if not inv.latest:
         inv.status = "error"
         inv.detail = "could not parse latest info table"
+        return inv
+
+    # Update cache only after a successful parse so a partial run never
+    # corrupts the cache with empty entries.
+    if holdings_cache is not None:
+        holdings_cache[str(cik)] = {
+            "name": name, "manager": manager,
+            "latest": {"accession": filings[0]["accession"],
+                       "report_date": filings[0]["report_date"],
+                       "holdings": inv.latest},
+            "prior": ({"accession": filings[1]["accession"],
+                       "report_date": filings[1]["report_date"],
+                       "holdings": inv.prior} if len(filings) > 1 else None),
+        }
     return inv
 
 
@@ -355,15 +418,26 @@ def aggregate(investors: list[InvestorHoldings], cusip_to_ticker: dict[str, str]
 
 def build_dataset(watchlist_tickers: set[str] | None = None) -> dict[str, Any]:
     """Top-level: load investors, fetch holdings, map CUSIPs, aggregate."""
+    global _sec_phase_deadline
     watchlist = {t.upper() for t in (watchlist_tickers or set())}
     config = json.loads(INVESTORS_PATH.read_text())
+    holdings_cache = _load_holdings_cache()
+    print(f"  [13f] holdings cache: {len(holdings_cache)} investors pre-cached")
+    _sec_phase_deadline = time.monotonic() + SEC_PHASE_BUDGET_SEC
+
     investors: list[InvestorHoldings] = []
     for entry in config.get("investors", []):
-        inv = fetch_investor_holdings(entry["name"], int(entry["cik"]), entry.get("manager", ""))
+        inv = fetch_investor_holdings(entry["name"], int(entry["cik"]),
+                                      entry.get("manager", ""), holdings_cache)
         print(f"  [13f] {inv.name}: {inv.status}"
               + (f" ({inv.detail})" if inv.detail else "")
               + (f" — {len(inv.latest)} holdings, as of {inv.as_of}" if inv.status == "ok" else ""))
         investors.append(inv)
+        # Persist as we go so a mid-run timeout still saves progress.
+        _save_holdings_cache(holdings_cache)
+    if time.monotonic() > _sec_phase_deadline:
+        print(f"  [13f] SEC phase budget ({SEC_PHASE_BUDGET_SEC}s) exhausted — "
+              "remaining investors will show as errors.")
 
     all_cusips: set[str] = set()
     for inv in investors:

@@ -27,10 +27,17 @@ nav a { color: #ff9800; text-decoration: none; margin-right: .75rem; border-bott
 .toggle-btn { background: #0f1923; color: #8899aa; border: 1px solid #1e2d3d;
   border-radius: 3px; padding: .25rem .6rem; cursor: pointer; font: inherit; font-size: .74rem; }
 .toggle-btn.active { background: #0d1b2a; color: #42a5f5; border-color: #1565c0; }
-table { width: 100%; border-collapse: collapse; font-size: .8rem; }
-thead th { text-align: right; padding: .4rem .5rem; border-bottom: 1px solid #1e2d3d;
-  color: #6b7d8e; font-size: .7rem; text-transform: uppercase; letter-spacing: .05em;
-  cursor: pointer; user-select: none; white-space: nowrap; }
+table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: .8rem; }
+thead th { text-align: right; padding: .5rem .5rem; background: #0a0e17;
+  border-bottom: 1px solid #1e2d3d; color: #6b7d8e; font-size: .7rem;
+  text-transform: uppercase; letter-spacing: .05em; cursor: pointer;
+  user-select: none; white-space: nowrap;
+  /* Stick to the top of the viewport so the column meaning stays visible
+     as the list scrolls. */
+  position: sticky; top: 0; z-index: 10;
+  /* The 1px border doesn't stick with the cell, so simulate it with a
+     box-shadow that always sits at the bottom of the header. */
+  box-shadow: inset 0 -1px 0 #1e2d3d; }
 thead th.stock { text-align: left; }
 thead th.sorted::after { content: " \\25BC"; color: #ff9800; }
 tbody td { padding: .4rem .5rem; border-bottom: 1px solid #152233; text-align: right; vertical-align: top; }

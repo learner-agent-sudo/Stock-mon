@@ -3,9 +3,13 @@ name: Stock Briefing
 on:
   workflow_dispatch:
   schedule:
-    # 11:00 UTC daily = 07:00 EDT (summer) / 06:00 EST (winter)
-    # GitHub cron is UTC-only, so this shifts by 1 hour with DST.
-    - cron: "0 11 * * *"
+    # GitHub Actions cron is best-effort and frequently delayed 30-90 min
+    # (sometimes dropped). Multiple windows + a self-check that exits fast
+    # when today's briefing already exists gives self-healing reliability
+    # without ever doing duplicate work.
+    - cron: "0 11 * * *"   # primary: 07:00 EDT / 06:00 EST
+    - cron: "0 14 * * *"   # backstop ~3h later
+    - cron: "0 17 * * *"   # backstop ~6h later
 
 # Allow committing the history archive AND deploying to Pages directly.
 permissions:
@@ -37,21 +41,37 @@ jobs:
           python-version: "3.12"
           cache: pip
 
+      - name: Check if today's briefing already exists
+        id: freshness
+        run: |
+          today=$(date -u +%Y-%m-%d)
+          if ls docs/history/${today}-*.json >/dev/null 2>&1; then
+            echo "Today's briefing ($today) already generated — skipping build."
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "No briefing yet for $today — proceeding."
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Install dependencies
+        if: steps.freshness.outputs.skip != 'true'
         run: pip install --quiet yfinance pandas python-dotenv requests
 
       - name: Initialize DB and load seed
+        if: steps.freshness.outputs.skip != 'true'
         run: |
           python scripts/init_db.py
           python scripts/load_seed.py
 
       - name: Build briefing
+        if: steps.freshness.outputs.skip != 'true'
         env:
           FINNHUB_API_KEY: ${{ secrets.FINNHUB_API_KEY }}
           FMP_API_KEY: ${{ secrets.FMP_API_KEY }}
         run: python scripts/run_briefing_to_html.py
 
       - name: Commit history archive back to the repo
+        if: steps.freshness.outputs.skip != 'true'
         run: |
           git config user.name  "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
@@ -69,13 +89,16 @@ jobs:
       # depend on the bot's commit triggering a separate Pages rebuild
       # (which GITHUB_TOKEN pushes do not do).
       - name: Configure Pages
+        if: steps.freshness.outputs.skip != 'true'
         uses: actions/configure-pages@v5
 
       - name: Upload Pages artifact
+        if: steps.freshness.outputs.skip != 'true'
         uses: actions/upload-pages-artifact@v3
         with:
           path: docs
 
       - name: Deploy to GitHub Pages
         id: deployment
+        if: steps.freshness.outputs.skip != 'true'
         uses: actions/deploy-pages@v4

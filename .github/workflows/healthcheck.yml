@@ -1,0 +1,70 @@
+name: Health Watchdog
+
+# Runs after all backstop briefing windows. If something's broken
+# (no briefing today, all news sources down, 13F stale, etc.), opens or
+# updates a single sticky GitHub issue — GitHub then emails the repo
+# owner automatically. If everything's healthy and a previous alert
+# issue is open, it closes it.
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 19 * * *"   # 19:00 UTC = after all 3 briefing windows
+
+permissions:
+  contents: read
+  issues: write
+
+concurrency:
+  group: "stock-healthcheck"
+  cancel-in-progress: false
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Run health check
+        id: check
+        # Don't fail the job on a problem; the next steps need to run to
+        # manage the alert issue. We use `outcome` to branch instead.
+        continue-on-error: true
+        run: python scripts/check_health.py
+
+      - name: Open or update alert issue
+        if: steps.check.outcome == 'failure'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          BODY: ${{ steps.check.outputs.body }}
+        run: |
+          title="Stock-mon health alert"
+          # Find an existing open alert (label-free search by exact title).
+          existing=$(gh issue list --state open --search "in:title \"$title\"" --json number --jq '.[0].number // empty')
+          if [ -n "$existing" ]; then
+            echo "Updating existing issue #$existing"
+            gh issue comment "$existing" --body "$BODY"
+          else
+            echo "Opening new alert issue"
+            gh issue create --title "$title" --body "$BODY"
+          fi
+
+      - name: Resolve alert if everything is healthy
+        if: steps.check.outcome == 'success'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          title="Stock-mon health alert"
+          existing=$(gh issue list --state open --search "in:title \"$title\"" --json number --jq '.[0].number // empty')
+          if [ -n "$existing" ]; then
+            gh issue close "$existing" --comment "Resolved at $(date -u +'%Y-%m-%d %H:%M UTC'). Latest run reports healthy."
+          else
+            echo "All healthy and no open alert — nothing to do."
+          fi

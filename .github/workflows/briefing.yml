@@ -102,3 +102,10 @@ jobs:
         id: deployment
         if: steps.freshness.outputs.skip != 'true'
         uses: actions/deploy-pages@v4
+
+      # Inline content check — fails the job loudly (and triggers the
+      # default GitHub workflow-failure email) if the build "succeeded"
+      # but produced degraded content (no news sources, too few prices).
+      - name: Verify output
+        if: steps.freshness.outputs.skip != 'true'
+        run: python scripts/check_health.py --briefing

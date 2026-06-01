@@ -77,3 +77,8 @@ jobs:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
+
+      # Inline content check — fails loudly if the run wrote a 13F page
+      # with zero healthy investors (e.g. SEC blocked all fetches).
+      - name: Verify output
+        run: python scripts/check_health.py --13f

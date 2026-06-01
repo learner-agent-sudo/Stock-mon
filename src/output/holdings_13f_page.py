@@ -74,10 +74,14 @@ function fmtSortState(th){
   document.querySelectorAll('thead th').forEach(function(h){h.classList.remove('sorted');});
   th.classList.add('sorted');
 }
-function sortBy(key, th){
+function sortBy(key, th, mode){
   var tbody = document.querySelector('tbody');
   var rows = Array.prototype.slice.call(tbody.querySelectorAll('tr.stock-row'));
-  rows.sort(function(a,b){ return parseFloat(b.dataset[key]) - parseFloat(a.dataset[key]); });
+  if (mode === 'string') {
+    rows.sort(function(a,b){ return a.dataset[key].localeCompare(b.dataset[key]); });
+  } else {
+    rows.sort(function(a,b){ return parseFloat(b.dataset[key]) - parseFloat(a.dataset[key]); });
+  }
   rows.forEach(function(r){
     var d = document.getElementById('d-' + r.dataset.cusip);
     tbody.appendChild(r); if (d) tbody.appendChild(d);
@@ -165,8 +169,11 @@ def _render_row(stock: dict) -> str:
     wl = '<span class="wl-dot" title="In your watchlist">◆</span>' if stock.get("in_watchlist") else ""
     ni = stock["net_investors"]
     ni_txt = f"+{ni}" if ni > 0 else str(ni)
+    # Sort key for the Stock column: ticker if mapped, else issuer name.
+    stock_key = (ticker or stock.get("issuer") or "").upper()
     row = (
         f'<tr class="stock-row" data-cusip="{cusip}" '
+        f'data-stock="{escape(stock_key)}" '
         f'data-net_investors="{ni}" data-net_value="{stock["net_value"]}" '
         f'data-net_shares="{stock["net_shares"]}" data-watchlist="{1 if stock.get("in_watchlist") else 0}" '
         f'onclick="expand(\'{cusip}\')">'
@@ -193,7 +200,7 @@ def render(dataset: dict[str, Any]) -> str:
     rows = "".join(_render_row(s) for s in stocks) if stocks else ""
     if stocks:
         body = (f'<table><thead><tr>'
-                f'<th class="stock">Stock</th>'
+                f'<th class="stock" onclick="sortBy(\'stock\', this, \'string\')">Stock</th>'
                 f'<th class="sorted" onclick="sortBy(\'net_investors\', this)">Investors net</th>'
                 f'<th onclick="sortBy(\'net_value\', this)">$ net</th>'
                 f'<th onclick="sortBy(\'net_shares\', this)">Shares net</th>'

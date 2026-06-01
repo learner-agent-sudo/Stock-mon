@@ -1,5 +1,5 @@
 {
-  "_comment": "Curated 13F filers for net-flow tracking. CIK is the authoritative key (verified via SEC EDGAR / 13f.info). 'name' is for display and a runtime sanity-check against the entity name SEC returns. Add/remove freely; keep CIK correct.",
+  "_comment": "Curated 13F filers for net-flow tracking. CIK is the authoritative key (verified via SEC EDGAR / 13f.info). 'name' is the firm (used for display fallback and a runtime sanity-check against SEC's entity name); 'manager' is the famous person whose moves we care about. Add/remove freely; keep CIK correct.",
   "investors": [
     { "name": "Berkshire Hathaway",        "manager": "Warren Buffett",         "cik": 1067983 },
     { "name": "Scion Asset Management",     "manager": "Michael Burry",          "cik": 1649339 },
@@ -10,6 +10,14 @@
     { "name": "Akre Capital Management",    "manager": "Chuck Akre",             "cik": 1112520 },
     { "name": "Third Point",                "manager": "Daniel Loeb",            "cik": 1040273 },
     { "name": "Duquesne Family Office",     "manager": "Stanley Druckenmiller",  "cik": 1536411 },
-    { "name": "Tiger Global Management",    "manager": "Chase Coleman",          "cik": 1167483 }
+    { "name": "Tiger Global Management",    "manager": "Chase Coleman",          "cik": 1167483 },
+    { "name": "Baupost Group",              "manager": "Seth Klarman",           "cik": 1061768 },
+    { "name": "Greenlight Capital",         "manager": "David Einhorn",          "cik": 1079114 },
+    { "name": "Oaktree Capital Management", "manager": "Howard Marks",           "cik": 949509  },
+    { "name": "Gotham Asset Management",    "manager": "Joel Greenblatt",        "cik": 1510387 },
+    { "name": "Soros Fund Management",      "manager": "Soros Fund (Robert Soros)", "cik": 1029160 },
+    { "name": "Himalaya Capital Management","manager": "Li Lu",                  "cik": 1709323 },
+    { "name": "Point72 Asset Management",   "manager": "Steve Cohen",            "cik": 1603466 },
+    { "name": "Citadel Advisors",           "manager": "Ken Griffin",            "cik": 1423053 }
   ]
 }

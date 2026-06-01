@@ -234,7 +234,14 @@ def _save_cusip_cache(cache: dict[str, str]) -> None:
 
 def resolve_cusip_tickers(cusips: set[str]) -> dict[str, str]:
     """Map CUSIP -> ticker via OpenFIGI, caching results. Unmapped CUSIPs are
-    cached as "" so we don't re-query them every run."""
+    cached as "" so we don't re-query them every run.
+
+    Hard wall-clock budget so OpenFIGI can never blow the job timeout. Without
+    an API key the limit is 25 req/min in batches of 10 — adding a large fund
+    like Citadel can introduce thousands of new CUSIPs and consume 20+ minutes
+    on a cold cache. When the budget is exhausted we save the partial cache
+    and continue; the page falls back to issuer names for unmapped CUSIPs.
+    """
     cache = _load_cusip_cache()
     todo = sorted(c for c in cusips if c not in cache)
     if not todo or requests is None or os.environ.get(FIXTURE_ENV) == "1":
@@ -244,7 +251,15 @@ def resolve_cusip_tickers(cusips: set[str]) -> dict[str, str]:
     batch = 100 if key else 10  # OpenFIGI: 100 jobs/req with key, 10 without
     if key:
         headers["X-OPENFIGI-APIKEY"] = key
+    budget_sec = 600 if key else 120  # plenty when fast; firm cap when slow
+    deadline = time.monotonic() + budget_sec
+    resolved = skipped = 0
     for i in range(0, len(todo), batch):
+        if time.monotonic() > deadline:
+            skipped = len(todo) - i
+            print(f"  [13f] OpenFIGI budget ({budget_sec}s) exhausted — "
+                  f"{skipped} of {len(todo)} CUSIPs left unmapped this run.")
+            break
         chunk = todo[i:i + batch]
         body = [{"idType": "ID_CUSIP", "idValue": c} for c in chunk]
         try:
@@ -262,7 +277,10 @@ def resolve_cusip_tickers(cusips: set[str]) -> dict[str, str]:
                     ticker = t
                     break
             cache[c] = ticker
+            resolved += 1
         time.sleep(2.6 if not key else 0.3)  # respect 25 req/min without key
+    print(f"  [13f] OpenFIGI: resolved {resolved} new CUSIP(s); "
+          f"{len(cache)} total cached.")
     _save_cusip_cache(cache)
     return cache
 

@@ -24,8 +24,10 @@ HISTORY = REPO_ROOT / "docs" / "history"
 
 # Tunables — easy to adjust later if you want stricter/looser alerts.
 MIN_PRICES_OK = 100              # sane lower bound for the daily run
+MIN_PRICE_SUCCESS_PCT = 70.0     # alert if >30% of tickers fail to price
 TF13F_FRESHNESS_DAYS = 9         # 13F runs weekly; >9d means a missed run
 MIN_HEALTHY_NEWS_SOURCES = 1     # at least one news source must work
+REQUIRED_NEWS_SOURCE = "yahoo"   # primary source — others are nice-to-have
 
 
 def _latest_briefing_json() -> Path | None:
@@ -65,13 +67,27 @@ def check_briefing() -> list[str]:
     except (OSError, json.JSONDecodeError) as exc:
         return problems + [f"**Briefing**: cannot read `{latest.name}` ({exc})."]
 
+    # The deployed HTML should exist too — otherwise the page is broken
+    # even if the JSON archive looks fine.
+    if not (REPO_ROOT / "docs" / "index.html").exists():
+        problems.append("**Deployed page missing** — `docs/index.html` is absent.")
+
     stats = payload.get("stats", {})
     prices_ok = stats.get("prices_ok", 0)
+    checked = stats.get("stocks_checked", 0)
     if prices_ok < MIN_PRICES_OK:
         problems.append(
             f"**Prices look broken** — only {prices_ok} tickers returned valid prices "
             f"(threshold {MIN_PRICES_OK}). yfinance or upstream may be down."
         )
+    if checked > 0:
+        pct = prices_ok / checked * 100.0
+        if pct < MIN_PRICE_SUCCESS_PCT:
+            problems.append(
+                f"**Price success rate dropped** — {prices_ok}/{checked} "
+                f"({pct:.0f}%) — threshold {MIN_PRICE_SUCCESS_PCT:.0f}%. "
+                f"Partial yfinance outage or many delisted tickers."
+            )
 
     sources = stats.get("source_health") or []
     if sources:
@@ -80,6 +96,20 @@ def check_briefing() -> list[str]:
         if len(healthy) < MIN_HEALTHY_NEWS_SOURCES:
             details = "; ".join(f"{s.get('name')}: {s.get('detail','?')}" for s in broken) or "all sources disabled"
             problems.append(f"**No news sources are healthy** — {details}.")
+        # Yahoo is the primary source (only one with international coverage);
+        # losing it specifically matters more than any single other source.
+        yahoo = next((s for s in sources if s.get("name") == REQUIRED_NEWS_SOURCE), None)
+        if yahoo is not None and yahoo.get("status") != "ok":
+            problems.append(
+                f"**Primary news source down** — yahoo: {yahoo.get('detail','?')}. "
+                f"International tickers will have no news coverage."
+            )
+
+    if stats.get("total_articles", 0) == 0 and stats.get("tickers_with_news", 0) == 0:
+        problems.append(
+            "**No news articles fetched at all** — even though sources report healthy, "
+            "nothing was returned. Check for an upstream change."
+        )
     return problems
 
 

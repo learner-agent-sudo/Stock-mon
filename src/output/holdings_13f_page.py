@@ -18,8 +18,11 @@ body { font-family: "SF Mono","Cascadia Mono","Fira Code","Consolas",monospace;
 header { margin-bottom: 1rem; border-bottom: 1px solid #1e2d3d; padding-bottom: .75rem; }
 h1 { font-size: 1.1rem; color: #ff9800; letter-spacing: .06em; text-transform: uppercase; }
 .meta { color: #6b7d8e; font-size: .78rem; margin-top: .15rem; }
-.sources { font-size: .72rem; margin-top: .2rem; color: #6b7d8e; }
-.src-tag { margin-right: .6rem; white-space: nowrap; }
+/* Investor health line — explicitly wrap so 18+ tags never force horizontal scroll. */
+.sources { display: flex; flex-wrap: wrap; gap: .25rem .7rem; align-items: baseline;
+  font-size: .72rem; margin-top: .3rem; color: #6b7d8e; }
+.sources .src-label { font-weight: 600; }
+.src-tag { white-space: nowrap; }
 .src-ok { color: #69f0ae; } .src-warn { color: #ffb74d; } .src-err { color: #ff6e6e; }
 nav { margin-top: .35rem; font-size: .78rem; }
 nav a { color: #ff9800; text-decoration: none; margin-right: .75rem; border-bottom: 1px dotted #ff980050; }
@@ -27,19 +30,29 @@ nav a { color: #ff9800; text-decoration: none; margin-right: .75rem; border-bott
 .toggle-btn { background: #0f1923; color: #8899aa; border: 1px solid #1e2d3d;
   border-radius: 3px; padding: .25rem .6rem; cursor: pointer; font: inherit; font-size: .74rem; }
 .toggle-btn.active { background: #0d1b2a; color: #42a5f5; border-color: #1565c0; }
+/* Each table lives in its own section with a colored, collapsible header. */
+.section { background: #0f1923; border: 1px solid #1e2d3d; border-radius: 4px;
+  margin: .6rem 0; overflow: hidden; }
+.section h2 { padding: .5rem .65rem; font-size: .8rem; font-weight: 600;
+  letter-spacing: .04em; text-transform: uppercase; cursor: pointer; user-select: none;
+  display: flex; justify-content: space-between; align-items: center; }
+.section.inflow  h2 { background: #0a1a0f; color: #66bb6a; }
+.section.outflow h2 { background: #1a0a0a; color: #ef5350; }
+.section h2 .caret { font-size: .7rem; transition: transform .15s; }
+.section.collapsed h2 .caret { transform: rotate(-90deg); }
+.section.collapsed table { display: none; }
 table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: .8rem; }
-thead th { text-align: right; padding: .5rem .5rem; background: #0a0e17;
+thead th { text-align: right; padding: .5rem .5rem; background: #0f1923;
   border-bottom: 1px solid #1e2d3d; color: #6b7d8e; font-size: .7rem;
   text-transform: uppercase; letter-spacing: .05em; cursor: pointer;
   user-select: none; white-space: nowrap;
-  /* Stick to the top of the viewport so the column meaning stays visible
-     as the list scrolls. */
   position: sticky; top: 0; z-index: 10;
-  /* The 1px border doesn't stick with the cell, so simulate it with a
-     box-shadow that always sits at the bottom of the header. */
   box-shadow: inset 0 -1px 0 #1e2d3d; }
 thead th.stock { text-align: left; }
 thead th.sorted::after { content: " \\25BC"; color: #ff9800; }
+/* Short labels on narrow screens — the full label only appears via title=. */
+thead th .full  { display: inline; }
+thead th .short { display: none; }
 tbody td { padding: .4rem .5rem; border-bottom: 1px solid #152233; text-align: right; vertical-align: top; }
 tbody td.stock { text-align: left; }
 tr.stock-row { cursor: pointer; }
@@ -66,16 +79,24 @@ footer { color: #3a4a5a; font-size: .68rem; margin-top: 1rem; text-align: center
   body { padding: .5rem; } table { font-size: .72rem; }
   .issuer { display: block; } thead th { padding: .35rem .3rem; font-size: .62rem; }
   tbody td { padding: .35rem .3rem; }
+  thead th .full  { display: none; }
+  thead th .short { display: inline; }
+  .section h2 { padding: .4rem .5rem; font-size: .72rem; }
+  .controls { font-size: .7rem; }
 }
 """
 
 JS = """
 function fmtSortState(th){
-  document.querySelectorAll('thead th').forEach(function(h){h.classList.remove('sorted');});
+  // Only un-mark headers within the same table — the other table's
+  // sort indicator should stay put.
+  var table = th.closest('table');
+  table.querySelectorAll('thead th').forEach(function(h){h.classList.remove('sorted');});
   th.classList.add('sorted');
 }
 function sortBy(key, th, mode){
-  var tbody = document.querySelector('tbody');
+  var table = th.closest('table');
+  var tbody = table.querySelector('tbody');
   var rows = Array.prototype.slice.call(tbody.querySelectorAll('tr.stock-row'));
   if (mode === 'string') {
     rows.sort(function(a,b){ return a.dataset[key].localeCompare(b.dataset[key]); });
@@ -87,6 +108,9 @@ function sortBy(key, th, mode){
     tbody.appendChild(r); if (d) tbody.appendChild(d);
   });
   fmtSortState(th);
+}
+function toggleSection(h2){
+  h2.parentElement.classList.toggle('collapsed');
 }
 function toggleWatchlist(btn){
   var on = btn.classList.toggle('active');
@@ -138,7 +162,8 @@ def _render_source_health(dataset: dict) -> str:
         title = inv.get("detail") or (f"{inv.get('name','')} — {inv.get('holdings',0)} holdings, as of {inv.get('as_of')}")
         tags.append(f'<span class="src-tag {cls}" title="{escape(str(title))}">'
                     f'{icon} {escape(label)}</span>')
-    return f'<div class="sources">Investors: {"".join(tags)}</div>' if tags else ""
+    return (f'<div class="sources"><span class="src-label">Investors:</span>'
+            f'{"".join(tags)}</div>') if tags else ""
 
 
 def _render_detail(stock: dict) -> str:
@@ -188,6 +213,43 @@ def _render_row(stock: dict) -> str:
     return row
 
 
+def _render_section(stocks: list[dict], *, css_class: str, title: str,
+                    initial_sort_key: str) -> str:
+    """One table per +/- section. Each table owns its own sticky header
+    and its own column-sort state, so sorting Inflow doesn't affect Outflow."""
+    rows = "".join(_render_row(s) for s in stocks)
+    sort_classes = {
+        "net_investors": "sorted",
+        "net_value": "",
+        "net_shares": "",
+        "stock": "",
+    }
+    sort_classes[initial_sort_key] = "sorted"
+    return (
+        f'<section class="section {css_class}">'
+        f'<h2 onclick="toggleSection(this)">'
+        f'<span>{escape(title)} <span class="issuer">({len(stocks)} stocks)</span></span>'
+        f'<span class="caret">&#9660;</span></h2>'
+        f'<table><thead><tr>'
+        f'<th class="stock {sort_classes["stock"]}" onclick="sortBy(\'stock\', this, \'string\')">'
+        f'<span class="full">Stock</span><span class="short">Stock</span></th>'
+        f'<th class="{sort_classes["net_investors"]}" '
+        f'title="Buyers minus sellers among the tracked investors" '
+        f'onclick="sortBy(\'net_investors\', this)">'
+        f'<span class="full">Investors net</span><span class="short">Inv &plusmn;</span></th>'
+        f'<th class="{sort_classes["net_value"]}" '
+        f'title="Net dollar value added minus removed across investors" '
+        f'onclick="sortBy(\'net_value\', this)">'
+        f'<span class="full">$ net</span><span class="short">$ &plusmn;</span></th>'
+        f'<th class="{sort_classes["net_shares"]}" '
+        f'title="Net share count change across investors" '
+        f'onclick="sortBy(\'net_shares\', this)">'
+        f'<span class="full">Shares net</span><span class="short">Sh &plusmn;</span></th>'
+        f'</tr></thead><tbody>{rows}</tbody></table>'
+        f'</section>'
+    )
+
+
 def render(dataset: dict[str, Any]) -> str:
     generated = dataset.get("generated_at", "")
     try:
@@ -197,24 +259,31 @@ def render(dataset: dict[str, Any]) -> str:
     as_of = dataset.get("as_of") or "?"
     stocks = dataset.get("stocks", [])
 
-    rows = "".join(_render_row(s) for s in stocks) if stocks else ""
     if stocks:
-        body = (f'<table><thead><tr>'
-                f'<th class="stock" onclick="sortBy(\'stock\', this, \'string\')">Stock</th>'
-                f'<th class="sorted" onclick="sortBy(\'net_investors\', this)">Investors net</th>'
-                f'<th onclick="sortBy(\'net_value\', this)">$ net</th>'
-                f'<th onclick="sortBy(\'net_shares\', this)">Shares net</th>'
-                f'</tr></thead><tbody>{rows}</tbody></table>')
+        inflow = [s for s in stocks if s["net_investors"] >= 0]
+        outflow = [s for s in stocks if s["net_investors"] < 0]
+        # Each section pre-sorted by net_investors so they look right on load
+        # even before any column header is tapped.
+        inflow.sort(key=lambda s: (s["net_investors"], s["net_value"]), reverse=True)
+        outflow.sort(key=lambda s: (s["net_investors"], s["net_value"]))
+        body = (
+            _render_section(inflow, css_class="inflow",
+                            title="Net inflow (buyers ≥ sellers)",
+                            initial_sort_key="net_investors") +
+            _render_section(outflow, css_class="outflow",
+                            title="Net outflow (sellers > buyers)",
+                            initial_sort_key="net_investors")
+        )
     else:
         # Surface the actual error reason — one investor's detail is usually
         # representative when they all fail the same way (e.g. SEC HTTP 403).
         errs = [i.get("detail") for i in dataset.get("investors", [])
                 if i.get("status") != "ok" and i.get("detail")]
-        reason = f'<div class="empty"><strong>Error:</strong> {escape(errs[0])}<br>' \
-                 f'<span class="issuer">All {len(dataset.get("investors", []))} investors failed with the same/similar error. ' \
-                 f'Hover any ✗ above for that investor’s specific message.</span></div>' if errs \
-                 else '<div class="empty">No holdings changes found.</div>'
-        body = reason
+        body = (
+            f'<div class="empty"><strong>Error:</strong> {escape(errs[0])}<br>'
+            f'<span class="issuer">All {len(dataset.get("investors", []))} investors failed with the same/similar error. '
+            f'Hover any ✗ above for that investor’s specific message.</span></div>'
+        ) if errs else '<div class="empty">No holdings changes found.</div>'
 
     return f"""<!doctype html>
 <html lang="en">

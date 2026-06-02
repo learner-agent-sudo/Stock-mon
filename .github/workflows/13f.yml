@@ -83,3 +83,28 @@ jobs:
       # with zero healthy investors (e.g. SEC blocked all fetches).
       - name: Verify output
         run: python scripts/check_health.py --13f
+
+      # External uptime monitoring via healthchecks.io. The check expects
+      # a weekly ping; if the run fails we hit /fail so healthchecks.io
+      # surfaces it immediately rather than waiting for the timeout.
+      - name: Ping healthchecks.io (success)
+        if: success()
+        env:
+          HC_URL: ${{ secrets.HEALTHCHECKS_13F_URL }}
+        run: |
+          if [ -n "$HC_URL" ]; then
+            curl -fsS -m 10 --retry 3 "${HC_URL%/}" >/dev/null \
+              && echo "Pinged healthchecks.io: success" \
+              || echo "healthchecks.io ping failed (non-fatal)"
+          else
+            echo "HEALTHCHECKS_13F_URL secret not set — skipping ping."
+          fi
+
+      - name: Ping healthchecks.io (failure)
+        if: failure()
+        env:
+          HC_URL: ${{ secrets.HEALTHCHECKS_13F_URL }}
+        run: |
+          if [ -n "$HC_URL" ]; then
+            curl -fsS -m 10 --retry 3 "${HC_URL%/}/fail" >/dev/null || true
+          fi

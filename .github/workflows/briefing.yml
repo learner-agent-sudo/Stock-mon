@@ -109,3 +109,30 @@ jobs:
       - name: Verify output
         if: steps.freshness.outputs.skip != 'true'
         run: python scripts/check_health.py --briefing
+
+      # External uptime monitoring via healthchecks.io. The check expects
+      # a daily ping; if any of the 3 cron windows succeeds (or skips
+      # because today's briefing already exists), we ping. If the job
+      # fails, we ping /fail so healthchecks.io surfaces it immediately
+      # instead of waiting for the dead-man's-switch timeout.
+      - name: Ping healthchecks.io (success or skipped)
+        if: success()
+        env:
+          HC_URL: ${{ secrets.HEALTHCHECKS_BRIEFING_URL }}
+        run: |
+          if [ -n "$HC_URL" ]; then
+            curl -fsS -m 10 --retry 3 "${HC_URL%/}" >/dev/null \
+              && echo "Pinged healthchecks.io: success" \
+              || echo "healthchecks.io ping failed (non-fatal)"
+          else
+            echo "HEALTHCHECKS_BRIEFING_URL secret not set — skipping ping."
+          fi
+
+      - name: Ping healthchecks.io (failure)
+        if: failure()
+        env:
+          HC_URL: ${{ secrets.HEALTHCHECKS_BRIEFING_URL }}
+        run: |
+          if [ -n "$HC_URL" ]; then
+            curl -fsS -m 10 --retry 3 "${HC_URL%/}/fail" >/dev/null || true
+          fi

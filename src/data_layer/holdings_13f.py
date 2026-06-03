@@ -465,19 +465,39 @@ def build_dataset(watchlist_tickers: set[str] | None = None,
     stocks = aggregate(investors, cusip_to_ticker, watchlist, cats)
 
     # Attach brief company info + price for each mapped ticker (build-time
-    # snapshot; the page is static). Holdings/watchlist tickers are fetched
-    # first so the ones you're most likely to click are always populated.
-    tickers = sorted({s["ticker"].upper() for s in stocks if s.get("ticker")})
-    if tickers and os.environ.get(FIXTURE_ENV) != "1":
+    # snapshot; the page is static). Fetching for ALL ~7000 unique stocks is
+    # impractical — limit to the ones you're most likely to click:
+    #   1) every watchlist/holdings ticker (always relevant)
+    #   2) top-N by absolute net dollar value (the most-moved names)
+    # This keeps the fetch list under ~400 even with a huge investor universe.
+    INFO_TOP_N = 200
+    pri_tickers = [s["ticker"].upper() for s in stocks
+                   if s.get("ticker") and s["category"]]
+    by_impact = sorted(
+        (s for s in stocks if s.get("ticker")),
+        key=lambda s: abs(s.get("net_value", 0)), reverse=True,
+    )
+    top_tickers = [s["ticker"].upper() for s in by_impact[:INFO_TOP_N]]
+    info_tickers = list(dict.fromkeys(pri_tickers + top_tickers))  # dedupe, preserve order
+
+    if info_tickers and os.environ.get(FIXTURE_ENV) != "1":
+        print(f"  [13f] ticker_info: targeting {len(info_tickers)} tickers "
+              f"({len(pri_tickers)} tracked + top {INFO_TOP_N} by $ impact)")
         try:
             from . import ticker_info
-            info_map = ticker_info.fetch_ticker_info(tickers, priority=watchlist)
+            info_map = ticker_info.fetch_ticker_info(info_tickers, priority=watchlist)
+            attached = 0
             for s in stocks:
                 t = (s.get("ticker") or "").upper()
                 if t in info_map:
                     s["info"] = info_map[t]
+                    attached += 1
+            print(f"  [13f] ticker_info: attached info to {attached} stocks")
         except Exception as exc:  # noqa: BLE001 — info is a nice-to-have
-            print(f"  [13f] ticker info fetch skipped: {exc}")
+            import traceback
+            print(f"  [13f] ticker info fetch CRASHED: {type(exc).__name__}: {exc}")
+            print("  [13f] traceback:")
+            traceback.print_exc()
 
     ok = [i for i in investors if i.status == "ok"]
     latest_dates = [i.as_of for i in ok if i.as_of]

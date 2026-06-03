@@ -24,7 +24,12 @@ except ImportError:  # pragma: no cover
 REPO_ROOT = Path(__file__).resolve().parent.parent.parent
 CACHE_PATH = REPO_ROOT / "data" / "ticker_info_cache.json"
 CACHE_TTL_SEC = 5 * 24 * 3600        # refresh roughly weekly
-DEFAULT_BUDGET_SEC = 240             # cap the whole info-fetch phase
+# Budget for the whole info-fetch phase. The job cap is 20 min and the SEC
+# + OpenFIGI phases are cache-fast after their first run, so we can give the
+# ticker-info phase a generous window. At ~1s/call this covers ~550 tickers —
+# comfortably more than the ~400 we target (watchlist + top 200 by impact),
+# so on a warm cache the full scoped set resolves in a single run.
+DEFAULT_BUDGET_SEC = 600
 SUMMARY_MAX = 320                    # trim long business summaries
 
 

@@ -36,7 +36,7 @@ jobs:
           cache: pip
 
       - name: Install dependencies
-        run: pip install --quiet requests
+        run: pip install --quiet requests yfinance pandas
 
       - name: Initialize DB and load seed
         run: |
@@ -60,6 +60,7 @@ jobs:
           # on a first/blocked run they may be absent.
           if [ -f data/cusip_map.json ]; then git add data/cusip_map.json; fi
           if [ -f data/13f_holdings_cache.json ]; then git add data/13f_holdings_cache.json; fi
+          if [ -f data/ticker_info_cache.json ]; then git add data/ticker_info_cache.json; fi
           if git diff --cached --quiet; then
             echo "No changes to commit."
           else

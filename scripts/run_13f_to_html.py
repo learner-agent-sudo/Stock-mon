@@ -27,11 +27,15 @@ def main() -> None:
     db.seed_default_settings()
 
     try:
-        watchlist = {s["symbol"].upper() for s in db.get_active_stocks()}
+        rows = db.get_active_stocks()
+        watchlist = {s["symbol"].upper() for s in rows}
+        # TICKER -> 'HOLDING' | 'WATCHLIST' so the page can mark each stock.
+        categories = {s["symbol"].upper(): s["category"] for s in rows}
     except Exception:  # noqa: BLE001 — page is still useful without watchlist matching
         watchlist = set()
+        categories = {}
 
-    dataset = holdings_13f.build_dataset(watchlist)
+    dataset = holdings_13f.build_dataset(watchlist, categories)
 
     DOCS_DIR.mkdir(parents=True, exist_ok=True)
     HISTORY_DIR.mkdir(parents=True, exist_ok=True)

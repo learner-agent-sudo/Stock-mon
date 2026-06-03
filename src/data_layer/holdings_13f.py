@@ -369,9 +369,15 @@ def _classify(prior_shares: int, latest_shares: int) -> str:
 
 
 def aggregate(investors: list[InvestorHoldings], cusip_to_ticker: dict[str, str],
-              watchlist: set[str]) -> list[dict]:
+              watchlist: set[str], categories: dict[str, str] | None = None) -> list[dict]:
     """Per-stock net flow across investors, comparing each investor's latest
-    vs prior filing."""
+    vs prior filing.
+
+    `categories` maps TICKER -> 'HOLDING' | 'WATCHLIST' so the page can mark
+    each stock accordingly. `watchlist` stays as the membership set used for
+    the page's watchlist toggle (holdings + watchlist combined).
+    """
+    cats = categories or {}
     stocks: dict[str, dict] = {}
     for inv in investors:
         if inv.status not in ("ok",):
@@ -414,16 +420,24 @@ def aggregate(investors: list[InvestorHoldings], cusip_to_ticker: dict[str, str]
         st["net_investors"] = st["buyers"] - st["sellers"]
         ticker = st["ticker"].upper() if st["ticker"] else ""
         st["in_watchlist"] = bool(ticker and ticker in watchlist)
+        # 'HOLDING' / 'WATCHLIST' / '' — drives the per-stock mark on the page.
+        st["category"] = cats.get(ticker, "") if ticker else ""
         st["detail"].sort(key=lambda d: abs(d["value_delta"]), reverse=True)
         out.append(st)
     out.sort(key=lambda s: (s["net_investors"], s["net_value"]), reverse=True)
     return out
 
 
-def build_dataset(watchlist_tickers: set[str] | None = None) -> dict[str, Any]:
-    """Top-level: load investors, fetch holdings, map CUSIPs, aggregate."""
+def build_dataset(watchlist_tickers: set[str] | None = None,
+                  categories: dict[str, str] | None = None) -> dict[str, Any]:
+    """Top-level: load investors, fetch holdings, map CUSIPs, aggregate.
+
+    `categories` maps TICKER -> 'HOLDING' | 'WATCHLIST'. `watchlist_tickers`
+    is the combined membership set (holdings + watchlist) for the toggle.
+    """
     global _sec_phase_deadline
     watchlist = {t.upper() for t in (watchlist_tickers or set())}
+    cats = {t.upper(): c for t, c in (categories or {}).items()}
     config = json.loads(INVESTORS_PATH.read_text())
     holdings_cache = _load_holdings_cache()
     print(f"  [13f] holdings cache: {len(holdings_cache)} investors pre-cached")
@@ -448,7 +462,23 @@ def build_dataset(watchlist_tickers: set[str] | None = None) -> dict[str, Any]:
         all_cusips |= set(inv.latest) | set(inv.prior)
     cusip_to_ticker = resolve_cusip_tickers(all_cusips)
 
-    stocks = aggregate(investors, cusip_to_ticker, watchlist)
+    stocks = aggregate(investors, cusip_to_ticker, watchlist, cats)
+
+    # Attach brief company info + price for each mapped ticker (build-time
+    # snapshot; the page is static). Holdings/watchlist tickers are fetched
+    # first so the ones you're most likely to click are always populated.
+    tickers = sorted({s["ticker"].upper() for s in stocks if s.get("ticker")})
+    if tickers and os.environ.get(FIXTURE_ENV) != "1":
+        try:
+            from . import ticker_info
+            info_map = ticker_info.fetch_ticker_info(tickers, priority=watchlist)
+            for s in stocks:
+                t = (s.get("ticker") or "").upper()
+                if t in info_map:
+                    s["info"] = info_map[t]
+        except Exception as exc:  # noqa: BLE001 — info is a nice-to-have
+            print(f"  [13f] ticker info fetch skipped: {exc}")
+
     ok = [i for i in investors if i.status == "ok"]
     latest_dates = [i.as_of for i in ok if i.as_of]
     return {

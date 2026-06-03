@@ -36,8 +36,15 @@ def test_aggregate_net_flow():
         "037833100": "AAPL", "594918104": "MSFT",
         "67066G104": "NVDA", "191216100": "KO",
     }
-    stocks = h.aggregate([berk, scion], cusip_to_ticker, watchlist={"AAPL", "NVDA"})
+    categories = {"AAPL": "HOLDING", "NVDA": "WATCHLIST"}
+    stocks = h.aggregate([berk, scion], cusip_to_ticker,
+                         watchlist={"AAPL", "NVDA"}, categories=categories)
     s = _by_cusip(stocks)
+
+    # Category marks flow through from the DB categories map.
+    assert s["037833100"]["category"] == "HOLDING"
+    assert s["67066G104"]["category"] == "WATCHLIST"
+    assert s["594918104"]["category"] == ""  # MSFT not tracked
 
     # AAPL: Berkshire added (+20), Scion trimmed (-10) -> 1 buyer, 1 seller.
     assert s["037833100"]["buyers"] == 1

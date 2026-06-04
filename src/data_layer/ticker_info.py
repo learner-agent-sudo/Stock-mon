@@ -24,6 +24,11 @@ except ImportError:  # pragma: no cover
 REPO_ROOT = Path(__file__).resolve().parent.parent.parent
 CACHE_PATH = REPO_ROOT / "data" / "ticker_info_cache.json"
 CACHE_TTL_SEC = 5 * 24 * 3600        # refresh roughly weekly
+# Unresolved (negative-cached) entries get a much shorter TTL so a transient
+# yfinance rate-limit doesn't lock out a real ticker for the full positive
+# TTL. 4h means a single run's failures self-heal by the next day's run,
+# while still preventing pointless retries within the same backstop cluster.
+NEG_CACHE_TTL_SEC = 4 * 3600
 # Budget for the whole info-fetch phase. The job cap is 20 min and the SEC
 # + OpenFIGI phases are cache-fast after their first run, so we can give the
 # ticker-info phase a generous window. At ~1s/call this covers ~550 tickers —
@@ -55,7 +60,8 @@ def _save_cache(cache: dict) -> None:
 
 def _fresh(entry: dict) -> bool:
     ts = entry.get("fetched_at", 0)
-    return (time.time() - ts) < CACHE_TTL_SEC
+    ttl = NEG_CACHE_TTL_SEC if entry.get("unresolved") else CACHE_TTL_SEC
+    return (time.time() - ts) < ttl
 
 
 def _fetch_one(symbol: str) -> tuple[dict | None, str | None]:

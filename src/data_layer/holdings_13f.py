@@ -493,6 +493,26 @@ def build_dataset(watchlist_tickers: set[str] | None = None,
                     s["info"] = info_map[t]
                     attached += 1
             print(f"  [13f] ticker_info: attached info to {attached} stocks")
+
+            # Wikipedia fallback for the in-scope stocks yfinance couldn't
+            # resolve — gives the user a real paragraph about the business
+            # for foreign-listed / recent-IPO names that aren't on Yahoo.
+            scoped = set(info_tickers)
+            need_wiki = [s for s in stocks
+                         if s.get("ticker") and s["ticker"].upper() in scoped
+                         and not s.get("info") and s.get("issuer")]
+            if need_wiki:
+                names = sorted({s["issuer"] for s in need_wiki})
+                print(f"  [13f] wiki: targeting {len(names)} issuer name(s) "
+                      f"missed by yfinance")
+                wiki_map = ticker_info.fetch_wiki_summaries(names)
+                wiki_attached = 0
+                for s in need_wiki:
+                    summ = wiki_map.get(s["issuer"])
+                    if summ:
+                        s["wiki"] = summ
+                        wiki_attached += 1
+                print(f"  [13f] wiki: attached summary to {wiki_attached} stocks")
         except Exception as exc:  # noqa: BLE001 — info is a nice-to-have
             import traceback
             print(f"  [13f] ticker info fetch CRASHED: {type(exc).__name__}: {exc}")

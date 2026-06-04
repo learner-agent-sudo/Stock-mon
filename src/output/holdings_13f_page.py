@@ -80,6 +80,9 @@ tr.stock-row:hover { background: #0f1923; }
 .info-summary { color: #8899aa; font-size: .72rem; margin-top: .35rem; line-height: 1.45; }
 .info-link { color: #ff9800; font-size: .7rem; text-decoration: none; }
 .info-link:hover { text-decoration: underline; }
+.info-links { margin-top: .4rem; display: flex; flex-wrap: wrap;
+  gap: .25rem .55rem; align-items: baseline; }
+.info-source { color: #4a5568; font-size: .65rem; margin-top: .3rem; }
 .info-detail-label { color: #4a5568; font-size: .65rem; text-transform: uppercase;
   letter-spacing: .05em; margin: .1rem 0 .25rem; }
 .info-missing { color: #6b7d8e; font-size: .72rem; font-style: italic; }
@@ -193,56 +196,116 @@ def _fmt_num(v, suffix: str = "") -> str:
         return "—"
 
 
+def _outbound_links(ticker: str, issuer: str) -> str:
+    """Always-on outbound search links so the user can pivot to research even
+    when no embedded info is available."""
+    import urllib.parse as _u
+    q = _u.quote_plus((issuer or ticker or "").strip())
+    t = _u.quote_plus(ticker.strip())
+    links = []
+    if ticker:
+        links.append(f'<a class="info-link" href="https://finance.yahoo.com/quote/{t}" '
+                     f'target="_blank" rel="noopener">Yahoo ↗</a>')
+        links.append(f'<a class="info-link" href="https://finance.yahoo.com/quote/{t}/news" '
+                     f'target="_blank" rel="noopener">Yahoo News ↗</a>')
+    elif q:
+        links.append(f'<a class="info-link" href="https://finance.yahoo.com/lookup?s={q}" '
+                     f'target="_blank" rel="noopener">Yahoo lookup ↗</a>')
+    if q:
+        links.append(f'<a class="info-link" href="https://en.wikipedia.org/wiki/Special:Search?search={q}" '
+                     f'target="_blank" rel="noopener">Wikipedia ↗</a>')
+        links.append(f'<a class="info-link" href="https://www.google.com/search?q={q}+stock" '
+                     f'target="_blank" rel="noopener">Google ↗</a>')
+        links.append(f'<a class="info-link" '
+                     f'href="https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&amp;company={q}&amp;type=10-K" '
+                     f'target="_blank" rel="noopener">SEC EDGAR ↗</a>')
+    return ('<div class="info-links">' + " &middot; ".join(links) + "</div>") if links else ""
+
+
 def _render_info_card(stock: dict, as_of: str) -> str:
-    """Brief company snapshot shown when a stock row is expanded. Data is a
-    build-time yfinance snapshot, so it's explicitly dated."""
+    """Brief company snapshot shown when a stock row is expanded.
+
+    Tries yfinance first (rich card with price), then Wikipedia (paragraph
+    about the business), and always renders outbound search links so even an
+    unresolved name gives the user one-click navigation to Yahoo / Google /
+    Wikipedia / SEC EDGAR."""
     info = stock.get("info")
+    wiki = stock.get("wiki")
     ticker = stock.get("ticker") or ""
-    if not info:
-        which = f"{ticker} " if ticker else ""
-        return (f'<div class="info-card"><span class="info-missing">'
-                f'No company snapshot available for {escape(which)}'
-                f'(symbol may be unmapped or non-US).</span></div>')
+    issuer = stock.get("issuer") or ""
+    links_html = _outbound_links(ticker, issuer)
 
-    cur = info.get("currency") or ""
-    price = info.get("price")
-    price_txt = f'{price:,.2f} {cur}'.strip() if isinstance(price, (int, float)) else "—"
-    chg = info.get("change_pct")
-    chg_html = ""
-    if isinstance(chg, (int, float)):
-        chg_html = f' <span class="{_cls(chg)}">{chg:+.2f}%</span>'
+    # Case 1: yfinance data — full snapshot.
+    if info:
+        cur = info.get("currency") or ""
+        price = info.get("price")
+        price_txt = f'{price:,.2f} {cur}'.strip() if isinstance(price, (int, float)) else "—"
+        chg = info.get("change_pct")
+        chg_html = ""
+        if isinstance(chg, (int, float)):
+            chg_html = f' <span class="{_cls(chg)}">{chg:+.2f}%</span>'
 
-    sector = " · ".join(x for x in (info.get("sector"), info.get("industry")) if x)
-    rng = ""
-    if isinstance(info.get("wk_low"), (int, float)) and isinstance(info.get("wk_high"), (int, float)):
-        rng = f'{info["wk_low"]:,.2f}–{info["wk_high"]:,.2f}'
+        sector = " · ".join(x for x in (info.get("sector"), info.get("industry")) if x)
+        rng = ""
+        if isinstance(info.get("wk_low"), (int, float)) and isinstance(info.get("wk_high"), (int, float)):
+            rng = f'{info["wk_low"]:,.2f}–{info["wk_high"]:,.2f}'
 
-    grid = []
-    grid.append(f'<div>Mkt cap <span>{_fmt_cap(info.get("market_cap"))}</span></div>')
-    grid.append(f'<div>P/E <span>{_fmt_num(info.get("pe"))}</span></div>')
-    if rng:
-        grid.append(f'<div>52wk <span>{escape(rng)}</span></div>')
+        grid = [
+            f'<div>Mkt cap <span>{_fmt_cap(info.get("market_cap"))}</span></div>',
+            f'<div>P/E <span>{_fmt_num(info.get("pe"))}</span></div>',
+        ]
+        if rng:
+            grid.append(f'<div>52wk <span>{escape(rng)}</span></div>')
 
-    summary = info.get("summary") or ""
-    summary_html = f'<p class="info-summary">{escape(summary)}</p>' if summary else ""
+        summary = info.get("summary") or ""
+        summary_html = f'<p class="info-summary">{escape(summary)}</p>' if summary else ""
 
-    website = info.get("website") or ""
-    link_html = ""
-    if website:
-        link_html = f' &middot; <a class="info-link" href="{escape(website)}" target="_blank" rel="noopener">website ↗</a>'
+        website = info.get("website") or ""
+        site_html = (f' &middot; <a class="info-link" href="{escape(website)}" '
+                     f'target="_blank" rel="noopener">website ↗</a>') if website else ""
 
-    name = info.get("name") or stock.get("issuer") or ticker
+        name = info.get("name") or issuer or ticker
+        return (
+            f'<div class="info-card">'
+            f'<div class="info-head">'
+            f'<span class="info-name">{escape(name)}</span>'
+            f'<span class="info-sector">{escape(sector)}</span>'
+            f'<span class="info-price">{escape(price_txt)}{chg_html}</span>'
+            f'</div>'
+            f'<div class="info-grid">{"".join(grid)}</div>'
+            f'{summary_html}'
+            f'{links_html}'
+            f'<div class="info-source">Snapshot as of {escape(str(as_of))}{site_html}</div>'
+            f'</div>'
+        )
+
+    # Case 2: Wikipedia fallback — paragraph about the business + link.
+    if wiki:
+        title = wiki.get("title") or issuer or ticker
+        descr = wiki.get("description") or ""
+        wiki_url = wiki.get("url") or ""
+        wiki_link = (f' &middot; <a class="info-link" href="{escape(wiki_url)}" '
+                     f'target="_blank" rel="noopener">read on Wikipedia ↗</a>') if wiki_url else ""
+        return (
+            f'<div class="info-card">'
+            f'<div class="info-head">'
+            f'<span class="info-name">{escape(title)}</span>'
+            f'<span class="info-sector">{escape(descr)}</span>'
+            f'</div>'
+            f'<p class="info-summary">{escape(wiki.get("extract", ""))}</p>'
+            f'{links_html}'
+            f'<div class="info-source">Background from Wikipedia{wiki_link} '
+            f'&middot; no live price available for this symbol</div>'
+            f'</div>'
+        )
+
+    # Case 3: nothing embedded — at least give the user navigation.
+    label = ticker or issuer or "?"
     return (
         f'<div class="info-card">'
-        f'<div class="info-head">'
-        f'<span class="info-name">{escape(name)}</span>'
-        f'<span class="info-sector">{escape(sector)}</span>'
-        f'<span class="info-price">{escape(price_txt)}{chg_html}</span>'
-        f'</div>'
-        f'<div class="info-grid">{"".join(grid)}</div>'
-        f'{summary_html}'
-        f'<div class="info-summary" style="margin-top:.3rem;color:#4a5568;font-size:.65rem;">'
-        f'Snapshot as of {escape(str(as_of))}{link_html}</div>'
+        f'<span class="info-missing">No embedded snapshot for '
+        f'<strong>{escape(label)}</strong>. Look it up:</span>'
+        f'{links_html}'
         f'</div>'
     )
 

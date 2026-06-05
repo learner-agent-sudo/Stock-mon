@@ -236,7 +236,7 @@ def render(b: Briefing) -> str:
 <body>
 <header>
   <h1>Stock Briefing</h1>
-  <div class="meta">Generated {when}</div>
+  <div class="meta">Prices &amp; news as of <strong>{when}</strong></div>
   <div class="stats">
     {stats.get('stocks_checked', 0)} stocks &middot;
     {stats.get('prices_ok', 0)} ok &middot;
@@ -244,6 +244,8 @@ def render(b: Briefing) -> str:
     {stats.get('signals_matched', 0)} signals &middot;
     {news_line}
   </div>
+  <div class="stats">Prices update at every workflow run (11:00 / 14:00 / 17:00 UTC daily).
+    To pull a fresh snapshot right now, go to Actions &rarr; <em>Stock Briefing</em> &rarr; Run workflow.</div>
   {sources_html}
   <nav>
     <a href="./13f.html">13F net flow &rarr;</a>

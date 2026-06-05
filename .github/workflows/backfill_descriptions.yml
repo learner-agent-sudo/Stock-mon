@@ -1,0 +1,52 @@
+name: Backfill 13F Descriptions
+
+# Manual trigger only — push Wikipedia summaries into the cache for stocks
+# the weekly 13F build hasn't covered yet. Run when you notice a click on a
+# stock you care about lands on a "no embedded snapshot" card and you'd like
+# to add it for next time.
+
+on:
+  workflow_dispatch:
+    inputs:
+      budget_sec:
+        description: "Wall-clock budget for Wikipedia fetches (seconds)"
+        required: false
+        default: "900"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: "stock-briefing"
+  cancel-in-progress: false
+
+jobs:
+  backfill:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install dependencies
+        run: pip install --quiet requests
+
+      - name: Run backfill
+        run: python scripts/backfill_descriptions.py --budget-sec ${{ inputs.budget_sec }}
+
+      - name: Commit refreshed wiki cache
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git pull --rebase origin "${GITHUB_REF_NAME}" || true
+          if [ -f data/wiki_summary_cache.json ]; then git add data/wiki_summary_cache.json; fi
+          if git diff --cached --quiet; then
+            echo "No new entries to commit."
+          else
+            git commit -m "wiki cache: backfill $(date -u +%Y-%m-%d)"
+            git push origin "HEAD:${GITHUB_REF_NAME}"
+          fi

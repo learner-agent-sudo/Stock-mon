@@ -178,7 +178,7 @@ def fetch_ticker_info(
 WIKI_SEARCH_URL = "https://en.wikipedia.org/w/api.php"
 WIKI_SUMMARY_URL = "https://en.wikipedia.org/api/rest_v1/page/summary/{title}"
 WIKI_UA = "stock-mon/1.0 (contact: fredchan31@gmail.com)"
-WIKI_BUDGET_SEC = 120
+WIKI_BUDGET_SEC = 300
 WIKI_EXTRACT_MAX = 480
 
 # Strip common legal/structural suffixes so "AMER SPORTS INC" searches as

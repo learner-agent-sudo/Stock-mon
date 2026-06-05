@@ -470,7 +470,7 @@ def build_dataset(watchlist_tickers: set[str] | None = None,
     #   1) every watchlist/holdings ticker (always relevant)
     #   2) top-N by absolute net dollar value (the most-moved names)
     # This keeps the fetch list under ~400 even with a huge investor universe.
-    INFO_TOP_N = 200
+    INFO_TOP_N = 500
     pri_tickers = [s["ticker"].upper() for s in stocks
                    if s.get("ticker") and s["category"]]
     by_impact = sorted(

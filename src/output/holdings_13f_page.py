@@ -18,6 +18,7 @@ body { font-family: "SF Mono","Cascadia Mono","Fira Code","Consolas",monospace;
 header { margin-bottom: 1rem; border-bottom: 1px solid #1e2d3d; padding-bottom: .75rem; }
 h1 { font-size: 1.1rem; color: #ff9800; letter-spacing: .06em; text-transform: uppercase; }
 .meta { color: #6b7d8e; font-size: .78rem; margin-top: .15rem; }
+.stats { color: #6b7d8e; font-size: .72rem; margin-top: .35rem; line-height: 1.4; }
 /* Investor health line — explicitly wrap so 18+ tags never force horizontal scroll. */
 .sources { display: flex; flex-wrap: wrap; gap: .25rem .7rem; align-items: baseline;
   font-size: .72rem; margin-top: .3rem; color: #6b7d8e; }
@@ -138,18 +139,24 @@ function toggleSection(h2){
 function toggleWatchlist(btn){
   var on = btn.classList.toggle('active');
   document.querySelectorAll('tr.stock-row').forEach(function(r){
-    var show = !on || r.dataset.watchlist === '1';
-    r.style.display = show ? '' : 'none';
+    var matches = !on || r.dataset.watchlist === '1';
+    r.style.display = matches ? '' : 'none';
     var d = document.getElementById('d-' + r.dataset.cusip);
-    if (d && !d.classList.contains('expanded')) d.style.display = 'none';
-    else if (d) d.style.display = show ? '' : 'none';
+    if (!d) return;
+    // Detail-row visibility = parent matches AND was already expanded.
+    // Setting display='' lets CSS (.detail-row.hidden) take over so a
+    // later click on expand() can show it.
+    if (!matches) d.style.display = 'none';
+    else d.style.display = '';
   });
 }
 function expand(cusip){
   var d = document.getElementById('d-' + cusip);
   if (!d) return;
-  var hidden = d.classList.toggle('hidden');
-  d.classList.toggle('expanded', !hidden);
+  var nowHidden = d.classList.toggle('hidden');
+  d.classList.toggle('expanded', !nowHidden);
+  // Clear any inline display the filter set, so the class rule controls it.
+  d.style.display = '';
 }
 """
 
@@ -222,13 +229,15 @@ def _outbound_links(ticker: str, issuer: str) -> str:
     return ('<div class="info-links">' + " &middot; ".join(links) + "</div>") if links else ""
 
 
-def _render_info_card(stock: dict, as_of: str) -> str:
+def _render_info_card(stock: dict, prices_when: str) -> str:
     """Brief company snapshot shown when a stock row is expanded.
 
     Tries yfinance first (rich card with price), then Wikipedia (paragraph
     about the business), and always renders outbound search links so even an
     unresolved name gives the user one-click navigation to Yahoo / Google /
-    Wikipedia / SEC EDGAR."""
+    Wikipedia / SEC EDGAR. `prices_when` is the build-run UTC timestamp —
+    used to label the price snapshot honestly (was previously mistakenly
+    labelled with the 13F quarter end date)."""
     info = stock.get("info")
     wiki = stock.get("wiki")
     ticker = stock.get("ticker") or ""
@@ -275,7 +284,7 @@ def _render_info_card(stock: dict, as_of: str) -> str:
             f'<div class="info-grid">{"".join(grid)}</div>'
             f'{summary_html}'
             f'{links_html}'
-            f'<div class="info-source">Snapshot as of {escape(str(as_of))}{site_html}</div>'
+            f'<div class="info-source">Price snapshot at {escape(prices_when)}{site_html}</div>'
             f'</div>'
         )
 
@@ -344,7 +353,7 @@ def _render_detail(stock: dict) -> str:
     return "".join(items)
 
 
-def _render_row(stock: dict, as_of: str = "") -> str:
+def _render_row(stock: dict, prices_when: str = "") -> str:
     cusip = escape(stock["cusip"])
     ticker = stock.get("ticker") or ""
     label = escape(ticker) if ticker else escape((stock.get("issuer") or "?")[:18])
@@ -360,7 +369,7 @@ def _render_row(stock: dict, as_of: str = "") -> str:
     ni_txt = f"+{ni}" if ni > 0 else str(ni)
     # Sort key for the Stock column: ticker if mapped, else issuer name.
     stock_key = (ticker or stock.get("issuer") or "").upper()
-    detail_body = _render_info_card(stock, as_of) + _render_detail(stock)
+    detail_body = _render_info_card(stock, prices_when) + _render_detail(stock)
     row = (
         f'<tr class="stock-row" data-cusip="{cusip}" '
         f'data-stock="{escape(stock_key)}" '
@@ -379,10 +388,10 @@ def _render_row(stock: dict, as_of: str = "") -> str:
 
 
 def _render_section(stocks: list[dict], *, css_class: str, title: str,
-                    initial_sort_key: str, as_of: str = "") -> str:
+                    initial_sort_key: str, prices_when: str = "") -> str:
     """One table per +/- section. Each table owns its own sticky header
     and its own column-sort state, so sorting Inflow doesn't affect Outflow."""
-    rows = "".join(_render_row(s, as_of) for s in stocks)
+    rows = "".join(_render_row(s, prices_when) for s in stocks)
     sort_classes = {
         "net_investors": "sorted",
         "net_value": "",
@@ -434,10 +443,10 @@ def render(dataset: dict[str, Any]) -> str:
         body = (
             _render_section(inflow, css_class="inflow",
                             title="Net inflow (buyers ≥ sellers)",
-                            initial_sort_key="net_investors", as_of=str(as_of)) +
+                            initial_sort_key="net_investors", prices_when=when) +
             _render_section(outflow, css_class="outflow",
                             title="Net outflow (sellers > buyers)",
-                            initial_sort_key="net_investors", as_of=str(as_of))
+                            initial_sort_key="net_investors", prices_when=when)
         )
     else:
         # Surface the actual error reason — one investor's detail is usually
@@ -462,9 +471,13 @@ def render(dataset: dict[str, Any]) -> str:
 <body>
 <header>
   <h1>13F Net Flow</h1>
-  <div class="meta">Super-investor buys &amp; sells &middot; quarter as of {escape(str(as_of))}
-    &middot; {dataset.get('investor_count', 0)} investors &middot; generated {escape(when)}</div>
+  <div class="meta">Super-investor buys &amp; sells &middot;
+    <strong>holdings as of {escape(str(as_of))}</strong> (13F filing quarter)
+    &middot; <strong>prices as of {escape(when)}</strong>
+    &middot; {dataset.get('investor_count', 0)} investors</div>
   {_render_source_health(dataset)}
+  <div class="stats">Tap a stock to expand &mdash; price comes from the build run, not real-time.
+    Trigger Actions &rarr; <em>13F Net Flow</em> &rarr; Run workflow to refresh prices.</div>
   <nav><a href="./index.html">&larr; Daily briefing</a><a href="./manage.html">Manage tickers</a></nav>
 </header>
 <div class="controls">

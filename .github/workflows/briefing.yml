@@ -41,15 +41,30 @@ jobs:
           python-version: "3.12"
           cache: pip
 
-      - name: Check if today's briefing already exists
+      - name: Check briefing freshness
         id: freshness
         run: |
-          today=$(date -u +%Y-%m-%d)
-          if ls docs/history/${today}-*.json >/dev/null 2>&1; then
-            echo "Today's briefing ($today) already generated — skipping build."
+          # Skip only if a briefing was generated in the LAST 2 HOURS — this
+          # avoids duplicate work when backstop windows fire close together,
+          # but still lets later windows refresh prices during market hours.
+          # Manual workflow_dispatch runs always proceed (the user explicitly
+          # asked for fresh data).
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "Manual dispatch — always proceed."
+            echo "skip=false" >> "$GITHUB_OUTPUT"; exit 0
+          fi
+          latest=$(ls -t docs/history/[0-9]*-*.json 2>/dev/null | head -1)
+          if [ -z "$latest" ]; then
+            echo "No briefing archive found — proceeding."
+            echo "skip=false" >> "$GITHUB_OUTPUT"; exit 0
+          fi
+          latest_ts=$(stat -c %Y "$latest")
+          age_min=$(( ($(date +%s) - latest_ts) / 60 ))
+          if [ "$age_min" -lt 120 ]; then
+            echo "Most recent briefing is ${age_min} min old (< 120) — skipping."
             echo "skip=true" >> "$GITHUB_OUTPUT"
           else
-            echo "No briefing yet for $today — proceeding."
+            echo "Most recent briefing is ${age_min} min old — proceeding."
             echo "skip=false" >> "$GITHUB_OUTPUT"
           fi
 

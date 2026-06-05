@@ -1,7 +1,12 @@
-"""Fetch yesterday's price data from yfinance with retries and gentle error handling."""
+"""Fetch current price data from yfinance with retries and gentle error handling.
+
+Prefers the live quote (last price vs previous close) so the briefing reflects
+today's move even when the workflow runs before the US market opens; falls back
+to daily candles when a live quote isn't available."""
 from __future__ import annotations
 
 import csv
+import datetime as _dt
 import io
 import json
 import os
@@ -47,6 +52,53 @@ class PriceData:
         return False
 
 
+def _fetch_quote(ticker, symbol: str) -> "PriceData | None":
+    """Build PriceData from yfinance's live/fast quote.
+
+    Uses last traded price vs the previous official close — matching what
+    finance sites display intraday and after hours. Returns None (so the
+    caller falls back to daily candles) if the quote is incomplete.
+    """
+    try:
+        fi = ticker.fast_info
+    except Exception:  # noqa: BLE001
+        return None
+    if fi is None:
+        return None
+
+    def _g(*names):
+        for n in names:
+            try:
+                v = fi[n] if not hasattr(fi, n) else getattr(fi, n)
+            except (KeyError, TypeError, AttributeError):
+                v = None
+            if v is not None and v == v:  # not None, not NaN
+                return float(v)
+        return None
+
+    last_price = _g("last_price", "lastPrice")
+    prev_close = _g("previous_close", "previousClose", "regular_market_previous_close")
+    if last_price is None or prev_close is None or prev_close == 0:
+        return None
+
+    volume = None
+    raw_vol = _g("last_volume", "lastVolume", "regular_market_volume")
+    if raw_vol is not None:
+        volume = int(raw_vol)
+
+    pct = (last_price - prev_close) / prev_close * 100.0
+    return PriceData(
+        symbol=symbol,
+        last_close=last_price,
+        prior_close=prev_close,
+        pct_change=pct,
+        volume=volume,
+        last_date=_dt.datetime.now(_dt.timezone.utc).strftime("%Y-%m-%d"),
+        ok=True,
+        error="live quote",
+    )
+
+
 def _fetch_one(symbol: str, retries: int = 3, backoff: float = 1.5) -> PriceData:
     if yf is None:
         return PriceData(symbol, None, None, None, None, None, False, "yfinance not installed")
@@ -55,6 +107,16 @@ def _fetch_one(symbol: str, retries: int = 3, backoff: float = 1.5) -> PriceData
     for attempt in range(retries):
         try:
             ticker = yf.Ticker(symbol)
+
+            # Prefer the live quote: last_price vs previous_close is what
+            # finance sites show as "today's % move". history(period="5d")
+            # only yields completed daily candles, so a run before the US
+            # open (11:00 UTC, market opens 14:30 UTC) would otherwise report
+            # yesterday's move — a full day stale and often the wrong sign.
+            quote = _fetch_quote(ticker, symbol)
+            if quote is not None:
+                return quote
+
             # 5d window gives us at least two trading days even after a holiday.
             hist = ticker.history(period="5d", auto_adjust=False)
             if hist is None or hist.empty:

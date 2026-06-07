@@ -42,11 +42,15 @@ jobs:
         run: |
           git config user.name  "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git pull --rebase origin "${GITHUB_REF_NAME}" || true
-          if [ -f data/wiki_summary_cache.json ]; then git add data/wiki_summary_cache.json; fi
+          git add -A
           if git diff --cached --quiet; then
             echo "No new entries to commit."
-          else
-            git commit -m "wiki cache: backfill $(date -u +%Y-%m-%d)"
-            git push origin "HEAD:${GITHUB_REF_NAME}"
+            exit 0
           fi
+          git commit -m "wiki cache: backfill $(date -u +%Y-%m-%d)"
+          for attempt in 1 2 3 4; do
+            git pull --rebase origin "${GITHUB_REF_NAME}" && \
+            git push origin "HEAD:${GITHUB_REF_NAME}" && break
+            echo "push attempt $attempt failed; retrying after backoff..."
+            sleep $((attempt * 3))
+          done

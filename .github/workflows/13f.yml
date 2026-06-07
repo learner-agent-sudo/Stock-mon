@@ -54,22 +54,24 @@ jobs:
         run: |
           git config user.name  "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git pull --rebase origin "${GITHUB_REF_NAME}" || true
-          git add docs/
-          # These files only exist after the build has progress to persist;
-          # on a first/blocked run they may be absent.
-          if [ -f data/cusip_map.json ]; then git add data/cusip_map.json; fi
-          if [ -f data/13f_holdings_cache.json ]; then git add data/13f_holdings_cache.json; fi
-          if [ -f data/ticker_info_cache.json ]; then git add data/ticker_info_cache.json; fi
-          if [ -f data/wiki_summary_cache.json ]; then git add data/wiki_summary_cache.json; fi
-          if [ -f data/insider_cache.json ]; then git add data/insider_cache.json; fi
-          if [ -f data/ticker_cik_map.json ]; then git add data/ticker_cik_map.json; fi
+          # Stage and commit BEFORE pulling — the build leaves cache files
+          # unstaged, and `git pull --rebase` refuses to run with a dirty
+          # tree. Commit first so the rebase has a clean working tree, then
+          # rebase onto the latest remote and push.
+          git add -A
           if git diff --cached --quiet; then
             echo "No changes to commit."
-          else
-            git commit -m "13f: $(date -u +%Y-%m-%d)"
-            git push origin "HEAD:${GITHUB_REF_NAME}"
+            exit 0
           fi
+          git commit -m "13f: $(date -u +%Y-%m-%d)"
+          # Retry rebase+push a few times in case another run pushes
+          # concurrently to the same branch.
+          for attempt in 1 2 3 4; do
+            git pull --rebase origin "${GITHUB_REF_NAME}" && \
+            git push origin "HEAD:${GITHUB_REF_NAME}" && break
+            echo "push attempt $attempt failed; retrying after backoff..."
+            sleep $((attempt * 3))
+          done
 
       - name: Configure Pages
         uses: actions/configure-pages@v5

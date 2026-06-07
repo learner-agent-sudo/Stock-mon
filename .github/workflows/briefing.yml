@@ -90,14 +90,20 @@ jobs:
         run: |
           git config user.name  "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git pull --rebase origin "${GITHUB_REF_NAME}" || true
-          git add docs/
+          # Commit BEFORE pulling — `git pull --rebase` refuses to run with a
+          # dirty tree, and the build may leave unstaged files.
+          git add -A
           if git diff --cached --quiet; then
             echo "No changes to commit."
-          else
-            git commit -m "briefing: $(date -u +%Y-%m-%d_%H:%M)"
-            git push origin "HEAD:${GITHUB_REF_NAME}"
+            exit 0
           fi
+          git commit -m "briefing: $(date -u +%Y-%m-%d_%H:%M)"
+          for attempt in 1 2 3 4; do
+            git pull --rebase origin "${GITHUB_REF_NAME}" && \
+            git push origin "HEAD:${GITHUB_REF_NAME}" && break
+            echo "push attempt $attempt failed; retrying after backoff..."
+            sleep $((attempt * 3))
+          done
 
       # Deploy the docs/ folder to GitHub Pages from within this run.
       # This is what makes the live site update reliably — it does not

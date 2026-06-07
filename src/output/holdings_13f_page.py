@@ -87,6 +87,15 @@ tr.stock-row:hover { background: #0f1923; }
 .info-detail-label { color: #4a5568; font-size: .65rem; text-transform: uppercase;
   letter-spacing: .05em; margin: .1rem 0 .25rem; }
 .info-missing { color: #6b7d8e; font-size: .72rem; font-style: italic; }
+.insider-card { border-bottom: 1px solid #1e2d3d; margin-bottom: .5rem; padding-bottom: .5rem; }
+.insider-head { font-size: .72rem; color: #8899aa; margin-bottom: .25rem; }
+.insider-head .ins-buy { color: #69f0ae; font-weight: 700; }
+.insider-head .ins-sell { color: #ff6e6e; font-weight: 700; }
+.insider-item { font-size: .72rem; padding: .15rem 0; }
+.insider-item .ins-who { color: #e8e6e3; font-weight: 600; }
+.insider-item .ins-title { color: #6b7d8e; font-size: .68rem; margin-left: .3rem; }
+.insider-item .ins-buy { color: #69f0ae; }
+.insider-item .ins-sell { color: #ff6e6e; }
 .detail-item { display: flex; justify-content: space-between; gap: 1rem;
   padding: .2rem 0; border-bottom: 1px dotted #152233; font-size: .74rem; }
 .detail-item:last-child { border-bottom: 0; }
@@ -235,7 +244,7 @@ def _render_info_card(stock: dict, prices_when: str) -> str:
     Tries yfinance first (rich card with price), then Wikipedia (paragraph
     about the business), and always renders outbound search links so even an
     unresolved name gives the user one-click navigation to Yahoo / Google /
-    Wikipedia / SEC EDGAR. `prices_when` is the build-run UTC timestamp —
+    Wikipedia / SEC EDGAR. `prices_when` is the build-run timestamp (ET) —
     used to label the price snapshot honestly (was previously mistakenly
     labelled with the 13F quarter end date)."""
     info = stock.get("info")
@@ -333,8 +342,38 @@ def _render_source_health(dataset: dict) -> str:
             f'{"".join(tags)}</div>') if tags else ""
 
 
+def _render_insider(stock: dict) -> str:
+    """Insider (Form 4) activity card — open-market buys/sells by company
+    officers, with C-suite moves highlighted."""
+    ins = stock.get("insider")
+    if not ins:
+        return ""
+    buys, sells = ins.get("buys", 0), ins.get("sells", 0)
+    if buys == 0 and sells == 0:
+        return ""
+    net_val = ins.get("net_value") or 0
+    head = (f'<div class="insider-head">Company insiders (last ~120d): '
+            f'<span class="ins-buy">{buys} buy</span> / '
+            f'<span class="ins-sell">{sells} sell</span>'
+            f' &middot; net {_fmt_money(int(net_val))}</div>')
+    rows = []
+    for h in ins.get("csuite_highlights", []):
+        cls = "ins-buy" if h["verb"] == "bought" else "ins-sell"
+        val = f' (~{_fmt_money(int(h["value"]))})' if h.get("value") else ""
+        sh = f'{int(h["shares"]):,}' if h.get("shares") else "?"
+        title = f'<span class="ins-title">{escape(h["title"])}</span>' if h.get("title") else ""
+        rows.append(
+            f'<div class="insider-item"><span class="ins-who">{escape(h["owner"])}</span>{title} '
+            f'<span class="{cls}">{escape(h["verb"])} {sh} sh{val}</span></div>'
+        )
+    body = "".join(rows)
+    return (f'<div class="insider-card">'
+            f'<div class="info-detail-label">Insider activity (SEC Form 4)</div>'
+            f'{head}{body}</div>')
+
+
 def _render_detail(stock: dict) -> str:
-    items = ['<div class="info-detail-label">Who bought / sold</div>']
+    items = ['<div class="info-detail-label">Who bought / sold (13F institutions)</div>']
     for d in stock.get("detail", []):
         act = d["action"]
         manager = d.get("manager") or ""
@@ -369,7 +408,9 @@ def _render_row(stock: dict, prices_when: str = "") -> str:
     ni_txt = f"+{ni}" if ni > 0 else str(ni)
     # Sort key for the Stock column: ticker if mapped, else issuer name.
     stock_key = (ticker or stock.get("issuer") or "").upper()
-    detail_body = _render_info_card(stock, prices_when) + _render_detail(stock)
+    detail_body = (_render_info_card(stock, prices_when)
+                   + _render_insider(stock)
+                   + _render_detail(stock))
     row = (
         f'<tr class="stock-row" data-cusip="{cusip}" '
         f'data-stock="{escape(stock_key)}" '
@@ -425,11 +466,9 @@ def _render_section(stocks: list[dict], *, css_class: str, title: str,
 
 
 def render(dataset: dict[str, Any]) -> str:
+    from .timefmt import fmt_et
     generated = dataset.get("generated_at", "")
-    try:
-        when = datetime.fromisoformat(generated).astimezone(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
-    except (ValueError, TypeError):
-        when = generated
+    when = fmt_et(generated) if generated else "?"
     as_of = dataset.get("as_of") or "?"
     stocks = dataset.get("stocks", [])
 

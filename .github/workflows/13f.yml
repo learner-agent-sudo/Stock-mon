@@ -62,6 +62,8 @@ jobs:
           if [ -f data/13f_holdings_cache.json ]; then git add data/13f_holdings_cache.json; fi
           if [ -f data/ticker_info_cache.json ]; then git add data/ticker_info_cache.json; fi
           if [ -f data/wiki_summary_cache.json ]; then git add data/wiki_summary_cache.json; fi
+          if [ -f data/insider_cache.json ]; then git add data/insider_cache.json; fi
+          if [ -f data/ticker_cik_map.json ]; then git add data/ticker_cik_map.json; fi
           if git diff --cached --quiet; then
             echo "No changes to commit."
           else

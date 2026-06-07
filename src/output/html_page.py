@@ -194,11 +194,8 @@ def _render_source_health(health: list[dict]) -> str:
 
 
 def render(b: Briefing) -> str:
-    generated_utc = datetime.fromisoformat(b.generated_at).astimezone(timezone.utc)
-    est = timezone(timedelta(hours=-5))
-    edt = timezone(timedelta(hours=-4))
-    generated_et = generated_utc.astimezone(edt)
-    when = generated_et.strftime("%Y-%m-%d %H:%M ET")
+    from .timefmt import fmt_et
+    when = fmt_et(b.generated_at)
 
     grouped: dict[str, list[SignalResult]] = defaultdict(list)
     for r in b.results:
@@ -244,7 +241,7 @@ def render(b: Briefing) -> str:
     {stats.get('signals_matched', 0)} signals &middot;
     {news_line}
   </div>
-  <div class="stats">Prices update at every workflow run (11:00 / 14:00 / 17:00 UTC daily).
+  <div class="stats">Prices update at each scheduled run (~7am / 10am / 1pm ET daily).
     To pull a fresh snapshot right now, go to Actions &rarr; <em>Stock Briefing</em> &rarr; Run workflow.</div>
   {sources_html}
   <nav>

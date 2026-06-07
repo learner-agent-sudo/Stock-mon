@@ -519,6 +519,24 @@ def build_dataset(watchlist_tickers: set[str] | None = None,
             print("  [13f] traceback:")
             traceback.print_exc()
 
+        # Insider (Form 4) activity for the same in-scope tickers — surfaces
+        # CEO/CFO open-market buying/selling alongside the institutional flow.
+        try:
+            from . import insider
+            ins_map = insider.fetch_insider_summaries(info_tickers)
+            ins_attached = 0
+            for s in stocks:
+                t = (s.get("ticker") or "").upper()
+                summ = ins_map.get(t)
+                if summ and not summ.get("empty"):
+                    s["insider"] = summ
+                    ins_attached += 1
+            print(f"  [13f] insider: attached to {ins_attached} stocks")
+        except Exception as exc:  # noqa: BLE001 — insider data is a nice-to-have
+            import traceback
+            print(f"  [13f] insider fetch CRASHED: {type(exc).__name__}: {exc}")
+            traceback.print_exc()
+
     ok = [i for i in investors if i.status == "ok"]
     latest_dates = [i.as_of for i in ok if i.as_of]
     return {

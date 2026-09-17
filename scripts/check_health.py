@@ -31,7 +31,10 @@ REQUIRED_NEWS_SOURCE = "yahoo"   # primary source — others are nice-to-have
 
 
 def _latest_briefing_json() -> Path | None:
-    files = sorted(HISTORY.glob("[0-9]*-*.json"))
+    # Only true briefing archives (YYYY-MM-DD-HHMM.json); the glob
+    # [0-9]*-*.json would also match 13f-*.json, so validate the name.
+    files = sorted(p for p in HISTORY.glob("[0-9]*-*.json")
+                   if _briefing_date_from_name(p) is not None)
     return files[-1] if files else None
 
 

@@ -68,3 +68,35 @@ jobs:
           else
             echo "All healthy and no open alert — nothing to do."
           fi
+
+      # Independent content-freshness dead-man's-switch. This watchdog is
+      # separate from the briefing workflow, so it's a SECOND alert path for
+      # "the page isn't updating": it pings healthchecks.io green only when
+      # today's content is actually fresh, and /fail when it isn't. If the
+      # watchdog itself stops running, the missed daily ping trips the
+      # dead-man's-switch. Optional — skipped cleanly when the secret is unset.
+      - name: Ping healthchecks.io — content fresh
+        if: steps.check.outcome == 'success'
+        env:
+          HC_URL: ${{ secrets.HEALTHCHECKS_WATCHDOG_URL }}
+        run: |
+          if [ -n "$HC_URL" ]; then
+            curl -fsS -m 10 --retry 3 "${HC_URL%/}" >/dev/null \
+              && echo "Pinged healthchecks.io: content fresh" \
+              || echo "healthchecks.io ping failed (non-fatal)"
+          else
+            echo "HEALTHCHECKS_WATCHDOG_URL secret not set — skipping ping."
+          fi
+
+      - name: Ping healthchecks.io — content STALE
+        if: steps.check.outcome == 'failure'
+        env:
+          HC_URL: ${{ secrets.HEALTHCHECKS_WATCHDOG_URL }}
+        run: |
+          if [ -n "$HC_URL" ]; then
+            curl -fsS -m 10 --retry 3 "${HC_URL%/}/fail" >/dev/null \
+              && echo "Pinged healthchecks.io: /fail (content stale)" \
+              || echo "healthchecks.io /fail ping failed (non-fatal)"
+          else
+            echo "HEALTHCHECKS_WATCHDOG_URL secret not set — skipping ping."
+          fi

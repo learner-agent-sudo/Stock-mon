@@ -1,0 +1,1651 @@
+{
+  "generated_at": "2026-09-25T15:50:56.739922+00:00",
+  "stats": {
+    "stocks_checked": 263,
+    "prices_ok": 246,
+    "prices_failed": 17,
+    "signals_matched": 42,
+    "news_source": "yahoo+finnhub",
+    "source_health": [
+      {
+        "name": "yahoo",
+        "status": "ok",
+        "detail": "10 canary articles"
+      },
+      {
+        "name": "finnhub",
+        "status": "ok",
+        "detail": "245 canary articles"
+      },
+      {
+        "name": "fmp",
+        "status": "error",
+        "detail": "HTTP 401: {\n  \"Error Message\": \"Invalid API KEY. Feel free to create a"
+      },
+      {
+        "name": "gdelt",
+        "status": "error",
+        "detail": "HTTPSConnectionPool(host='api.gdeltproject.org', port=443): Read timed out. (rea"
+      }
+    ],
+    "total_articles": 2518,
+    "tickers_with_news": 161,
+    "tickers_without_news": 102
+  },
+  "results": [
+    {
+      "signal_name": "drop_without_news",
+      "symbol": "CMBMF",
+      "severity": 74.46373850868233,
+      "headline": "CMBMF dropped 74.46% with NO news found",
+      "details": {
+        "pct_change": -74.46373850868233,
+        "last_close": 0.025,
+        "prior_close": 0.0979,
+        "threshold": 2.0,
+        "cap_tier": null,
+        "description": "Canadian Western Bank OTC",
+        "category": "HOLDING"
+      },
+      "news": []
+    },
+    {
+      "signal_name": "drop_without_news",
+      "symbol": "NNOX",
+      "severity": 5.657146658216198,
+      "headline": "NNOX dropped 5.66% with NO news found",
+      "details": {
+        "pct_change": -5.657146658216198,
+        "last_close": 0.6603999733924866,
+        "prior_close": 0.7,
+        "threshold": 2.0,
+        "cap_tier": null,
+        "description": "Nano-X Imaging",
+        "category": "HOLDING"
+      },
+      "news": []
+    },
+    {
+      "signal_name": "drop_without_news",
+      "symbol": "GSY.TO",
+      "severity": 3.514893747004228,
+      "headline": "GSY.TO dropped 3.51% with NO news found",
+      "details": {
+        "pct_change": -3.514893747004228,
+        "last_close": 41.45000076293945,
+        "prior_close": 42.959999084472656,
+        "threshold": 2.0,
+        "cap_tier": null,
+        "description": "goeasy",
+        "category": "WATCHLIST"
+      },
+      "news": []
+    },
+    {
+      "signal_name": "drop_without_news",
+      "symbol": "TC.TO",
+      "severity": 3.386321463372679,
+      "headline": "TC.TO dropped 3.39% with NO news found",
+      "details": {
+        "pct_change": -3.386321463372679,
+        "last_close": 13.979999542236328,
+        "prior_close": 14.470000267028809,
+        "threshold": 2.0,
+        "cap_tier": null,
+        "description": "TC Energy",
+        "category": "WATCHLIST"
+      },
+      "news": []
+    },
+    {
+      "signal_name": "drop_without_news",
+      "symbol": "LAND",
+      "severity": 2.855664151232322,
+      "headline": "LAND dropped 2.86% with NO news found",
+      "details": {
+        "pct_change": -2.855664151232322,
+        "last_close": 9.354999542236328,
+        "prior_close": 9.63,
+        "threshold": 2.0,
+        "cap_tier": null,
+        "description": "Gladstone Land",
+        "category": "HOLDING"
+      },
+      "news": []
+    },
+    {
+      "signal_name": "drop_without_news",
+      "symbol": "DIBS",
+      "severity": 2.70935706024955,
+      "headline": "DIBS dropped 2.71% with NO news found",
+      "details": {
+        "pct_change": -2.70935706024955,
+        "last_close": 3.950000047683716,
+        "prior_close": 4.059999942779541,
+        "threshold": 2.0,
+        "cap_tier": null,
+        "description": "1stDibs",
+        "category": "HOLDING"
+      },
+      "news": []
+    },
+    {
+      "signal_name": "drop_without_news",
+      "symbol": "1299.HK",
+      "severity": 2.704489405307844,
+      "headline": "1299.HK dropped 2.70% with NO news found",
+      "details": {
+        "pct_change": -2.704489405307844,
+        "last_close": 73.75,
+        "prior_close": 75.80000305175781,
+        "threshold": 2.0,
+        "cap_tier": null,
+        "description": "AIA Group",
+        "category": "HOLDING"
+      },
+      "news": []
+    },
+    {
+      "signal_name": "drop_without_news",
+      "symbol": "CRBU",
+      "severity": 2.3622039734847915,
+      "headline": "CRBU dropped 2.36% with NO news found",
+      "details": {
+        "pct_change": -2.3622039734847915,
+        "last_close": 1.2400000095367432,
+        "prior_close": 1.27,
+        "threshold": 2.0,
+        "cap_tier": null,
+        "description": "Caribou Biosciences",
+        "category": "HOLDING"
+      },
+      "news": []
+    },
+    {
+      "signal_name": "drop_without_news",
+      "symbol": "PSD.TO",
+      "severity": 2.0270250677801456,
+      "headline": "PSD.TO dropped 2.03% with NO news found",
+      "details": {
+        "pct_change": -2.0270250677801456,
+        "last_close": 2.9000000953674316,
+        "prior_close": 2.9600000381469727,
+        "threshold": 2.0,
+        "cap_tier": null,
+        "description": "Pulse Seismic",
+        "category": "WATCHLIST"
+      },
+      "news": []
+    },
+    {
+      "signal_name": "drop_with_news",
+      "symbol": "BYND",
+      "severity": 9.145016690869353,
+      "headline": "BYND dropped 9.15% \u2014 7 headline(s) found",
+      "details": {
+        "pct_change": -9.145016690869353,
+        "last_close": 8.395000457763672,
+        "prior_close": 9.24,
+        "threshold": 2.0,
+        "cap_tier": null,
+        "description": "Beyond Meat",
+        "category": "HOLDING"
+      },
+      "news": [
+        {
+          "headline": "Stocks making big moves yesterday: Beyond Meat, GEO Group, Instacart, LendingTree, and NN",
+          "summary": "Check out the companies making headlines yesterday:",
+          "url": "https://finance.yahoo.com/markets/stocks/articles/stocks-making-big-moves-yesterday-181658795.html",
+          "source": "StockStory",
+          "published_at": "2026-09-24T18:16:58+00:00"
+        },
+        {
+          "headline": "Stocks making big moves yesterday: Beyond Meat, GEO Group, Instacart, LendingTree, and NN",
+          "summary": "Check out the companies making headlines yesterday:",
+          "url": "https://finnhub.io/api/news?id=e1bc5a9c710951ab8f9a4f2953080a4ce8c98b65b5e06d2f77378f1402acdfa2",
+          "source": "Yahoo",
+          "published_at": "2026-09-24T18:16:58+00:00"
+        },
+        {
+          "headline": "US judge cuts Beyond Meat trademark penalty",
+          "summary": "The case dates to 2022, with Sonate alleging Beyond Meat\u2019s ad campaign with Dunkin\u2019 Donuts was likely to confuse consumers.",
+          "url": "https://www.just-food.com/news/beyond-meat-trademark-penalty-reduced/",
+          "source": "Just Food",
+          "published_at": "2026-09-24T10:03:53+00:00"
+        },
+        {
+          "headline": "US judge cuts Beyond Meat trademark penalty",
+          "summary": "The case dates to 2022, with Sonate alleging Beyond Meat\u2019s ad campaign with Dunkin\u2019 Donuts was likely to confuse consumers.",
+          "url": "https://finnhub.io/api/news?id=ae43f7213ca2ed314ba44731d3a70017e1fa799889442b8f21c353a17f4d818a",
+          "source": "Yahoo",
+          "published_at": "2026-09-24T10:03:53+00:00"
+        },
+        {
+          "headline": "Beyond Meat: Runway Extended By Debt-For-Equity Swap, But Cash Burn Remains Problematic",
+          "summary": "",
+          "url": "https://finnhub.io/api/news?id=b474f6781b426e1bedf7d7e7baa8e58729902fdabaf37fe830ab18dad03c5986",
+          "source": "SeekingAlpha",
+          "published_at": "2026-09-24T08:47:07+00:00"
+        }
+      ]
+    },
+    {
+      "signal_name": "drop_with_news",
+      "symbol": "BB",
+      "severity": 6.313997079894802,
+      "headline": "BB dropped 6.31% \u2014 48 headline(s) found",
+      "details": {
+        "pct_change": -6.313997079894802,
+        "last_close": 8.234999656677246,
+        "prior_close": 8.79,
+        "threshold": 2.0,
+        "cap_tier": null,
+        "description": "BlackBerry",
+        "category": "HOLDING"
+      },
+      "news": [
+        {
+          "headline": "BB Q2 Earnings Call Highlights QNX Momentum and Higher Outlook",
+          "summary": "BlackBerry raises its fiscal 2027 outlook as record QNX revenues, stronger cash flow and its first Alloy Kore win fuel growth momentum.",
+          "url": "https://finance.yahoo.com/markets/stocks/articles/bb-q2-earnings-call-highlights-130000778.html",
+          "source": "Zacks",
+          "published_at": "2026-09-25T13:00:00+00:00"
+        },
+        {
+          "headline": "Company News for Sep 25, 2026",
+          "summary": "Companies in The News Are: BB,DRI,MGM,PPLI,KNF",
+          "url": "https://finance.yahoo.com/markets/stocks/articles/company-news-sep-25-2026-122900622.html",
+          "source": "Zacks",
+          "published_at": "2026-09-25T12:29:00+00:00"
+        },
+        {
+          "headline": "RBC Capital Reiterates Sector Perform on BlackBerry, Maintains $9 Price Target",
+          "summary": "RBC Capital  analyst Paul Treiber   reiterates BlackBerry (NYSE:BB) with a Sector Perform and maintains $9 price target.",
+          "url": "https://finnhub.io/api/news?id=54214d5bc83d2eae64245c629ae1298f25b8f8c327a7e5af5b8ce9409242516d",
+          "source": "Benzinga",
+          "published_at": "2026-09-25T09:42:47+00:00"
+        },
+        {
+          "headline": "BB Stock Eyes Best Week In 3 Months As QNX Royalties Become \u2018Star Of The Show\u2019 \u2014 President\u2019s Holdings Revealed",
+          "summary": "CFO Tim Foote called QNX royalties \u201cthe star of the show\u201d as BlackBerry\u2019s $950 million backlog began converting into revenue.",
+          "url": "https://stocktwits.com/news-articles/markets/equity/bb-stock-qnx-royalties-star-of-the-show-president-holdings-revealed/cZMarhGRBad",
+          "source": "Stocktwits",
+          "published_at": "2026-09-25T01:32:10+00:00"
+        },
+        {
+          "headline": "BB Stock Eyes Best Week In 3 Months As QNX Royalties Become \u2018Star Of The Show\u2019 \u2014 President\u2019s Holdings Revealed",
+          "summary": "CFO Tim Foote called QNX royalties \u201cthe star of the show\u201d as BlackBerry\u2019s $950 million backlog began converting into revenue.",
+          "url": "https://finnhub.io/api/news?id=c05166f88f654388485b5575343dadd1b7a47483c0a66a1c2ba78b1600899fe6",
+          "source": "Yahoo",
+          "published_at": "2026-09-25T01:32:10+00:00"
+        }
+      ]
+    },
+    {
+      "signal_name": "drop_with_news",
+      "symbol": "ZS",
+      "severity": 5.504897744177573,
+      "headline": "ZS dropped 5.50% \u2014 6 headline(s) found",
+      "details": {
+        "pct_change": -5.504897744177573,
+        "last_close": 194.8300018310547,
+        "prior_close": 206.18,
+        "threshold": 2.0,
+        "cap_tier": null,
+        "description": "Zscaler",
+        "category": "HOLDING"
+      },
+      "news": [
+        {
+          "headline": "Zscaler shares slide on CRO departure, but analysts see limited disruption",
+          "summary": "Shares of Zscaler Inc. (NASDAQ:ZS) fell 8.6% on Friday morning after the company announced that chief revenue officer Mike Rich is stepping down for personal reasons. Ross Tackett, currently Worldwide Head of Sales, will take over as CRO effective October 1. Jefferies said the timing...",
+          "url": "https://www.proactiveinvestors.com/companies/news/1099150/zscaler-shares-slide-on-cro-departure-but-analysts-see-limited-disruption-1099150.html",
+          "source": "Proactive",
+          "published_at": "2026-09-25T14:11:00+00:00"
+        },
+        {
+          "headline": "Why Zscaler Stock Is on Pace for Its Worst Day in 3 Months",
+          "summary": "Shares of  Zscaler  fell Friday and were on pace for their worst daily performance in three months after the cybersecurity company made a change to its executive management.  The company said Thursday that Ross Tackett would be taking over the role of chief revenue officer from Mike Rich.  Rich is leaving  Zscaler  for \u201cpersonal reasons,\u201d according to the company.",
+          "url": "https://www.barrons.com/articles/zscaler-stock-executive-change-8aff21d6?siteid=yhoof2&yptr=yahoo",
+          "source": "Barrons.com",
+          "published_at": "2026-09-25T14:09:00+00:00"
+        },
+        {
+          "headline": "Nvidia, Meta, Akamai, Comcast, Zscaler, Nike, and More Stocks That Explain Today\u2019s Market",
+          "summary": "Akamai Technologies rises sharply after securing a deal with Anthropic. Nike declines following a downgrade of the stock.",
+          "url": "https://www.barrons.com/articles/stock-movers-4d9aad60?siteid=yhoof2&yptr=yahoo",
+          "source": "Barrons.com",
+          "published_at": "2026-09-25T14:05:00+00:00"
+        },
+        {
+          "headline": "CrowdStrike (CRWD) Joined A Founding Alliance To Secure AI Agents",
+          "summary": "CrowdStrike Holdings (NasdaqGS:CRWD) has joined peers as a founding member of the new Blueprint Alliance to secure AI agents. The Blueprint Alliance brings together AWS, Google Cloud, Okta, Salesforce, ServiceNow, Zscaler and others in a shared security effort. Members plan to create common principles and a reference architecture that enterprises can use to manage and protect AI agents. The Blueprint Alliance launch only captures one angle of CrowdStrike's AI agent push, which extends beyond...",
+          "url": "https://finance.yahoo.com/technology/ai/articles/crowdstrike-crwd-joined-founding-alliance-061018474.html",
+          "source": "Simply Wall St.",
+          "published_at": "2026-09-25T06:10:18+00:00"
+        },
+        {
+          "headline": "Zscaler stock falls on CRO leadership change",
+          "summary": "Investing.com -- Zscaler Inc (NASDAQ:ZS) shares dropped more than 4% in after-hours trading Thursday following the announcement of a leadership change in its revenue organization.",
+          "url": "https://finance.yahoo.com/markets/stocks/articles/zscaler-stock-falls-cro-leadership-205136908.html",
+          "source": "Investing.com",
+          "published_at": "2026-09-24T20:51:36+00:00"
+        }
+      ]
+    },
+    {
+      "signal_name": "drop_with_news",
+      "symbol": "EDIT",
+      "severity": 4.6931370070695015,
+      "headline": "EDIT dropped 4.69% \u2014 8 headline(s) found",
+      "details": {
+        "pct_change": -4.6931370070695015,
+        "last_close": 2.640000104904175,
+        "prior_close": 2.77,
+        "threshold": 2.0,
+        "cap_tier": null,
+        "description": "Editas Medicine",
+        "category": "HOLDING"
+      },
+      "news": [
+        {
+          "headline": "Crispr Therapeutics: Why AI Giant Anthropic's Discovery Has Rocked Gene Editing",
+          "summary": "",
+          "url": "https://finnhub.io/api/news?id=e5b28f04036f73c4e5e5d62cd7d6c652d57fb578b4b8687edc670e0b567a5243",
+          "source": "SeekingAlpha",
+          "published_at": "2026-09-24T14:59:20+00:00"
+        },
+        {
+          "headline": "CRSP, NTLA, BEAM, PRME, EDIT Shares Slip \u2014 Did Claude Just Spook Gene-Editing Stocks?",
+          "summary": "CRSP shares closed down 6% on Wednesday, while PRME and EDIT stocks declined 12% and 8%, respectively.",
+          "url": "https://stocktwits.com/news-articles/markets/equity/crsp-ntla-beam-prme-edit-shares-slip-did-claude-just-spook-gene-editing-stocks/cZM4eZORBBa",
+          "source": "Stocktwits",
+          "published_at": "2026-09-23T21:49:19+00:00"
+        },
+        {
+          "headline": "CRSP, NTLA, BEAM, PRME, EDIT Shares Slip \u2014 Did Claude Just Spook Gene-Editing Stocks?",
+          "summary": "CRSP shares closed down 6% on Wednesday, while PRME and EDIT stocks declined 12% and 8%, respectively.",
+          "url": "https://finnhub.io/api/news?id=7b52c750ad772ef15d3be572fd7f42d7102058291b4a3cf5f59d04550a5fcb08",
+          "source": "Yahoo",
+          "published_at": "2026-09-23T21:49:19+00:00"
+        },
+        {
+          "headline": "Microsoft upgraded, HubSpot initiated: Wall Street's top analyst calls",
+          "summary": "Microsoft upgraded, HubSpot initiated: Wall Street's top analyst calls",
+          "url": "https://finnhub.io/api/news?id=278334f451c48e13a3bad1a2f529fd8d10e1e1956c735cccaeaaf16a629e6790",
+          "source": "Yahoo",
+          "published_at": "2026-09-23T13:49:52+00:00"
+        },
+        {
+          "headline": "CRISPR Therapeutics Traded Sideways and Down for 12 Months: One Wall Street Pro Expects 85% Gains Soon",
+          "summary": "CRISPR Therapeutics owns the only approved gene therapy of its kind, yet the stock sits far below where Wall Street thinks it belongs. One analyst sees a path to gains that would embarrass the broader market, but the numbers tell a complicated story.",
+          "url": "https://finnhub.io/api/news?id=22a992c5189f8c70149b83d875e9d4e3a1a430473294d656fa585389bb8fade0",
+          "source": "Yahoo",
+          "published_at": "2026-09-23T12:22:45+00:00"
+        }
+      ]
+    },
+    {
+      "signal_name": "drop_with_news",
+      "symbol": "WIX",
+      "severity": 4.688312480976055,
+      "headline": "WIX dropped 4.69% \u2014 3 headline(s) found",
+      "details": {
+        "pct_change": -4.688312480976055,
+        "last_close": 73.38999938964844,
+        "prior_close": 77.0,
+        "threshold": 2.0,
+        "cap_tier": null,
+        "description": "Wix.com",
+        "category": "HOLDING"
+      },
+      "news": [
+        {
+          "headline": "GoDaddy Stock Fails To Break Out After Reported Takeover Offer",
+          "summary": "Norton antivirus maker Gen Digital reportedly made a bid for website domain firm GoDaddy. A merger could be an AI growth catalyst.",
+          "url": "https://www.investors.com/news/go-daddy-stock-buy-point-gen-digital-takeover-offer/?src=A00220&yptr=yahoo",
+          "source": "Investor's Business Daily",
+          "published_at": "2026-09-24T20:56:01+00:00"
+        },
+        {
+          "headline": "A Major Software Player Has Its Eyes on GoDaddy, Says a Report. GoDaddy Stock Rises.",
+          "summary": "GoDaddy stock rises following a report that Gen Digital could be looking to acquire the web domain provider.",
+          "url": "https://www.barrons.com/articles/godaddy-stock-gen-digital-acquisition-report-6ceb940e?siteid=yhoof2&yptr=yahoo",
+          "source": "Barrons.com",
+          "published_at": "2026-09-24T18:17:00+00:00"
+        },
+        {
+          "headline": "Wix.com Ltd. (WIX) Is a Trending Stock: Facts to Know Before Betting on It",
+          "summary": "Wix.com (WIX) has been one of the stocks most watched by Zacks.com users lately. So, it is worth exploring what lies ahead for the stock.",
+          "url": "https://finance.yahoo.com/markets/stocks/articles/wix-com-ltd-wix-trending-120004426.html",
+          "source": "Zacks",
+          "published_at": "2026-09-24T12:00:04+00:00"
+        }
+      ]
+    },
+    {
+      "signal_name": "drop_with_news",
+      "symbol": "RBLX",
+      "severity": 4.408162953902265,
+      "headline": "RBLX dropped 4.41% \u2014 6 headline(s) found",
+      "details": {
+        "pct_change": -4.408162953902265,
+        "last_close": 46.84000015258789,
+        "prior_close": 49.0,
+        "threshold": 2.0,
+        "cap_tier": null,
+        "description": "Roblox",
+        "category": "HOLDING"
+      },
+      "news": [
+        {
+          "headline": "Gaming stocks fall after Meta unveils AI game-building tools",
+          "summary": "Investing.com -- Unity Software Inc. (NYSE:U) fell 5%, while Roblox Corporation and AppLovin each dropped 1% after Meta announced new AI-powered game creation tools at its Connect conference.",
+          "url": "https://finance.yahoo.com/markets/stocks/articles/gaming-stocks-fall-meta-unveils-190933194.html",
+          "source": "Investing.com",
+          "published_at": "2026-09-24T19:09:33+00:00"
+        },
+        {
+          "headline": "Gaming stocks fall after Meta unveils AI game-building tools",
+          "summary": "Investing.com -- Unity Software Inc. (NYSE:U) fell 5%, while Roblox Corporation and AppLovin each dropped 1% after Meta announced new AI-powered game creation tools at its Connect conference.",
+          "url": "https://finnhub.io/api/news?id=7254c3a607a6e6e23d1a7334fcb4a2eebfbf0bb8e426fde04a2a27c10a38e781",
+          "source": "Yahoo",
+          "published_at": "2026-09-24T19:09:33+00:00"
+        },
+        {
+          "headline": "The Engine Behind Unity Stock Has Real Parts",
+          "summary": "This software stock has the engine of a genuine turnaround, but after a recent pullback, investors must decide if the ticket price already accounts for the entire trip.",
+          "url": "https://www.trefis.com/articles/616409/the-engine-behind-unity-stock-has-real-parts/2026-09-24",
+          "source": "Trefis",
+          "published_at": "2026-09-24T12:38:39+00:00"
+        },
+        {
+          "headline": "The Engine Behind Unity Stock Has Real Parts",
+          "summary": "This software stock has the engine of a genuine turnaround, but after a recent pullback, investors must decide if the ticket price already accounts for the entire trip.",
+          "url": "https://finnhub.io/api/news?id=32dae4425b8d9f90e5ed9c2f9734bc175bfe5b17e6589955d09be1ce139205e0",
+          "source": "Yahoo",
+          "published_at": "2026-09-24T12:38:39+00:00"
+        },
+        {
+          "headline": "Roblox: AI Could Build A Trillion-Dollar Entertainment Platform",
+          "summary": "Roblox (RBLX) could be a top AI beneficiary\u00e2\u0080\u0094faster game creation, record creator earnings, and long-term growth potential. See here for more details.",
+          "url": "https://finnhub.io/api/news?id=718d9f77e278de68e58ede5d4122be122de206fa2fffc370731adde877be3cd8",
+          "source": "SeekingAlpha",
+          "published_at": "2026-09-23T10:02:12+00:00"
+        }
+      ]
+    },
+    {
+      "signal_name": "drop_with_news",
+      "symbol": "OKTA",
+      "severity": 4.15896883277473,
+      "headline": "OKTA dropped 4.16% \u2014 10 headline(s) found",
+      "details": {
+        "pct_change": -4.15896883277473,
+        "last_close": 198.58999633789062,
+        "prior_close": 207.2077,
+        "threshold": 2.0,
+        "cap_tier": null,
+        "description": "Okta",
+        "category": "HOLDING"
+      },
+      "news": [
+        {
+          "headline": "Half a Dozen Analysts Have a Buy Signal on Okta",
+          "summary": "Wall Street just handed Okta a coordinated vote of confidence tied to one bold bet on AI agents, and the price targets analysts set reveal exactly how high they think this identity play can run.",
+          "url": "https://247wallst.com/investing/2026/09/25/half-a-dozen-analysts-have-a-buy-signal-on-okta/",
+          "source": "24/7 Wall St.",
+          "published_at": "2026-09-25T12:00:40+00:00"
+        },
+        {
+          "headline": "Why Okta Stock Was Rocking it This Week",
+          "summary": "The company is playing a big role in a new industry alliance aimed at securing AI agents.",
+          "url": "https://www.fool.com/investing/2026/09/25/why-okta-stock-was-rocking-it-this-week/",
+          "source": "Motley Fool",
+          "published_at": "2026-09-25T09:45:00+00:00"
+        },
+        {
+          "headline": "CrowdStrike (CRWD) Joined A Founding Alliance To Secure AI Agents",
+          "summary": "CrowdStrike Holdings (NasdaqGS:CRWD) has joined peers as a founding member of the new Blueprint Alliance to secure AI agents. The Blueprint Alliance brings together AWS, Google Cloud, Okta, Salesforce, ServiceNow, Zscaler and others in a shared security effort. Members plan to create common principles and a reference architecture that enterprises can use to manage and protect AI agents. The Blueprint Alliance launch only captures one angle of CrowdStrike's AI agent push, which extends beyond...",
+          "url": "https://finance.yahoo.com/technology/ai/articles/crowdstrike-crwd-joined-founding-alliance-061018474.html",
+          "source": "Simply Wall St.",
+          "published_at": "2026-09-25T06:10:18+00:00"
+        },
+        {
+          "headline": "Why Did OKTA, S, META Stocks Jump To 52-Week Highs Today?",
+          "summary": "Okta, SentinelOne and Meta Platforms jumped to 52-week highs on Thursday amid a series of positive catalysts and rising Wall Street optimism.",
+          "url": "https://stocktwits.com/news-articles/markets/equity/why-did-okta-s-meta-stocks-jump-to-52-week-highs-today/cZMaUTkRBaf",
+          "source": "Stocktwits",
+          "published_at": "2026-09-25T05:03:19+00:00"
+        },
+        {
+          "headline": "Okta price target lifted to $220 as BofA sees stronger AI agent positioning",
+          "summary": "Bank of America (BofA) raised its price target on Okta Inc (NASDAQ:OKTA) to $220 from $200 after the company unveiled new AI-agent security and identity capabilities at its Oktane 2026 conference. The bank said Okta\u2019s ambition to become the identity control plane for AI agents was reinforced...",
+          "url": "https://www.proactiveinvestors.com/companies/news/1099097/okta-price-target-lifted-to-220-as-bofa-sees-stronger-ai-agent-positioning-1099097.html",
+          "source": "Proactive",
+          "published_at": "2026-09-24T17:13:00+00:00"
+        }
+      ]
+    },
+    {
+      "signal_name": "drop_with_news",
+      "symbol": "META",
+      "severity": 3.734955229478947,
+      "headline": "META dropped 3.73% \u2014 9 headline(s) found",
+      "details": {
+        "pct_change": -3.734955229478947,
+        "last_close": 747.0150146484375,
+        "prior_close": 775.9982,
+        "threshold": 2.0,
+        "cap_tier": null,
+        "description": "Meta Platforms",
+        "category": "HOLDING"
+      },
+      "news": [
+        {
+          "headline": "AMD Shares Are About to Become Even More Valuable And That Keeps Me Buying",
+          "summary": "Lisa Su's latest earnings call left me convinced the market still has not priced what AMD is actually building, and I added to my position again this week to get ahead of the milestone I think reprices everything.",
+          "url": "https://247wallst.com/investing/2026/09/25/amd-shares-are-about-to-become-even-more-valuable-and-that-keeps-me-buying/",
+          "source": "24/7 Wall St.",
+          "published_at": "2026-09-25T14:45:21+00:00"
+        },
+        {
+          "headline": "Meta Slides 4% as Retracement Follows 32% Monthly Run; Pinterest and Snap Inch Higher",
+          "summary": "Profit taking is hitting Meta Platforms (NASDAQ:META) after a monthly run fueled by its new AI agent, Muse. Meta Platforms stock is down 4% to $750.18 early in the session, a pullback from a 32% gain over the past month. Much of that run arrived well ahead of any revenue from the agent, which leaves [\u2026]",
+          "url": "https://247wallst.com/investing/2026/09/25/meta-slides-4-as-retracement-follows-32-monthly-run-pinterest-and-snap-inch-higher/",
+          "source": "24/7 Wall St.",
+          "published_at": "2026-09-25T14:41:33+00:00"
+        },
+        {
+          "headline": "Wall St edges up as AI enthusiasm eases worries over higher oil prices, yields",
+          "summary": "By Johann M Cherian and Avinash P Sept 25 (Reuters) - AstWall Street's main indexes inched higher on Friday as AI optimism buoyed sentiment despite elevated oil prices and rising Treasury yields,",
+          "url": "https://finance.yahoo.com/markets/stocks/articles/wall-st-futures-gain-ai-095035646.html",
+          "source": "Reuters",
+          "published_at": "2026-09-25T14:24:48+00:00"
+        },
+        {
+          "headline": "The \"Magnificent Seven\" Stocks: Here's the 1 I'm Buying Hand Over Fist Right Now",
+          "summary": "It's too good a value to pass up on right now.",
+          "url": "https://www.fool.com/investing/2026/09/25/the-magnificent-seven-stocks-heres-the-1-im-buying/",
+          "source": "Motley Fool",
+          "published_at": "2026-09-25T14:20:00+00:00"
+        },
+        {
+          "headline": "Stock Market Split As Nasdaq Hits High, Dow Jones Slides Amid Surging Treasury Yields: Weekly Review",
+          "summary": "The Nasdaq hit a new high this week, but the Dow Jones set fresh three-month lows as Treasury yields skyrocketed.",
+          "url": "https://www.investors.com/news/stock-market-split-nasdaq-hits-high-dow-jones-slides-surging-treasury-yields/?src=A00220&yptr=yahoo",
+          "source": "Investor's Business Daily",
+          "published_at": "2026-09-25T14:18:42+00:00"
+        }
+      ]
+    },
+    {
+      "signal_name": "drop_with_news",
+      "symbol": "NET",
+      "severity": 3.533017213512637,
+      "headline": "NET dropped 3.53% \u2014 8 headline(s) found",
+      "details": {
+        "pct_change": -3.533017213512637,
+        "last_close": 346.2200012207031,
+        "prior_close": 358.9,
+        "threshold": 2.0,
+        "cap_tier": null,
+        "description": "Cloudflare",
+        "category": "HOLDING"
+      },
+      "news": [
+        {
+          "headline": "Can Unified Platform Strategy Boost Cloudflare's Long-Term Growth?",
+          "summary": "NET's unified platform is winning large enterprise deals as customers consolidate security, networking and developer tools.",
+          "url": "https://finance.yahoo.com/technology/articles/unified-platform-strategy-boost-cloudflares-133600830.html",
+          "source": "Zacks",
+          "published_at": "2026-09-25T13:36:00+00:00"
+        },
+        {
+          "headline": "Akamai Surges 15% on $11.6B Anthropic Cloud Deal; CoreWeave and Cloudflare Tick Up",
+          "summary": "Anthropic just signed a multibillion-dollar cloud deal with a company Wall Street has never thought of as an AI infrastructure player, and the stock reaction is raising a bigger question about who really wins the AI compute race.",
+          "url": "https://247wallst.com/investing/2026/09/25/akamai-surges-15-on-11-6b-anthropic-cloud-deal-coreweave-and-cloudflare-tick-up/",
+          "source": "24/7 Wall St.",
+          "published_at": "2026-09-25T12:59:08+00:00"
+        },
+        {
+          "headline": "Do Cloudflare\u2019s (NET) New AI Crawler Controls Quietly Strengthen Its Data-Moat Narrative?",
+          "summary": "In September 2026, Cloudflare, Inc. launched new AI crawling controls, including a \u201cDisallow AI Training\u201d setting and an Accountable designation for AI crawlers, giving website owners granular control over search, AI training, and AI agents while keeping them visible in search results. A key innovation is Cloudflare\u2019s Bot Preference Sync and accountability criteria, which standardize how websites express AI access preferences across major crawlers like Apple, Google, and Microsoft, aligning...",
+          "url": "https://finance.yahoo.com/technology/ai/articles/cloudflare-net-ai-crawler-controls-060920372.html",
+          "source": "Simply Wall St.",
+          "published_at": "2026-09-25T06:09:20+00:00"
+        },
+        {
+          "headline": "What Does Cloudflare (NET) New AI Crawler Control Mean For Website Owners?",
+          "summary": "Cloudflare (NYSE:NET) introduced an \"Accountable\" label for AI crawlers, flagging which bots identify themselves and respect publisher rules. The firm launched a \"Disallow AI Training\" feature that lets site owners restrict use of their content in AI model training. Cloudflare said the new controls also extend to how AI search tools can index and surface website content. The new Accountable designation and Disallow AI Training controls deserve to be weighed alongside Cloudflare's broader...",
+          "url": "https://finance.yahoo.com/technology/ai/articles/does-cloudflare-net-ai-crawler-221539969.html",
+          "source": "Simply Wall St.",
+          "published_at": "2026-09-24T22:15:39+00:00"
+        },
+        {
+          "headline": "Why the Market Dipped But Cloudflare (NET) Gained Today",
+          "summary": "In the latest trading session, Cloudflare (NET) closed at $358.99, marking a +1.89% move from the previous day.",
+          "url": "https://finance.yahoo.com/markets/stocks/articles/why-market-dipped-cloudflare-net-205004331.html",
+          "source": "Zacks",
+          "published_at": "2026-09-24T20:50:04+00:00"
+        }
+      ]
+    },
+    {
+      "signal_name": "drop_with_news",
+      "symbol": "AI",
+      "severity": 3.454713794697574,
+      "headline": "AI dropped 3.45% \u2014 3 headline(s) found",
+      "details": {
+        "pct_change": -3.454713794697574,
+        "last_close": 10.34000015258789,
+        "prior_close": 10.71,
+        "threshold": 2.0,
+        "cap_tier": null,
+        "description": "C3.ai",
+        "category": "HOLDING"
+      },
+      "news": [
+        {
+          "headline": "BigBear.ai Targets Mission-Ready AI: Can It Scale Beyond Defense?",
+          "summary": "BBAI is expanding mission-ready AI beyond defense, but rising competition and continued losses raise questions about scaling commercially.",
+          "url": "https://finance.yahoo.com/technology/ai/articles/bigbear-ai-targets-mission-ready-132000712.html",
+          "source": "Zacks",
+          "published_at": "2026-09-24T13:20:00+00:00"
+        },
+        {
+          "headline": "BigBear.ai Targets Mission-Ready AI: Can It Scale Beyond Defense?",
+          "summary": "BBAI is expanding mission-ready AI beyond defense, but rising competition and continued losses raise questions about scaling commercially.",
+          "url": "https://finnhub.io/api/news?id=20c653a98b75d4597451fd37a94fb41a44e3d1b76615d20f5cc5e1947c598a6c",
+          "source": "Yahoo",
+          "published_at": "2026-09-24T13:20:00+00:00"
+        },
+        {
+          "headline": "'Senators Move To Force AI Companies To Disclose More' - Semafor Exclusive",
+          "summary": "https://www.semafor.com/article/09/24/2026/senators-move-to-force-ai-companies-to-disclose-more",
+          "url": "https://finnhub.io/api/news?id=190fa3a2972ef4e04007b80bc38936fbef41ca065f52e5557b4479260b0102c9",
+          "source": "Benzinga",
+          "published_at": "2026-09-24T11:40:02+00:00"
+        }
+      ]
+    },
+    {
+      "signal_name": "drop_with_news",
+      "symbol": "NTR.TO",
+      "severity": 3.317083644448191,
+      "headline": "NTR.TO dropped 3.32% \u2014 1 headline(s) found",
+      "details": {
+        "pct_change": -3.317083644448191,
+        "last_close": 101.13999938964844,
+        "prior_close": 104.61000061035156,
+        "threshold": 2.0,
+        "cap_tier": null,
+        "description": "Nutrien",
+        "category": "WATCHLIST"
+      },
+      "news": [
+        {
+          "headline": "Nutrien's Shares Rise 26% in a Year: What's Behind the Upside?",
+          "summary": "NTR's shares have rallied 25.7% as firm fertilizer prices, record potash sales and cost discipline support earnings and free cash flow.",
+          "url": "https://finance.yahoo.com/markets/stocks/articles/nutriens-shares-rise-26-whats-111800365.html",
+          "source": "Zacks",
+          "published_at": "2026-09-25T11:18:00+00:00"
+        }
+      ]
+    },
+    {
+      "signal_name": "drop_with_news",
+      "symbol": "GLOB",
+      "severity": 2.9271742876838314,
+      "headline": "GLOB dropped 2.93% \u2014 1 headline(s) found",
+      "details": {
+        "pct_change": -2.9271742876838314,
+        "last_close": 34.654998779296875,
+        "prior_close": 35.7,
+        "threshold": 2.0,
+        "cap_tier": null,
+        "description": "Globant",
+        "category": "HOLDING"
+      },
+      "news": [
+        {
+          "headline": "Can Globant (GLOB)\u2019s AI Pivot Lead to Better Economics? Early Results Offer Hope",
+          "summary": "Artificial intelligence is tearing up the business model that built Globant S.A. (NYSE:GLOB). The company\u2019s stock price has dropped sharply to around $40 from $350 in 2021. Now Globant is attempting to reinvent itself. And it\u2019s doing that by leaning more on AI. Its new Glob.AI platform is growing rapidly. But the transition is coming [\u2026]",
+          "url": "https://finance.yahoo.com/technology/ai/articles/globant-glob-ai-pivot-lead-221159764.html",
+          "source": "Insider Monkey",
+          "published_at": "2026-09-23T22:11:59+00:00"
+        }
+      ]
+    },
+    {
+      "signal_name": "drop_with_news",
+      "symbol": "DPZ",
+      "severity": 2.880590187123254,
+      "headline": "DPZ dropped 2.88% \u2014 6 headline(s) found",
+      "details": {
+        "pct_change": -2.880590187123254,
+        "last_close": 287.5899963378906,
+        "prior_close": 296.12,
+        "threshold": 2.0,
+        "cap_tier": null,
+        "description": "Dominos Pizza",
+        "category": "HOLDING"
+      },
+      "news": [
+        {
+          "headline": "Darden Restaurants (DRI) Misses Q1 Earnings and Revenue Estimates",
+          "summary": "Darden Restaurants (DRI) delivered earnings and revenue surprises of -0.49% and -0.14%, respectively, for the quarter ended August 2026. Do the numbers hold clues to what lies ahead for the stock?",
+          "url": "https://finnhub.io/api/news?id=aed56baf9bbac7ce5a2d96c4059ff0abbe8378ef48db94ebbcfb76b8123ab0bc",
+          "source": "Yahoo",
+          "published_at": "2026-09-24T11:10:02+00:00"
+        },
+        {
+          "headline": "Domino\u2019s Pizza Is Down 28% This Year. Is It Time to Sell or Load Up?",
+          "summary": "Domino's Pizza has shed more ground this year than any peer or benchmark in its category, yet one close competitor moved in the opposite direction entirely, which makes the sell-or-hold question harder than the chart alone suggests.",
+          "url": "https://247wallst.com/investing/2026/09/23/dominos-pizza-is-down-28-this-year-is-it-time-to-sell-or-load-up/",
+          "source": "24/7 Wall St.",
+          "published_at": "2026-09-23T19:23:09+00:00"
+        },
+        {
+          "headline": "Domino\u2019s Pizza Is Down 28% This Year. Is It Time to Sell or Load Up?",
+          "summary": "Domino\u2019s Pizza (NASDAQ:DPZ) stock has slid sharply in 2026, falling several times as far as either the consumer discretionary sector or the broad market has moved. The Consumer Discretionary Select Sector SPDR Fund (NYSEARCA:XLY) is down 7% year to date (YTD). The SPDR S&P 500 ETF Trust (NYSEARCA:SPY) is up 13% YTD, a split that [\u2026]",
+          "url": "https://finnhub.io/api/news?id=b3e89ab1f92d59917d9dc6713b675a55b63ca36be481ed2af3e7a960a350eb23",
+          "source": "Yahoo",
+          "published_at": "2026-09-23T19:23:09+00:00"
+        },
+        {
+          "headline": "Cracker Barrel Old Country Store (CBRL) Q4 Earnings and Revenues Surpass Estimates",
+          "summary": "Cracker Barrel (CBRL) delivered earnings and revenue surprises of +395.00% and +2.19%, respectively, for the quarter ended July 2026. Do the numbers hold clues to what lies ahead for the stock?",
+          "url": "https://finnhub.io/api/news?id=9d26be94c58d89df3ed4a2c086d08f1525e1d1507fbcb3f8274e59d15572d251",
+          "source": "Yahoo",
+          "published_at": "2026-09-23T12:30:12+00:00"
+        },
+        {
+          "headline": "Restaurant Industry Woes Are Pulling Down QSR Stock. Buy It Now for a 3.5% Yield.",
+          "summary": "Restaurant Brands International has lost 10% over the last month and now yields over 3.5%. The stock's valuation looks reasonable after the fall, and it could appeal to dividend investors.",
+          "url": "https://finnhub.io/api/news?id=293cf6e2635e9a03f77a4dde7d927938995158a049be18dac3e958ffe98e158e",
+          "source": "Yahoo",
+          "published_at": "2026-09-23T12:08:08+00:00"
+        }
+      ]
+    },
+    {
+      "signal_name": "drop_with_news",
+      "symbol": "TXG",
+      "severity": 2.8800989416830363,
+      "headline": "TXG dropped 2.88% \u2014 2 headline(s) found",
+      "details": {
+        "pct_change": -2.8800989416830363,
+        "last_close": 82.78500366210938,
+        "prior_close": 85.24,
+        "threshold": 2.0,
+        "cap_tier": null,
+        "description": "10x Genomics",
+        "category": "HOLDING"
+      },
+      "news": [
+        {
+          "headline": "Surgery Partners, 10x Genomics, QuidelOrtho, Zimmer Biomet, and Tandem Diabetes Stocks Trade Down, What You Need To Know",
+          "summary": "A number of stocks fell in the afternoon session after sentiment in the healthcare sector weakened, as the Centers for Medicare and Medicaid Services moved to cancel Affordable Care Act coverage for roughly 760,000 people and claw back billions in subsidies.",
+          "url": "https://finance.yahoo.com/healthcare/articles/surgery-partners-10x-genomics-quidelortho-213005328.html",
+          "source": "StockStory",
+          "published_at": "2026-09-23T21:30:05+00:00"
+        },
+        {
+          "headline": "Surgery Partners, 10x Genomics, QuidelOrtho, Zimmer Biomet, and Tandem Diabetes Stocks Trade Down, What You Need To Know",
+          "summary": "A number of stocks fell in the afternoon session after sentiment in the healthcare sector weakened, as the Centers for Medicare and Medicaid Services moved to cancel Affordable Care Act coverage for roughly 760,000 people and claw back billions in subsidies.",
+          "url": "https://finnhub.io/api/news?id=f3e81485ce9af3bd69f64ca84903ea5a818e59f17ed58bf1eb759387a84e6d55",
+          "source": "Yahoo",
+          "published_at": "2026-09-23T21:30:05+00:00"
+        }
+      ]
+    },
+    {
+      "signal_name": "drop_with_news",
+      "symbol": "FROG",
+      "severity": 2.7446144248752526,
+      "headline": "FROG dropped 2.74% \u2014 1 headline(s) found",
+      "details": {
+        "pct_change": -2.7446144248752526,
+        "last_close": 91.24500274658203,
+        "prior_close": 93.82,
+        "threshold": 2.0,
+        "cap_tier": null,
+        "description": "JFrog",
+        "category": "HOLDING"
+      },
+      "news": [
+        {
+          "headline": "Q2 Earnings Highlights: JFrog (NASDAQ:FROG) Vs The Rest Of The Software Development Stocks",
+          "summary": "As the Q2 earnings season wraps, let\u2019s dig into this quarter\u2019s best and worst performers in the software development industry, including JFrog (NASDAQ:FROG) and its peers.",
+          "url": "https://finance.yahoo.com/markets/stocks/articles/q2-earnings-highlights-jfrog-nasdaq-204858548.html",
+          "source": "StockStory",
+          "published_at": "2026-09-24T20:48:58+00:00"
+        }
+      ]
+    },
+    {
+      "signal_name": "drop_with_news",
+      "symbol": "1810.HK",
+      "severity": 2.5583156776810427,
+      "headline": "1810.HK dropped 2.56% \u2014 2 headline(s) found",
+      "details": {
+        "pct_change": -2.5583156776810427,
+        "last_close": 25.899999618530273,
+        "prior_close": 26.579999923706055,
+        "threshold": 2.0,
+        "cap_tier": null,
+        "description": "Xiaomi",
+        "category": "HOLDING"
+      },
+      "news": [
+        {
+          "headline": "Qualcomm Takes AI To The Edge With New Mobile Chips",
+          "summary": "Qualcomm showed off new mobile processors to power edge devices running AI applications. Qualcomm stock dropped Wednesday.",
+          "url": "https://www.investors.com/news/technology/qualcomm-stock-qcom-edge-ai-snapdragon-summit-2026/?src=A00220&yptr=yahoo",
+          "source": "Investor's Business Daily",
+          "published_at": "2026-09-23T22:37:08+00:00"
+        },
+        {
+          "headline": "Qualcomm Falls 1% as Dual 2nm Chips Widen the AI Phone Bet",
+          "summary": "Nine announced device brands broaden Qualcomm's reach, but shipment volumes and chip economics remain undisclosed.",
+          "url": "https://finance.yahoo.com/technology/ai/articles/qualcomm-falls-1-dual-2nm-173712353.html",
+          "source": "GuruFocus.com",
+          "published_at": "2026-09-23T17:37:12+00:00"
+        }
+      ]
+    },
+    {
+      "signal_name": "drop_with_news",
+      "symbol": "NCNO",
+      "severity": 2.512310760949049,
+      "headline": "NCNO dropped 2.51% \u2014 1 headline(s) found",
+      "details": {
+        "pct_change": -2.512310760949049,
+        "last_close": 19.790000915527344,
+        "prior_close": 20.3,
+        "threshold": 2.0,
+        "cap_tier": null,
+        "description": "nCino",
+        "category": "HOLDING"
+      },
+      "news": [
+        {
+          "headline": "nCino (NCNO) Screens As Undervalued, Is It A Bargain Or Fully Priced?",
+          "summary": "nCino (NCNO) traded at US$19.67 at the last close, following a period of mixed share performance over the past month and past 3 months for the banking software provider. Recent trading has been choppy for nCino, with the share price falling 3.72% over the last session and down 10.22% across the past week, despite a strong 90 day share price return of 33.81% and a 1 year total shareholder return that is down 32.91%. Scan beyond nCino and compare its recent swings with a hand-picked group of...",
+          "url": "https://finance.yahoo.com/markets/stocks/articles/ncino-ncno-screens-undervalued-bargain-201717340.html",
+          "source": "Simply Wall St.",
+          "published_at": "2026-09-23T20:17:17+00:00"
+        }
+      ]
+    },
+    {
+      "signal_name": "drop_with_news",
+      "symbol": "COIN",
+      "severity": 2.495714925950576,
+      "headline": "COIN dropped 2.50% \u2014 47 headline(s) found",
+      "details": {
+        "pct_change": -2.495714925950576,
+        "last_close": 193.44850158691406,
+        "prior_close": 198.4,
+        "threshold": 2.0,
+        "cap_tier": null,
+        "description": "Coinbase",
+        "category": "HOLDING"
+      },
+      "news": [
+        {
+          "headline": "Friday's session: gap up and gap down stock in the S&P500 index",
+          "summary": "Wondering what's happening in today's session regarding gap up and gap down stocks? Explore the S&P500 index on Friday to uncover the stocks that are gapping in the S&P500 index.",
+          "url": "https://finnhub.io/api/news?id=8b9047abb681da0087b05f45594ac5bb2244e7fc9e285ad0ebe0e25b49526d32",
+          "source": "ChartMill",
+          "published_at": "2026-09-25T14:35:01+00:00"
+        },
+        {
+          "headline": "What Would You Have Needed To Notice In Coinbase Stock?",
+          "summary": "Coinbase Global (COIN) shares returned 40% over the three months that ended on September 24. A $10,000 holding at the start of that window was worth about $13,980 at the end. The run came even as revenue kept falling. Management had been saying for well over a year that it wanted to go beyond trading, but the latest filed numbers pointed the other way.",
+          "url": "https://www.trefis.com/articles/616643/what-would-you-have-needed-to-notice-in-coinbase-stock/2026-09-25",
+          "source": "Trefis",
+          "published_at": "2026-09-25T14:11:19+00:00"
+        },
+        {
+          "headline": "Pete Hegseth financial disclosure 2026: cash, investments, bitcoin",
+          "summary": "The filing also shows Hegseth sold defense contractor stock and reshuffled family investments into broad index funds after taking office",
+          "url": "https://qz.com/pete-hegseth-financial-disclosure-cash-investments-bitcoin-092526",
+          "source": "Quartz",
+          "published_at": "2026-09-25T12:56:07+00:00"
+        },
+        {
+          "headline": "Elon Musk\u2019s Bitcoin \u2018Trade\u2019 Button Under Fire as Coinbase CEO Eyes $400K Target",
+          "summary": "Elon Musk\u2019s X now lets US users follow Bitcoin Cashtags to Coinbase, Kraken, Gemini and other outside trading platforms. The feature has prompted criticism over ...",
+          "url": "https://www.ccn.com/news/crypto/elon-musks-bitcoin-x-links-under-fire-coinbase-ceo-400k/",
+          "source": "CCN",
+          "published_at": "2026-09-25T12:47:15+00:00"
+        },
+        {
+          "headline": "Elon Musk\u2019s Bitcoin \u2018Trade\u2019 Button Under Fire as Coinbase CEO Eyes $400K Target",
+          "summary": "Elon Musk\u2019s X now lets US users follow Bitcoin Cashtags to Coinbase, Kraken, Gemini and other outside trading platforms. The feature has prompted criticism over ...",
+          "url": "https://finnhub.io/api/news?id=5f0435408d8d9b9592b7541982523c8c0c1aff161890e27c783ee820e4950b3f",
+          "source": "Yahoo",
+          "published_at": "2026-09-25T12:47:15+00:00"
+        }
+      ]
+    },
+    {
+      "signal_name": "drop_with_news",
+      "symbol": "SHOP",
+      "severity": 2.3686941652988796,
+      "headline": "SHOP dropped 2.37% \u2014 49 headline(s) found",
+      "details": {
+        "pct_change": -2.3686941652988796,
+        "last_close": 142.1999969482422,
+        "prior_close": 145.65,
+        "threshold": 2.0,
+        "cap_tier": null,
+        "description": "Shopify",
+        "category": "HOLDING"
+      },
+      "news": [
+        {
+          "headline": "Shopify Inc. (SHOP) Is a Trending Stock: Facts to Know Before Betting on It",
+          "summary": "Zacks.com users have recently been watching Shopify (SHOP) quite a bit. Thus, it is worth knowing the facts that could determine the stock's prospects.",
+          "url": "https://finance.yahoo.com/markets/stocks/articles/shopify-inc-shop-trending-stock-120008635.html",
+          "source": "Zacks",
+          "published_at": "2026-09-25T12:00:08+00:00"
+        },
+        {
+          "headline": "Shopify Inc. (SHOP) Is a Trending Stock: Facts to Know Before Betting on It",
+          "summary": "Zacks.com users have recently been watching Shopify (SHOP) quite a bit. Thus, it is worth knowing the facts that could determine the stock's prospects.",
+          "url": "https://finnhub.io/api/news?id=fdb7aac817608f9aff247e7c7fd42a5db0dca599f088cd5756d7f3c053a9e155",
+          "source": "Yahoo",
+          "published_at": "2026-09-25T12:00:08+00:00"
+        },
+        {
+          "headline": "Amazon Expands Multichannel Tools for Sellers",
+          "summary": "Amazon (AMZN) said Friday it is adding tools that let sellers manage listings, orders and inventory",
+          "url": "https://finance.yahoo.com/small-business/articles/amazon-expands-multichannel-tools-sellers-091038547.html",
+          "source": "MT Newswires",
+          "published_at": "2026-09-25T09:10:38+00:00"
+        },
+        {
+          "headline": "Amazon Expands Multichannel Tools for Sellers",
+          "summary": "Amazon (AMZN) said Friday it is adding tools that let sellers manage listings, orders and inventory",
+          "url": "https://finnhub.io/api/news?id=1d89233df2262df587fa4c4e8b47f7685d6b7d557dcd9b37e541ada25154226b",
+          "source": "Yahoo",
+          "published_at": "2026-09-25T09:10:38+00:00"
+        },
+        {
+          "headline": "Shopify Opens Its Doors to Muse, Here\u2019s Why Amazon Won\u2019t",
+          "summary": "Shopify Inc. (NASDAQ:SHOP) has signed a deal to make eligible Shopify stores fully shoppable through Meta\u2019s new AI agent Muse. Amazon is taking the opposite approach, actively blocking Muse and a growing list of AI shopping tools from its platform. The contrast reflects two different approaches to agentic commerce. Shopify is opening its doors on [\u2026]",
+          "url": "https://finance.yahoo.com/technology/ai/articles/shopify-opens-doors-muse-why-204347730.html",
+          "source": "Insider Monkey",
+          "published_at": "2026-09-24T20:43:47+00:00"
+        }
+      ]
+    },
+    {
+      "signal_name": "drop_with_news",
+      "symbol": "FTNT",
+      "severity": 2.169283195461396,
+      "headline": "FTNT dropped 2.17% \u2014 4 headline(s) found",
+      "details": {
+        "pct_change": -2.169283195461396,
+        "last_close": 174.52999877929688,
+        "prior_close": 178.4,
+        "threshold": 2.0,
+        "cap_tier": null,
+        "description": "Fortinet",
+        "category": "HOLDING"
+      },
+      "news": [
+        {
+          "headline": "How Much Could You Make If Synopsys Stock Rebounds From Here?",
+          "summary": "Synopsys (SNPS) stock could climb about 25% before it reaches a level that has turned it back three times. It could fall about 5% before the floor it sits on gives way. On paper, that is a generous trade on a maker of chip-design software. The catch is the floor itself, which has a poor record over the past two years.",
+          "url": "https://www.trefis.com/articles/616442/how-much-could-you-make-if-synopsys-stock-rebounds-from-here/2026-09-24",
+          "source": "Trefis",
+          "published_at": "2026-09-25T00:37:37+00:00"
+        },
+        {
+          "headline": "Fortinet (FTNT) is Positioned to Benefit From an Expanding Cybersecurity Market and AI Adoption",
+          "summary": "Emerald Wealth Partners, an independent asset and wealth management firm based in Zurich, released its Q2 2026 investor letter for the \u201cGrowth Equity Strategy. A copy of the letter can be downloaded here. The strategy highlighted a strong quarter for the portfolio amid a market rally increasingly shaped by AI-related themes. The strategy generated a [\u2026]",
+          "url": "https://finance.yahoo.com/technology/ai/articles/fortinet-ftnt-positioned-benefit-expanding-125037664.html",
+          "source": "Insider Monkey",
+          "published_at": "2026-09-24T12:50:37+00:00"
+        },
+        {
+          "headline": "7 Cybersecurity Stocks Riding the AI Security Boom",
+          "summary": "Anthropic and OpenAI's warnings about AI agents acting outside their boundaries sent cybersecurity stocks surging, but the companies investors rushed to buy face very different odds of turning that urgency into real contracts and earnings.",
+          "url": "https://247wallst.com/investing/2026/09/23/7-cybersecurity-stocks-riding-the-ai-security-boom/",
+          "source": "24/7 Wall St.",
+          "published_at": "2026-09-24T01:08:13+00:00"
+        },
+        {
+          "headline": "Cisco Stock Looks Expensive Until You Price The Year It Already Guided",
+          "summary": "Cisco Systems (CSCO) trades near $106 a share, about 24.6 times the $4.33 of non-GAAP earnings per share it reported for fiscal 2026. That is the same basis Cisco uses for its guidance and analysts use for their forecasts. For a networking supplier with $63.33 billion of revenue behind it, that is rich. And it ignores the two years analysts have already forecast.",
+          "url": "https://www.trefis.com/articles/616282/cisco-stock-looks-expensive-until-you-price-the-year-it-already-guided/2026-09-23",
+          "source": "Trefis",
+          "published_at": "2026-09-23T19:16:55+00:00"
+        }
+      ]
+    },
+    {
+      "signal_name": "drop_with_news",
+      "symbol": "DOCU",
+      "severity": 2.018891492069767,
+      "headline": "DOCU dropped 2.02% \u2014 6 headline(s) found",
+      "details": {
+        "pct_change": -2.018891492069767,
+        "last_close": 67.94499969482422,
+        "prior_close": 69.345,
+        "threshold": 2.0,
+        "cap_tier": null,
+        "description": "DocuSign",
+        "category": "HOLDING"
+      },
+      "news": [
+        {
+          "headline": "Productivity Software Stocks Q2 Highlights: DocuSign (NASDAQ:DOCU)",
+          "summary": "Quarterly earnings results are a good time to check in on a company\u2019s progress, especially compared to its peers in the same sector. Today we are looking at DocuSign (NASDAQ:DOCU) and the best and worst performers in the productivity software industry.",
+          "url": "https://finance.yahoo.com/markets/stocks/articles/productivity-software-stocks-q2-highlights-172858081.html",
+          "source": "StockStory",
+          "published_at": "2026-09-24T17:28:58+00:00"
+        },
+        {
+          "headline": "Productivity Software Stocks Q2 Highlights: DocuSign (NASDAQ:DOCU)",
+          "summary": "Quarterly earnings results are a good time to check in on a company\u2019s progress, especially compared to its peers in the same sector. Today we are looking at DocuSign (NASDAQ:DOCU) and the best and worst performers in the productivity software industry.",
+          "url": "https://finnhub.io/api/news?id=5532cfef4fe8879474e26ef026eb881c8d982e3fbd4f876962edb6943467ec18",
+          "source": "Yahoo",
+          "published_at": "2026-09-24T17:28:58+00:00"
+        },
+        {
+          "headline": "Investors Heavily Search Docusign Inc. (DOCU): Here is What You Need to Know",
+          "summary": "DocuSign (DOCU) has received quite a bit of attention from Zacks.com users lately. Therefore, it is wise to be aware of the facts that can impact the stock's prospects.",
+          "url": "https://finance.yahoo.com/markets/stocks/articles/investors-heavily-search-docusign-inc-120005393.html",
+          "source": "Zacks",
+          "published_at": "2026-09-24T12:00:05+00:00"
+        },
+        {
+          "headline": "Investors Heavily Search Docusign Inc. (DOCU): Here is What You Need to Know",
+          "summary": "DocuSign (DOCU) has received quite a bit of attention from Zacks.com users lately. Therefore, it is wise to be aware of the facts that can impact the stock's prospects.",
+          "url": "https://finnhub.io/api/news?id=98524c35f9adf09dcc87d0d5abd2734b1e2cc6e24d901d64eca83ad9087dfbda",
+          "source": "Yahoo",
+          "published_at": "2026-09-24T12:00:05+00:00"
+        },
+        {
+          "headline": "DocuSign President Sells 14,676 Shares",
+          "summary": "The executive sold shares after the stock fell 16% over the past year.",
+          "url": "https://finnhub.io/api/news?id=7f4df887677763ecbd4a4240938a1b3658952e06fe1bf104be91baa649ab02ec",
+          "source": "Yahoo",
+          "published_at": "2026-09-23T13:03:01+00:00"
+        }
+      ]
+    },
+    {
+      "signal_name": "significant_gain",
+      "symbol": "PYPL",
+      "severity": 4.851956809261577,
+      "headline": "PYPL gained +4.85%",
+      "details": {
+        "pct_change": 4.851956809261577,
+        "last_close": 54.88999938964844,
+        "prior_close": 52.35,
+        "threshold": 2.0,
+        "cap_tier": null,
+        "description": "PayPal",
+        "category": "HOLDING"
+      },
+      "news": [
+        {
+          "headline": "What Would You Have Needed To Notice In Coinbase Stock?",
+          "summary": "Coinbase Global (COIN) shares returned 40% over the three months that ended on September 24. A $10,000 holding at the start of that window was worth about $13,980 at the end. The run came even as revenue kept falling. Management had been saying for well over a year that it wanted to go beyond trading, but the latest filed numbers pointed the other way.",
+          "url": "https://www.trefis.com/articles/616643/what-would-you-have-needed-to-notice-in-coinbase-stock/2026-09-25",
+          "source": "Trefis",
+          "published_at": "2026-09-25T14:11:19+00:00"
+        },
+        {
+          "headline": "PayPal Holdings (PYPL), What Is Behind The Fresh Attention?",
+          "summary": "PayPal Holdings (PYPL) is back in focus after Meta folded its Muse AI shopping assistant into PayPal\u2019s global merchant network, letting users move from product discovery to PayPal powered checkout inside the agent. Despite the Muse AI partnership putting PayPal Holdings back in the headlines, the share price has been under pressure in recent months, with a 30 day share price return of down 15.5% and a year to date share price return of down 9.5%. This is set against a stronger 90 day share...",
+          "url": "https://finance.yahoo.com/markets/stocks/articles/paypal-holdings-pypl-behind-fresh-011437320.html",
+          "source": "Simply Wall St.",
+          "published_at": "2026-09-25T01:14:37+00:00"
+        },
+        {
+          "headline": "PayPal Holdings (PYPL), What Is Behind The Fresh Attention?",
+          "summary": "PayPal Holdings (PYPL) is back in focus after Meta folded its Muse AI shopping assistant into PayPal\u2019s global merchant network, letting users move from product discovery to PayPal powered checkout inside the agent. Despite the Muse AI partnership putting PayPal Holdings back in the headlines, the share price has been under pressure in recent months, with a 30 day share price return of down 15.5% and a year to date share price return of down 9.5%. This is set against a stronger 90 day share...",
+          "url": "https://finnhub.io/api/news?id=67d0810c6e025722f5dc614f9fcda5eaa56382eb04eb564ed757548c14638bfb",
+          "source": "Yahoo",
+          "published_at": "2026-09-25T01:14:37+00:00"
+        },
+        {
+          "headline": "Meta Muse's E-Commerce Adoption Remains Uncertain, Wedbush Says",
+          "summary": "Meta Platforms' (META) personal artificial intelligence agent, Muse, has drawn strong user interest,",
+          "url": "https://finance.yahoo.com/technology/ai/articles/meta-muse-apos-e-commerce-151251469.html",
+          "source": "MT Newswires",
+          "published_at": "2026-09-24T15:12:51+00:00"
+        },
+        {
+          "headline": "Meta Muse's E-Commerce Adoption Remains Uncertain, Wedbush Says",
+          "summary": "Meta Platforms' (META) personal artificial intelligence agent, Muse, has drawn strong user interest,",
+          "url": "https://finnhub.io/api/news?id=4efaa100099ba973f776ffb3e48a2bd8032c06254b97acc005cb54e4e2e79d60",
+          "source": "Yahoo",
+          "published_at": "2026-09-24T15:12:51+00:00"
+        }
+      ]
+    },
+    {
+      "signal_name": "significant_gain",
+      "symbol": "DDOG",
+      "severity": 4.563120185175316,
+      "headline": "DDOG gained +4.56%",
+      "details": {
+        "pct_change": 4.563120185175316,
+        "last_close": 269.5950927734375,
+        "prior_close": 257.83,
+        "threshold": 2.0,
+        "cap_tier": null,
+        "description": "Datadog",
+        "category": "HOLDING"
+      },
+      "news": [
+        {
+          "headline": "Stock Market Today: Dow Rises On U.S.-Iran Peace Hopes; Micron, Sandisk Rally, But Meta Shares Dip (Live Coverage)",
+          "summary": "Stock Market Today: The Dow Jones index rises Friday on U.S.-Iran peace hopes. Micron stock and Sandisk rally Friday.",
+          "url": "https://finnhub.io/api/news?id=7d0fae5a3d3d060d181f36f3ee460735030627318fd8ae386b18cd912a731cb4",
+          "source": "Yahoo",
+          "published_at": "2026-09-25T13:45:10+00:00"
+        },
+        {
+          "headline": "Dow Jones Futures Signal Rebound For Resilient Market; Tesla, Akamai, Taiwan Semi In Focus",
+          "summary": "Futures rose, with the market showing resilience even as yields keep rising. Taiwan Semi is a buy. Tesla held a Semi event.",
+          "url": "https://www.investors.com/market-trend/stock-market-today/dow-jones-futures-market-rally-resilient-yields-oil-prices-rising-tesla-semi-event/?src=A00220&yptr=yahoo",
+          "source": "Investor's Business Daily",
+          "published_at": "2026-09-25T12:04:53+00:00"
+        },
+        {
+          "headline": "Datadog, Inc. (DDOG) Is a Trending Stock: Facts to Know Before Betting on It",
+          "summary": "Zacks.com users have recently been watching Datadog (DDOG) quite a bit. Thus, it is worth knowing the facts that could determine the stock's prospects.",
+          "url": "https://finance.yahoo.com/markets/stocks/articles/datadog-inc-ddog-trending-stock-120005847.html",
+          "source": "Zacks",
+          "published_at": "2026-09-25T12:00:05+00:00"
+        },
+        {
+          "headline": "Datadog, Inc. (DDOG) Is a Trending Stock: Facts to Know Before Betting on It",
+          "summary": "Zacks.com users have recently been watching Datadog (DDOG) quite a bit. Thus, it is worth knowing the facts that could determine the stock's prospects.",
+          "url": "https://finnhub.io/api/news?id=73c87258e331621669c789d61153978abd42ceb09c3e99d63e39f0505ff03ea0",
+          "source": "Yahoo",
+          "published_at": "2026-09-25T12:00:05+00:00"
+        },
+        {
+          "headline": "Dow Jones Futures Signal Rebound For Resilient Market; Tesla, Akamai, Taiwan Semi In Focus",
+          "summary": "Futures rose, with the market showing resilience even as yields keep rising. Taiwan Semi is a buy. Tesla held a Semi event.",
+          "url": "https://finnhub.io/api/news?id=24ee99cacf6450bc4588a67a6b0f3cdd1856b24cc2c800cfd2cda37107ae5a94",
+          "source": "Yahoo",
+          "published_at": "2026-09-25T11:56:26+00:00"
+        }
+      ]
+    },
+    {
+      "signal_name": "significant_gain",
+      "symbol": "MSFT",
+      "severity": 3.559272456069298,
+      "headline": "MSFT gained +3.56%",
+      "details": {
+        "pct_change": 3.559272456069298,
+        "last_close": 513.4299926757812,
+        "prior_close": 495.7837,
+        "threshold": 2.0,
+        "cap_tier": null,
+        "description": "Microsoft",
+        "category": "HOLDING"
+      },
+      "news": [
+        {
+          "headline": "Wall St edges up as AI enthusiasm eases worries over higher oil prices, yields",
+          "summary": "By Johann M Cherian and Avinash P Sept 25 (Reuters) - AstWall Street's main indexes inched higher on Friday as AI optimism buoyed sentiment despite elevated oil prices and rising Treasury yields,",
+          "url": "https://finance.yahoo.com/markets/stocks/articles/wall-st-futures-gain-ai-095035646.html",
+          "source": "Reuters",
+          "published_at": "2026-09-25T14:24:48+00:00"
+        },
+        {
+          "headline": "The \"Magnificent Seven\" Stocks: Here's the 1 I'm Buying Hand Over Fist Right Now",
+          "summary": "It's too good a value to pass up on right now.",
+          "url": "https://www.fool.com/investing/2026/09/25/the-magnificent-seven-stocks-heres-the-1-im-buying/",
+          "source": "Motley Fool",
+          "published_at": "2026-09-25T14:20:00+00:00"
+        },
+        {
+          "headline": "Microsoft CEO Satya Nadella talks US-China AI safety norms",
+          "summary": "Deirdre Bosa sat down with Microsoft ( MSFT ) CEO Satya Nadella to discuss its cloud-based Autopilot update, consumer trust in AI agents, and how US and China might find common ground on AI development and safety as Chinese President Xi Jinping visits Washington to meet with President Trump.",
+          "url": "https://finance.yahoo.com/video/microsoft-ceo-satya-nadella-talks-us-china-ai-safety-norms-140757895.html",
+          "source": "Yahoo Finance Video",
+          "published_at": "2026-09-25T14:07:57+00:00"
+        },
+        {
+          "headline": "Qualcomm's CMO reveals the secret behind Snapdragon's rise",
+          "summary": "Qualcomm CMO Don McGuire joins In The Loop host Ejaaz Ahamadeen at Qualcomm\u2019s Snapdragon Summit in Maui, for an in-depth look at how a chip you can't even buy off a shelf became one of the biggest brands in tech, sports, and AI. He breaks down the brand strategy turning an invisible chip into a household name, why Microsoft's consumer Surface lineup is now 100% powered by Snapdragon, and the company\u2019s groundbreaking partnerships with Manchester United and Mercedes F1.",
+          "url": "https://finance.yahoo.com/video/qualcomms-cmo-reveals-secret-behind-140705053.html",
+          "source": "Yahoo Finance Video",
+          "published_at": "2026-09-25T14:07:05+00:00"
+        },
+        {
+          "headline": "Wall Street doubles down on Microsoft stock for investors",
+          "summary": "Microsoft has been the quiet name in the AI trade all year, but that just changed.",
+          "url": "https://www.thestreet.com/investing/stocks/stifel-upgrades-microsoft-stock-rating-price-target-msft",
+          "source": "TheStreet",
+          "published_at": "2026-09-25T14:07:00+00:00"
+        }
+      ]
+    },
+    {
+      "signal_name": "significant_gain",
+      "symbol": "PENG",
+      "severity": 3.4269654348994933,
+      "headline": "PENG gained +3.43%",
+      "details": {
+        "pct_change": 3.4269654348994933,
+        "last_close": 55.22999954223633,
+        "prior_close": 53.4,
+        "threshold": 2.0,
+        "cap_tier": null,
+        "description": "Penguin Solutions",
+        "category": "HOLDING"
+      },
+      "news": [
+        {
+          "headline": "3 AI Stocks With Revenue Growth Up To 33%",
+          "summary": "With global bond markets under pressure and the US 30-year Treasury yield at its highest level since 2004, cash has become more expensive and investors are rethinking where future growth could come from. That reset creates an opportunity to look at smaller AI-focused companies before they are widely discovered. This article discusses three small cap AI stocks from our screener that could be relevant for your watchlist. The three AI small caps highlighted below are just a starting sample, and...",
+          "url": "https://finance.yahoo.com/technology/ai/articles/3-ai-stocks-revenue-growth-101250467.html",
+          "source": "Simply Wall St.",
+          "published_at": "2026-09-25T10:12:50+00:00"
+        },
+        {
+          "headline": "3 AI Stocks With Revenue Growth Up To 33%",
+          "summary": "With global bond markets under pressure and the US 30-year Treasury yield at its highest level since 2004, cash has become more expensive and investors are rethinking where future growth could come from. That reset creates an opportunity to look at smaller AI-focused companies before they are widely discovered. This article discusses three small cap AI stocks from our screener that could be relevant for your watchlist. The three AI small caps highlighted below are just a starting sample, and...",
+          "url": "https://finnhub.io/api/news?id=cae73562d2fcafa50a67b350b7742c2c07c1bce7482549a1efc0950daba46b61",
+          "source": "Yahoo",
+          "published_at": "2026-09-25T10:12:50+00:00"
+        },
+        {
+          "headline": "Lam Research, Marvell Technology, Western Digital, FormFactor, and Penguin Solutions Shares Are Falling, What You Need To Know",
+          "summary": "A number of stocks fell in the afternoon session after the 10-year Treasury yield climbed to 5.14% following strong September business activity data that raised expectations for tighter Federal Reserve interest rate policy.",
+          "url": "https://finance.yahoo.com/markets/stocks/articles/lam-research-marvell-technology-western-232858881.html",
+          "source": "StockStory",
+          "published_at": "2026-09-24T23:28:58+00:00"
+        },
+        {
+          "headline": "Lam Research, Marvell Technology, Western Digital, FormFactor, and Penguin Solutions Shares Are Falling, What You Need To Know",
+          "summary": "A number of stocks fell in the afternoon session after the 10-year Treasury yield climbed to 5.14% following strong September business activity data that raised expectations for tighter Federal Reserve interest rate policy.",
+          "url": "https://finnhub.io/api/news?id=72622cb2bf1789fc02dcaf33d3430fc28b14de55f1257e2cd5e97ebb44168dfa",
+          "source": "Yahoo",
+          "published_at": "2026-09-24T23:28:58+00:00"
+        },
+        {
+          "headline": "Western Digital, FormFactor, Penguin Solutions, Himax, and Power Integrations Shares Are Falling, What You Need To Know",
+          "summary": "A number of stocks fell in the morning session after benchmark 10-year U.S. Treasury yields rose above 5.1%, renewing pressure on high-multiple technology valuations. The pullback follows a six-session climb that had lifted the Philadelphia Semiconductor Index by 14% since the start of the week, according to Nasdaq index data.",
+          "url": "https://finance.yahoo.com/markets/stocks/articles/western-digital-formfactor-penguin-solutions-212858821.html",
+          "source": "StockStory",
+          "published_at": "2026-09-24T21:28:58+00:00"
+        }
+      ]
+    },
+    {
+      "signal_name": "significant_gain",
+      "symbol": "SEDG",
+      "severity": 2.6023542718333412,
+      "headline": "SEDG gained +2.60%",
+      "details": {
+        "pct_change": 2.6023542718333412,
+        "last_close": 32.33000183105469,
+        "prior_close": 31.51,
+        "threshold": 2.0,
+        "cap_tier": null,
+        "description": "SolarEdge Technologies",
+        "category": "HOLDING"
+      },
+      "news": [
+        {
+          "headline": "Solar Stocks Tumble After 30-Year Treasury Yield Hits 2004 High",
+          "summary": "Solar Stocks Take a Brutal Hit as U.S. Borrowing Costs Surge",
+          "url": "https://finance.yahoo.com/energy/articles/solar-stocks-tumble-30-treasury-125942781.html",
+          "source": "GuruFocus.com",
+          "published_at": "2026-09-25T12:59:42+00:00"
+        },
+        {
+          "headline": "Enphase Energy: It's All Downhill From Here (Rating Downgrade)",
+          "summary": "Enphase Energy, Inc. is downgraded to Sell as revenue plunges, market share slips to Tesla, and SBC stays high. Click for this ENPH stock update.",
+          "url": "https://finnhub.io/api/news?id=f3e9bbc4bfc1798d52b950b52c5db7b3d0559bfcbf6566df20b774078c743fa7",
+          "source": "SeekingAlpha",
+          "published_at": "2026-09-25T09:30:20+00:00"
+        },
+        {
+          "headline": "First Solar, Enphase, SolarEdge, Alight, and Goodyear Shares Are Falling, What You Need To Know",
+          "summary": "A number of stocks fell in the afternoon session after the 10-year Treasury yield jumped to 5.14%, reaching levels last seen in 2007 and raising borrowing costs across the economy. U.S. stocks fell early Thursday, according to the Associated Press, as surging Treasury yields and rebounding energy prices weighed on financial markets.",
+          "url": "https://finance.yahoo.com/markets/stocks/articles/first-solar-enphase-solaredge-alight-235258458.html",
+          "source": "StockStory",
+          "published_at": "2026-09-24T23:52:58+00:00"
+        },
+        {
+          "headline": "First Solar, Enphase, SolarEdge, Alight, and Goodyear Shares Are Falling, What You Need To Know",
+          "summary": "A number of stocks fell in the afternoon session after the 10-year Treasury yield jumped to 5.14%, reaching levels last seen in 2007 and raising borrowing costs across the economy. U.S. stocks fell early Thursday, according to the Associated Press, as surging Treasury yields and rebounding energy prices weighed on financial markets.",
+          "url": "https://finnhub.io/api/news?id=c651553af16d78dce8a7c8cb54a4bccfbc7d307732dce9bd6febc8f3f2d233b1",
+          "source": "Yahoo",
+          "published_at": "2026-09-24T23:52:58+00:00"
+        },
+        {
+          "headline": "Why SolarEdge Technologies (SEDG) Dipped More Than Broader Market Today",
+          "summary": "SolarEdge Technologies (SEDG) concluded the recent trading session at $31.91, signifying a -4.32% move from its prior day's close.",
+          "url": "https://finance.yahoo.com/markets/stocks/articles/why-solaredge-technologies-sedg-dipped-211502520.html",
+          "source": "Zacks",
+          "published_at": "2026-09-24T21:15:02+00:00"
+        }
+      ]
+    },
+    {
+      "signal_name": "significant_gain",
+      "symbol": "PTON",
+      "severity": 2.58941615141306,
+      "headline": "PTON gained +2.59%",
+      "details": {
+        "pct_change": 2.58941615141306,
+        "last_close": 4.885000228881836,
+        "prior_close": 4.7617,
+        "threshold": 2.0,
+        "cap_tier": null,
+        "description": "Peloton",
+        "category": "WATCHLIST"
+      },
+      "news": [
+        {
+          "headline": "Can Affirm Sustain Profitability Amid Funding Cost Pressures?",
+          "summary": "AFRM has entered fiscal 2027 with strong GMV growth and improving margins, but funding costs and credit performance will test its path to sustained profitability.",
+          "url": "https://finance.yahoo.com/markets/stocks/articles/affirm-sustain-profitability-amid-funding-154700650.html",
+          "source": "Zacks",
+          "published_at": "2026-09-24T15:47:00+00:00"
+        },
+        {
+          "headline": "2 Volatile Stocks with Exciting Potential and 1 We Turn Down",
+          "summary": "Volatility cuts both ways - while it creates opportunities, it also increases risk, making sharp declines just as likely as big gains. This unpredictability can shake out even the most experienced investors.",
+          "url": "https://finance.yahoo.com/markets/stocks/articles/2-volatile-stocks-exciting-potential-104854199.html",
+          "source": "StockStory",
+          "published_at": "2026-09-24T10:48:54+00:00"
+        },
+        {
+          "headline": "2 Volatile Stocks with Exciting Potential and 1 We Turn Down",
+          "summary": "Volatility cuts both ways - while it creates opportunities, it also increases risk, making sharp declines just as likely as big gains. This unpredictability can shake out even the most experienced investors.",
+          "url": "https://finnhub.io/api/news?id=7be94369d13803f0935dc1d6e6f326d3e974486e384a37556aac8a97d41f25fb",
+          "source": "Yahoo",
+          "published_at": "2026-09-24T10:48:54+00:00"
+        },
+        {
+          "headline": "Peloton\u2019s New Folding Treadmill Might Not Be a Magical Fix for PTON Stock",
+          "summary": "Peloton is launching three new treadmills as it revamps its portfolio amid sagging sales. Its depressed stock would need a lot more to rebound, though.",
+          "url": "https://www.barchart.com/story/news/4773376/pelotons-new-folding-treadmill-might-not-be-a-magical-fix-for-pton-stock",
+          "source": "Barchart",
+          "published_at": "2026-09-24T10:45:31+00:00"
+        },
+        {
+          "headline": "Peloton\u2019s New Folding Treadmill Might Not Be a Magical Fix for PTON Stock",
+          "summary": "Peloton is launching three new treadmills as it revamps its portfolio amid sagging sales. Its depressed stock would need a lot more to rebound, though.",
+          "url": "https://finnhub.io/api/news?id=916d82a08843be68656e63158d28b8a8870c47192a52ef76229a8059421def50",
+          "source": "Yahoo",
+          "published_at": "2026-09-24T10:45:31+00:00"
+        }
+      ]
+    },
+    {
+      "signal_name": "significant_gain",
+      "symbol": "CLOV",
+      "severity": 2.4336308504627966,
+      "headline": "CLOV gained +2.43%",
+      "details": {
+        "pct_change": 2.4336308504627966,
+        "last_close": 4.630000114440918,
+        "prior_close": 4.52,
+        "threshold": 2.0,
+        "cap_tier": null,
+        "description": "Clover Health",
+        "category": "HOLDING"
+      },
+      "news": [
+        {
+          "headline": "1 Cash-Producing Stock on Our Buy List and 2 We Ignore",
+          "summary": "While strong cash flow is a key indicator of stability, it doesn\u2019t always translate to superior returns. Some cash-heavy businesses struggle with inefficient spending, slowing demand, or weak competitive positioning.",
+          "url": "https://finance.yahoo.com/markets/stocks/articles/1-cash-producing-stock-buy-124837517.html",
+          "source": "StockStory",
+          "published_at": "2026-09-25T12:48:37+00:00"
+        },
+        {
+          "headline": "UPDATE \u2013 Clover Health Welcomes Former U.S. Senator Robert Torricelli and Dr. Brian J. Miller M.D. to Its Board of Directors",
+          "summary": "WILMINGTON, Del., Sept. 24, 2026 (GLOBE NEWSWIRE) -- Clover Health Investments, Corp. (Nasdaq: CLOV) (\u201cClover,\u201d \u201cClover Health\u201d or the \u201cCompany\u201d) today announced the appointments of former U.S. Senator Robert Torricelli and Dr. Brian J. Miller, M.D., M.B.A., M.P.H., to the Company\u2019s Board of Directors, effective immediately. The appointments bring together two accomplished leaders whose complementary experience spans public service, Medicare Advantage, clinical practice, healthcare policy, and b",
+          "url": "https://finnhub.io/api/news?id=6e625302ed488dda6c0509fc84f547d0c2f65bd7d82214f1ee37f9e537425e48",
+          "source": "Yahoo",
+          "published_at": "2026-09-24T21:55:00+00:00"
+        },
+        {
+          "headline": "Clover Health Welcomes Former U.S. Senator Robert Torricelli and MedPAC Commissioner Dr. Brian J. Miller M.D. to Its Board of Directors",
+          "summary": "WILMINGTON, Del., Sept. 24, 2026 (GLOBE NEWSWIRE) -- Clover Health Investments, Corp. (Nasdaq: CLOV) (\u201cClover,\u201d \u201cClover Health\u201d or the \u201cCompany\u201d) today announced the appointments of former U.S. Senator Robert Torricelli and Dr. Brian J. Miller, M.D., M.B.A., M.P.H., to the Company\u2019s Board of Directors, effective immediately. The appointments bring together two accomplished leaders whose complementary experience spans public service, Medicare Advantage, clinical practice, healthcare policy, and b",
+          "url": "https://finnhub.io/api/news?id=4315fe5aea95b0a1d1c28ee41e5e8a1c4c831c2f94d1a6ecdb02f136f8c6bdc1",
+          "source": "Yahoo",
+          "published_at": "2026-09-24T20:30:00+00:00"
+        },
+        {
+          "headline": "NIO Stock And 2 Penny Stocks To Watch",
+          "summary": "Central banks are talking about higher interest rates for longer, and the OECD expects global inflation to linger. Cash in a savings account may feel safer, but it can struggle to keep up with rising prices. That is why some investors are looking at lower priced, financially robust smaller stocks as a way to stay in the game. This article highlights 3 such penny stocks for investors to examine more closely. The three penny stocks in this article are only a small sample, and the full screen...",
+          "url": "https://finnhub.io/api/news?id=5dba41447ead12d487ea2aea996c5cf3ead625bfec6215ecd6b90f0bdab80026",
+          "source": "Yahoo",
+          "published_at": "2026-09-23T14:18:26+00:00"
+        }
+      ]
+    },
+    {
+      "signal_name": "significant_gain",
+      "symbol": "COST",
+      "severity": 2.322627318036565,
+      "headline": "COST gained +2.32%",
+      "details": {
+        "pct_change": 2.322627318036565,
+        "last_close": 918.97998046875,
+        "prior_close": 898.12,
+        "threshold": 2.0,
+        "cap_tier": null,
+        "description": "Costco",
+        "category": "HOLDING"
+      },
+      "news": [
+        {
+          "headline": "Stock Market Today: Dow Rises On U.S.-Iran Peace Hopes; Software Name Soars On Anthropic Deal (Live Coverage)",
+          "summary": "Stock Market Today: The Dow Jones index rises Friday on U.S.-Iran peace hopes. Micron stock and Sandisk rally Friday.",
+          "url": "https://www.investors.com/market-trend/stock-market-today/dow-jones-sp500-nasdaq-us-iran-peace-hopes-micron-sandisk/?src=A00220&yptr=yahoo",
+          "source": "Investor's Business Daily",
+          "published_at": "2026-09-25T14:12:13+00:00"
+        },
+        {
+          "headline": "Stock Market Today: Dow Rises On U.S.-Iran Peace Hopes; Micron, Sandisk Rally, But Meta Shares Dip (Live Coverage)",
+          "summary": "Stock Market Today: The Dow Jones index rises Friday on U.S.-Iran peace hopes. Micron stock and Sandisk rally Friday.",
+          "url": "https://finnhub.io/api/news?id=7d0fae5a3d3d060d181f36f3ee460735030627318fd8ae386b18cd912a731cb4",
+          "source": "Yahoo",
+          "published_at": "2026-09-25T13:45:10+00:00"
+        },
+        {
+          "headline": "Costco's Best Numbers Came With an Asterisk",
+          "summary": "A premium valuation paired with a halving in membership fee growth sent shares lower.",
+          "url": "https://finance.yahoo.com/markets/stocks/articles/costcos-best-numbers-came-asterisk-132700449.html",
+          "source": "Zacks",
+          "published_at": "2026-09-25T13:27:00+00:00"
+        },
+        {
+          "headline": "Costco tops Wall Street estimates as digital sales surge",
+          "summary": "Costco Wholesale Corporation (NASDAQ:COST, XETRA:CTO) reported fiscal fourth-quarter profit and revenue that topped Wall Street estimates, driven by strong membership fee growth and digital sales. The warehouse retailer posted earnings of $6.75 per share for the 16-week period, up 15% from a...",
+          "url": "https://www.proactiveinvestors.com/companies/news/1099144/costco-tops-wall-street-estimates-as-digital-sales-surge-1099144.html",
+          "source": "Proactive",
+          "published_at": "2026-09-25T13:14:00+00:00"
+        },
+        {
+          "headline": "Costco tops Wall Street estimates as digital sales surge",
+          "summary": "Costco Wholesale Corporation (NASDAQ:COST, XETRA:CTO) reported fiscal fourth-quarter profit and revenue that topped Wall Street estimates, driven by strong membership fee growth and digital sales. The warehouse retailer posted earnings of $6.75 per share for the 16-week period, up 15% from a...",
+          "url": "https://finnhub.io/api/news?id=32148fc48a095050517baa82b56705f764f8118336e3b3dd4a4c90ccd4f5174c",
+          "source": "Yahoo",
+          "published_at": "2026-09-25T13:14:00+00:00"
+        }
+      ]
+    },
+    {
+      "signal_name": "significant_gain",
+      "symbol": "ABNB",
+      "severity": 2.2842757028555285,
+      "headline": "ABNB gained +2.28%",
+      "details": {
+        "pct_change": 2.2842757028555285,
+        "last_close": 154.85000610351562,
+        "prior_close": 151.3918,
+        "threshold": 2.0,
+        "cap_tier": null,
+        "description": "Airbnb",
+        "category": "HOLDING"
+      },
+      "news": [
+        {
+          "headline": "Uber Has Disappointed For More Than a Year: Here\u2019s Why a Highly Respected Wall Street Firm Says It\u2019s Going to Double",
+          "summary": "Uber's stock has shed nearly 30% over the past year while its cash flow crossed $10 billion and analysts keep raising their targets. One highly respected Wall Street firm sees a path to doubling from here, and the reasoning goes well beyond the rideshare business you think you know.",
+          "url": "https://247wallst.com/investing/2026/09/25/uber-has-disappointed-for-more-than-a-year-heres-why-a-highly-respected-wall-street-firm-says-its-going-to-double/",
+          "source": "24/7 Wall St.",
+          "published_at": "2026-09-25T11:32:49+00:00"
+        },
+        {
+          "headline": "Uber Has Disappointed For More Than a Year: Here\u2019s Why a Highly Respected Wall Street Firm Says It\u2019s Going to Double",
+          "summary": "Uber's stock has shed nearly 30% over the past year while its cash flow crossed $10 billion and analysts keep raising their targets. One highly respected Wall Street firm sees a path to doubling from here, and the reasoning goes well beyond the rideshare business you think you know.",
+          "url": "https://finnhub.io/api/news?id=140b19545997e49afeb8124495c25f6acf558c54f8a1c63292ea8f3384d22e99",
+          "source": "Yahoo",
+          "published_at": "2026-09-25T11:32:49+00:00"
+        },
+        {
+          "headline": "Market Analysis: Airbnb And Competitors In Hotels, Restaurants &amp; Leisure Industry",
+          "summary": "In today&#39;s rapidly changing and fiercely competitive business landscape, it is essential for investors and industry enthusiasts to thoroughly analyze companies. In this article, we will conduct a comprehensive",
+          "url": "https://finnhub.io/api/news?id=7db5b17911e32204825f2b3f82242fa9b0206e836cfcde889b7b7c9418ab4b92",
+          "source": "Benzinga",
+          "published_at": "2026-09-25T05:58:42+00:00"
+        },
+        {
+          "headline": "How Low Could Expedia Stock Go If A Real Shock Follows This Slide?",
+          "summary": "Expedia (EXPE) stock fell 7.7% on September 23, leaving it about 24% below its August 24 high of $339. Yet the company's latest results beat its forecast, and over the past 12 months the stock has still returned about 17%, roughly in line with the S&P 500. So how far could Expedia go in a real market shock.",
+          "url": "https://www.trefis.com/articles/616423/how-low-could-expedia-stock-go-if-a-real-shock-follows-this-slide/2026-09-24",
+          "source": "Trefis",
+          "published_at": "2026-09-24T23:39:41+00:00"
+        },
+        {
+          "headline": "How Low Could Expedia Stock Go If A Real Shock Follows This Slide?",
+          "summary": "Expedia (EXPE) stock fell 7.7% on September 23, leaving it about 24% below its August 24 high of $339. Yet the company's latest results beat its forecast, and over the past 12 months the stock has still returned about 17%, roughly in line with the S&P 500. So how far could Expedia go in a real market shock.",
+          "url": "https://finnhub.io/api/news?id=df468761fc7d71cb509f842103458cca5bc8e3ad42c4f411a335034d75292cd0",
+          "source": "Yahoo",
+          "published_at": "2026-09-24T23:39:41+00:00"
+        }
+      ]
+    },
+    {
+      "signal_name": "significant_gain",
+      "symbol": "ETSY",
+      "severity": 2.1956512893455615,
+      "headline": "ETSY gained +2.20%",
+      "details": {
+        "pct_change": 2.1956512893455615,
+        "last_close": 70.51499938964844,
+        "prior_close": 69.0,
+        "threshold": 2.0,
+        "cap_tier": null,
+        "description": "Etsy",
+        "category": "HOLDING"
+      },
+      "news": [
+        {
+          "headline": "Why Etsy (ETSY) Stock Is Trading Lower Today",
+          "summary": "Shares of online marketplace Etsy (NYSE:ETSY) fell 8.1% in the afternoon session after online marketplace shares fell as investors kept pricing in the threat that Meta\u2019s Muse AI agent could disintermediate shopping and booking platforms. According to CNBC, Muse can shop on a user\u2019s behalf across sites and marketplaces, and while Meta stock has rallied on the product\u2019s early traction, the same rollout has pressured financial-services and online-travel names as investors see AI agents moving into",
+          "url": "https://finance.yahoo.com/markets/stocks/articles/why-etsy-etsy-stock-trading-004058304.html",
+          "source": "StockStory",
+          "published_at": "2026-09-25T00:40:58+00:00"
+        },
+        {
+          "headline": "CoreWeave upgraded, Etsy downgraded: Wall Street's top analyst calls",
+          "summary": "CoreWeave upgraded, Etsy downgraded: Wall Street's top analyst calls",
+          "url": "https://finance.yahoo.com/markets/stocks/articles/microsoft-reinstated-ralph-lauren-upgraded-133648092.html",
+          "source": "The Fly",
+          "published_at": "2026-09-24T13:41:29+00:00"
+        },
+        {
+          "headline": "Etsy, CarGurus, Cars.com, and EverQuote Shares Are Falling, What You Need To Know",
+          "summary": "A number of stocks fell in the afternoon session after the adoption of Meta Platforms' new AI agent, Muse, continued to raise Wall Street fears about the disintermediation of direct user gateways.",
+          "url": "https://finance.yahoo.com/markets/stocks/articles/etsy-cargurus-cars-com-everquote-191316857.html",
+          "source": "StockStory",
+          "published_at": "2026-09-23T19:13:16+00:00"
+        }
+      ]
+    },
+    {
+      "signal_name": "significant_gain",
+      "symbol": "GM",
+      "severity": 2.086434361950064,
+      "headline": "GM gained +2.09%",
+      "details": {
+        "pct_change": 2.086434361950064,
+        "last_close": 82.19999694824219,
+        "prior_close": 80.52,
+        "threshold": 2.0,
+        "cap_tier": null,
+        "description": "General Motors",
+        "category": "HOLDING"
+      },
+      "news": [
+        {
+          "headline": "What Would It Take For Tesla Stock To Move Higher?",
+          "summary": "Tesla's clearest route to a higher share price runs through driverless rides, not through selling more cars. That matters now because the stock has trailed the market. Tesla (TSLA) shares lost 11.3% over the past year, while the S&P 500 returned 17.1%. Cybercab rides started in Austin in September, and regulators are already asking questions. How far along is Tesla's robotaxi service today.",
+          "url": "https://www.trefis.com/articles/616650/what-would-it-take-for-tesla-stock-to-move-higher/2026-09-25",
+          "source": "Trefis",
+          "published_at": "2026-09-25T13:37:11+00:00"
+        },
+        {
+          "headline": "GM, Ford Q3 US New Vehicle Sales Seen Dropping YOY, Cox Says",
+          "summary": "General Motors' (GM) new US vehicle sales are expected to drop 5.2% year over year in Q3, while Ford",
+          "url": "https://finance.yahoo.com/markets/stocks/articles/gm-ford-q3-us-vehicle-093634515.html",
+          "source": "MT Newswires",
+          "published_at": "2026-09-25T09:36:34+00:00"
+        },
+        {
+          "headline": "General Motors (GM) Puts 100% Recycled Battery Minerals Into Customer EVs",
+          "summary": "General Motors (NYSE:GM) has rolled out EV batteries using cathode material made entirely from recycled nickel, cobalt, and manganese in a new pilot. The recycled minerals come from end-of-life GM EV battery packs processed by recycling partner Cirba Solutions. These 100% recycled critical minerals met original safety and performance specifications and are now installed in Cadillac Lyriq and Chevrolet Silverado EVs sold to customers. GM's first EV batteries using fully recycled critical...",
+          "url": "https://finance.yahoo.com/markets/stocks/articles/general-motors-gm-puts-100-051236340.html",
+          "source": "Simply Wall St.",
+          "published_at": "2026-09-25T05:12:36+00:00"
+        },
+        {
+          "headline": "Soaring Gas Prices Could Put Korean Automaker's Sales Ahead Of Ford",
+          "summary": "Demand for hybrid cars has become so significant it could reorder the scoreboard for automakers in the U.S. A new U.S. sales forecast shows Ford giving up its no. 3 spot, while Hyundai stands to steal Ford's place for the third quarter. Cox Automotive predicts the South Korean automaker will sell 511,421 vehicles during the July-September period, a 6.5% bump...",
+          "url": "https://www.investors.com/news/hybrid-cars-help-korean-automaker-sales-forecast-ford-over-gas-prices/?src=A00220&yptr=yahoo",
+          "source": "Investor's Business Daily",
+          "published_at": "2026-09-24T19:48:21+00:00"
+        },
+        {
+          "headline": "GM CFO expects improved 2027 cash flow after EV restructuring",
+          "summary": "As an \u201cold school CFO,\u201d a strong focus on cash flow and generation remains paramount, GM CFO Paul Jacobson said.",
+          "url": "https://www.cfodive.com/news/gm-cfo-expects-improved-2027-cash-flow-ev-restructuring-auto/831306/",
+          "source": "CFO Dive",
+          "published_at": "2026-09-24T18:57:37+00:00"
+        }
+      ]
+    },
+    {
+      "signal_name": "significant_gain",
+      "symbol": "JMIA",
+      "severity": 2.0557974928801337,
+      "headline": "JMIA gained +2.06%",
+      "details": {
+        "pct_change": 2.0557974928801337,
+        "last_close": 6.949999809265137,
+        "prior_close": 6.81,
+        "threshold": 2.0,
+        "cap_tier": null,
+        "description": "Jumia Technologies",
+        "category": "HOLDING"
+      },
+      "news": []
+    }
+  ]
+}

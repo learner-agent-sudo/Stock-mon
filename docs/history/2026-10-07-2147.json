@@ -1,0 +1,1691 @@
+{
+  "generated_at": "2026-10-07T21:47:06.754570+00:00",
+  "stats": {
+    "stocks_checked": 263,
+    "prices_ok": 246,
+    "prices_failed": 17,
+    "signals_matched": 60,
+    "news_source": "yahoo+finnhub",
+    "source_health": [
+      {
+        "name": "yahoo",
+        "status": "ok",
+        "detail": "0 canary articles"
+      },
+      {
+        "name": "finnhub",
+        "status": "ok",
+        "detail": "246 canary articles"
+      },
+      {
+        "name": "fmp",
+        "status": "error",
+        "detail": "HTTP 401: {\n  \"Error Message\": \"Invalid API KEY. Feel free to create a"
+      },
+      {
+        "name": "gdelt",
+        "status": "error",
+        "detail": "HTTPSConnectionPool(host='api.gdeltproject.org', port=443): Read timed out. (rea"
+      }
+    ],
+    "total_articles": 2113,
+    "tickers_with_news": 89,
+    "tickers_without_news": 174
+  },
+  "results": [
+    {
+      "signal_name": "drop_without_news",
+      "symbol": "SJ",
+      "severity": 16.129035334433283,
+      "headline": "SJ dropped 16.13% with NO news found",
+      "details": {
+        "pct_change": -16.129035334433283,
+        "last_close": 0.7799999713897705,
+        "prior_close": 0.93,
+        "threshold": 2.0,
+        "cap_tier": null,
+        "description": "Scientia Global",
+        "category": "HOLDING"
+      },
+      "news": []
+    },
+    {
+      "signal_name": "drop_without_news",
+      "symbol": "LTCH",
+      "severity": 15.34391723612629,
+      "headline": "LTCH dropped 15.34% with NO news found",
+      "details": {
+        "pct_change": -15.34391723612629,
+        "last_close": 0.1599999964237213,
+        "prior_close": 0.189,
+        "threshold": 2.0,
+        "cap_tier": null,
+        "description": "Latch",
+        "category": "HOLDING"
+      },
+      "news": []
+    },
+    {
+      "signal_name": "drop_without_news",
+      "symbol": "SES",
+      "severity": 8.652391181484582,
+      "headline": "SES dropped 8.65% with NO news found",
+      "details": {
+        "pct_change": -8.652391181484582,
+        "last_close": 0.7253000140190125,
+        "prior_close": 0.794,
+        "threshold": 2.0,
+        "cap_tier": null,
+        "description": "SES AI",
+        "category": "WATCHLIST"
+      },
+      "news": []
+    },
+    {
+      "signal_name": "drop_without_news",
+      "symbol": "TWST",
+      "severity": 6.569099613920357,
+      "headline": "TWST dropped 6.57% with NO news found",
+      "details": {
+        "pct_change": -6.569099613920357,
+        "last_close": 155.64999389648438,
+        "prior_close": 166.5937,
+        "threshold": 2.0,
+        "cap_tier": null,
+        "description": "Twist Bioscience",
+        "category": "HOLDING"
+      },
+      "news": []
+    },
+    {
+      "signal_name": "drop_without_news",
+      "symbol": "LOB",
+      "severity": 6.111267959624003,
+      "headline": "LOB dropped 6.11% with NO news found",
+      "details": {
+        "pct_change": -6.111267959624003,
+        "last_close": 34.2599983215332,
+        "prior_close": 36.49,
+        "threshold": 2.0,
+        "cap_tier": null,
+        "description": "Live Oak Bancshares",
+        "category": "HOLDING"
+      },
+      "news": []
+    },
+    {
+      "signal_name": "drop_without_news",
+      "symbol": "FTHM",
+      "severity": 5.676853448542969,
+      "headline": "FTHM dropped 5.68% with NO news found",
+      "details": {
+        "pct_change": -5.676853448542969,
+        "last_close": 0.2160000056028366,
+        "prior_close": 0.229,
+        "threshold": 2.0,
+        "cap_tier": null,
+        "description": "Fathom Holdings",
+        "category": "HOLDING"
+      },
+      "news": []
+    },
+    {
+      "signal_name": "drop_without_news",
+      "symbol": "TXG",
+      "severity": 5.583128444018488,
+      "headline": "TXG dropped 5.58% with NO news found",
+      "details": {
+        "pct_change": -5.583128444018488,
+        "last_close": 76.0999984741211,
+        "prior_close": 80.6,
+        "threshold": 2.0,
+        "cap_tier": null,
+        "description": "10x Genomics",
+        "category": "HOLDING"
+      },
+      "news": []
+    },
+    {
+      "signal_name": "drop_without_news",
+      "symbol": "NNOX",
+      "severity": 4.952072106992094,
+      "headline": "NNOX dropped 4.95% with NO news found",
+      "details": {
+        "pct_change": -4.952072106992094,
+        "last_close": 0.5950000286102295,
+        "prior_close": 0.626,
+        "threshold": 2.0,
+        "cap_tier": null,
+        "description": "Nano-X Imaging",
+        "category": "HOLDING"
+      },
+      "news": []
+    },
+    {
+      "signal_name": "drop_without_news",
+      "symbol": "REAL.TO",
+      "severity": 4.558407275425397,
+      "headline": "REAL.TO dropped 4.56% with NO news found",
+      "details": {
+        "pct_change": -4.558407275425397,
+        "last_close": 3.3499999046325684,
+        "prior_close": 3.51,
+        "threshold": 2.0,
+        "cap_tier": null,
+        "description": "Real Matters",
+        "category": "WATCHLIST"
+      },
+      "news": []
+    },
+    {
+      "signal_name": "drop_without_news",
+      "symbol": "BYND",
+      "severity": 4.250001907348633,
+      "headline": "BYND dropped 4.25% with NO news found",
+      "details": {
+        "pct_change": -4.250001907348633,
+        "last_close": 7.659999847412109,
+        "prior_close": 8.0,
+        "threshold": 2.0,
+        "cap_tier": null,
+        "description": "Beyond Meat",
+        "category": "HOLDING"
+      },
+      "news": []
+    },
+    {
+      "signal_name": "drop_without_news",
+      "symbol": "FUN",
+      "severity": 3.7251646155553155,
+      "headline": "FUN dropped 3.73% with NO news found",
+      "details": {
+        "pct_change": -3.7251646155553155,
+        "last_close": 11.630000114440918,
+        "prior_close": 12.08,
+        "threshold": 2.0,
+        "cap_tier": null,
+        "description": "Six Flags Entertainment",
+        "category": "HOLDING"
+      },
+      "news": []
+    },
+    {
+      "signal_name": "drop_without_news",
+      "symbol": "TDOC",
+      "severity": 3.6395157230582074,
+      "headline": "TDOC dropped 3.64% with NO news found",
+      "details": {
+        "pct_change": -3.6395157230582074,
+        "last_close": 5.559999942779541,
+        "prior_close": 5.77,
+        "threshold": 2.0,
+        "cap_tier": null,
+        "description": "Teladoc Health",
+        "category": "HOLDING"
+      },
+      "news": []
+    },
+    {
+      "signal_name": "drop_without_news",
+      "symbol": "TXT",
+      "severity": 3.5907606873968647,
+      "headline": "TXT dropped 3.59% with NO news found",
+      "details": {
+        "pct_change": -3.5907606873968647,
+        "last_close": 73.02999877929688,
+        "prior_close": 75.75,
+        "threshold": 2.0,
+        "cap_tier": null,
+        "description": "Textron",
+        "category": "HOLDING"
+      },
+      "news": []
+    },
+    {
+      "signal_name": "drop_without_news",
+      "symbol": "DIBS",
+      "severity": 3.448273982907742,
+      "headline": "DIBS dropped 3.45% with NO news found",
+      "details": {
+        "pct_change": -3.448273982907742,
+        "last_close": 3.9200000762939453,
+        "prior_close": 4.06,
+        "threshold": 2.0,
+        "cap_tier": null,
+        "description": "1stDibs",
+        "category": "HOLDING"
+      },
+      "news": []
+    },
+    {
+      "signal_name": "drop_without_news",
+      "symbol": "TD.TO",
+      "severity": 3.349998407841695,
+      "headline": "TD.TO dropped 3.35% with NO news found",
+      "details": {
+        "pct_change": -3.349998407841695,
+        "last_close": 162.42999267578125,
+        "prior_close": 168.06,
+        "threshold": 2.0,
+        "cap_tier": null,
+        "description": "TD Bank",
+        "category": "WATCHLIST"
+      },
+      "news": []
+    },
+    {
+      "signal_name": "drop_without_news",
+      "symbol": "WHR",
+      "severity": 3.344369092524444,
+      "headline": "WHR dropped 3.34% with NO news found",
+      "details": {
+        "pct_change": -3.344369092524444,
+        "last_close": 29.190000534057617,
+        "prior_close": 30.2,
+        "threshold": 2.0,
+        "cap_tier": null,
+        "description": "Whirlpool",
+        "category": "HOLDING"
+      },
+      "news": []
+    },
+    {
+      "signal_name": "drop_without_news",
+      "symbol": "BNS.TO",
+      "severity": 3.0801614819655843,
+      "headline": "BNS.TO dropped 3.08% with NO news found",
+      "details": {
+        "pct_change": -3.0801614819655843,
+        "last_close": 124.29000091552734,
+        "prior_close": 128.24,
+        "threshold": 2.0,
+        "cap_tier": null,
+        "description": "Bank of Nova Scotia",
+        "category": "WATCHLIST"
+      },
+      "news": []
+    },
+    {
+      "signal_name": "drop_without_news",
+      "symbol": "CM.TO",
+      "severity": 2.5716940912582764,
+      "headline": "CM.TO dropped 2.57% with NO news found",
+      "details": {
+        "pct_change": -2.5716940912582764,
+        "last_close": 154.57000732421875,
+        "prior_close": 158.65,
+        "threshold": 2.0,
+        "cap_tier": null,
+        "description": "CIBC",
+        "category": "WATCHLIST"
+      },
+      "news": []
+    },
+    {
+      "signal_name": "drop_without_news",
+      "symbol": "META",
+      "severity": 2.5520132992983373,
+      "headline": "META dropped 2.55% with NO news found",
+      "details": {
+        "pct_change": -2.5520132992983373,
+        "last_close": 721.3099975585938,
+        "prior_close": 740.2,
+        "threshold": 2.0,
+        "cap_tier": null,
+        "description": "Meta Platforms",
+        "category": "HOLDING"
+      },
+      "news": []
+    },
+    {
+      "signal_name": "drop_without_news",
+      "symbol": "MFC.TO",
+      "severity": 2.5065558297293515,
+      "headline": "MFC.TO dropped 2.51% with NO news found",
+      "details": {
+        "pct_change": -2.5065558297293515,
+        "last_close": 59.5099983215332,
+        "prior_close": 61.04,
+        "threshold": 2.0,
+        "cap_tier": null,
+        "description": "Manulife Financial",
+        "category": "WATCHLIST"
+      },
+      "news": []
+    },
+    {
+      "signal_name": "drop_without_news",
+      "symbol": "DFH",
+      "severity": 2.4640657084188935,
+      "headline": "DFH dropped 2.46% with NO news found",
+      "details": {
+        "pct_change": -2.4640657084188935,
+        "last_close": 9.5,
+        "prior_close": 9.74,
+        "threshold": 2.0,
+        "cap_tier": null,
+        "description": "Dream Finders Homes",
+        "category": "HOLDING"
+      },
+      "news": []
+    },
+    {
+      "signal_name": "drop_without_news",
+      "symbol": "BMO.TO",
+      "severity": 2.3200672223949463,
+      "headline": "BMO.TO dropped 2.32% with NO news found",
+      "details": {
+        "pct_change": -2.3200672223949463,
+        "last_close": 230.72000122070312,
+        "prior_close": 236.2,
+        "threshold": 2.0,
+        "cap_tier": null,
+        "description": "Bank of Montreal",
+        "category": "HOLDING"
+      },
+      "news": []
+    },
+    {
+      "signal_name": "drop_without_news",
+      "symbol": "MPT",
+      "severity": 2.1212115432276817,
+      "headline": "MPT dropped 2.12% with NO news found",
+      "details": {
+        "pct_change": -2.1212115432276817,
+        "last_close": 3.2300000190734863,
+        "prior_close": 3.3,
+        "threshold": 2.0,
+        "cap_tier": null,
+        "description": "Medical Properties Trust",
+        "category": "HOLDING"
+      },
+      "news": []
+    },
+    {
+      "signal_name": "drop_without_news",
+      "symbol": "SLF.TO",
+      "severity": 2.054671357283986,
+      "headline": "SLF.TO dropped 2.05% with NO news found",
+      "details": {
+        "pct_change": -2.054671357283986,
+        "last_close": 108.20999908447266,
+        "prior_close": 110.48,
+        "threshold": 2.0,
+        "cap_tier": null,
+        "description": "Sun Life Financial",
+        "category": "HOLDING"
+      },
+      "news": []
+    },
+    {
+      "signal_name": "drop_without_news",
+      "symbol": "TGT",
+      "severity": 2.038168136475847,
+      "headline": "TGT dropped 2.04% with NO news found",
+      "details": {
+        "pct_change": -2.038168136475847,
+        "last_close": 150.9199981689453,
+        "prior_close": 154.06,
+        "threshold": 2.0,
+        "cap_tier": null,
+        "description": "Target",
+        "category": "HOLDING"
+      },
+      "news": []
+    },
+    {
+      "signal_name": "drop_with_news",
+      "symbol": "CRBU",
+      "severity": 16.420740414427474,
+      "headline": "CRBU dropped 16.42% \u2014 18 headline(s) found",
+      "details": {
+        "pct_change": -16.420740414427474,
+        "last_close": 0.6173999905586243,
+        "prior_close": 0.7387,
+        "threshold": 2.0,
+        "cap_tier": null,
+        "description": "Caribou Biosciences",
+        "category": "HOLDING"
+      },
+      "news": [
+        {
+          "headline": "Let's have a look at the top gainers and losers one hour before the close of the markets of today's session.",
+          "summary": "Curious to know what's happening on the US markets one hour before the close of the markets on Wednesday? Join us as we explore the top gainers and losers in today's session.",
+          "url": "https://finnhub.io/api/news?id=4bc8164ea45bb33575d532a8000ae796ee3f8ea4de5a3927b21b8477219d7aef",
+          "source": "ChartMill",
+          "published_at": "2026-10-07T19:00:00+00:00"
+        },
+        {
+          "headline": "What's going on in today's session",
+          "summary": "Intrigued by the market activity in the middle of the day on Wednesday? Uncover the key winners and losers of today's session in our insightful analysis.",
+          "url": "https://finnhub.io/api/news?id=22ca0e310cf2c3e71f2a24a1c2ab14f49d986bdec9dee9c042105fddf4b7fb18",
+          "source": "ChartMill",
+          "published_at": "2026-10-07T16:30:00+00:00"
+        },
+        {
+          "headline": "Wednesday's session: gap up and gap down stocks",
+          "summary": "The market is buzzing with gapping stocks on Wednesday. Let's uncover which stocks are experiencing notable gaps during today's session.",
+          "url": "https://finnhub.io/api/news?id=3069034a36df2be6de371d1681c8a46b83c3135d743357287302daa5921700df",
+          "source": "ChartMill",
+          "published_at": "2026-10-07T14:30:00+00:00"
+        },
+        {
+          "headline": "Wondering what's happening in today's pre-market session?",
+          "summary": "As we await the opening of the US market on Wednesday, let's delve into the pre-market session and discover the top gainers and losers shaping the early market sentiment.",
+          "url": "https://finnhub.io/api/news?id=78a34968e709f184761b4325dd1079dbf71787b288fe9c8093435fadf48e62db",
+          "source": "ChartMill",
+          "published_at": "2026-10-07T12:30:00+00:00"
+        },
+        {
+          "headline": "Dow Tumbles 350 Points; Constellation Brands Earnings Top Views",
+          "summary": "U.S. stocks fell Wednesday; Dow dropped 350 points. Energy rose, materials slid. Constellation beat estimates; oil gained while gold and silver fell.",
+          "url": "https://finnhub.io/api/news?id=4bb1aed1bde9a70d13372d2b902cd65c2ac1b0cd2da427e3ab98c18ee0fde51f",
+          "source": "Benzinga",
+          "published_at": "2026-10-07T09:52:18+00:00"
+        }
+      ]
+    },
+    {
+      "signal_name": "drop_with_news",
+      "symbol": "BB",
+      "severity": 9.307130736673507,
+      "headline": "BB dropped 9.31% \u2014 3 headline(s) found",
+      "details": {
+        "pct_change": -9.307130736673507,
+        "last_close": 8.770000457763672,
+        "prior_close": 9.67,
+        "threshold": 2.0,
+        "cap_tier": null,
+        "description": "BlackBerry",
+        "category": "HOLDING"
+      },
+      "news": [
+        {
+          "headline": "Why BlackBerry (TSX:BB) Is Up 10.6% After Raising Full-Year Revenue Guidance And Profitability Outlook",
+          "summary": "In late September 2026, BlackBerry reported second-quarter results showing sales of US$163.3 million and net income of US$33.9 million, and issued third-quarter revenue guidance of US$143 million to US$154 million alongside full-year guidance of US$616 million to US$636 million for the fiscal year ending February 28, 2027. The combination of stronger year-on-year profitability and a higher full-year revenue outlook signals management\u2019s increased confidence in the company\u2019s operating...",
+          "url": "https://finnhub.io/api/news?id=a780f94ce3a35f1b45726c62ec4f645349290d336f654bafa03b94066071712e",
+          "source": "Yahoo",
+          "published_at": "2026-10-07T01:08:56+00:00"
+        },
+        {
+          "headline": "Apogee Enterprises Posts Upbeat Q2 Earnings, Joins Constellation Energy, Freshworks  And Other Big Stocks Moving Higher On Tuesday",
+          "summary": "U.S. stocks rose; Apogee surged 10% on strong results and raised guidance, while Option Care, Ginkgo, PacBio and others posted double-digit gains.",
+          "url": "https://finnhub.io/api/news?id=775bb20d6d282e22da530780cee8ab498c2fa803b18f91f39b49bfc01878a376",
+          "source": "Benzinga",
+          "published_at": "2026-10-06T09:59:37+00:00"
+        },
+        {
+          "headline": "BlackBerry (BB) Lost the Smartphone War. Is QNX Winning Big Enough to Justify the Price?",
+          "summary": "BlackBerry Limited (NYSE:BB) has already completed perhaps the most difficult part of its transformation: pivoting from a smartphone maker into a software company. Apple forced that pivot as iPhones steadily eroded BlackBerry\u2019s market share. The company\u2019s comeback story has drawn growing attention from investors. In a recent analysis, Jim Cramer on BlackBerry (BB): \u201cI Am [\u2026]",
+          "url": "https://finnhub.io/api/news?id=77fa92f2f0851d55f3e3cb11339f0a843b3ae02619e1baf42dd316c0bf56b10c",
+          "source": "Yahoo",
+          "published_at": "2026-10-05T21:06:15+00:00"
+        }
+      ]
+    },
+    {
+      "signal_name": "drop_with_news",
+      "symbol": "DNA",
+      "severity": 7.4253408633671665,
+      "headline": "DNA dropped 7.43% \u2014 3 headline(s) found",
+      "details": {
+        "pct_change": -7.4253408633671665,
+        "last_close": 11.470000267028809,
+        "prior_close": 12.39,
+        "threshold": 2.0,
+        "cap_tier": null,
+        "description": "Ginkgo Bioworks",
+        "category": "HOLDING"
+      },
+      "news": [
+        {
+          "headline": "Ginkgo Bioworks: The Valuation Has Outrun The Business",
+          "summary": "Ginkgo Bioworks (DNA) reiterates a Sell: AI/biotech hype vs weak fundamentals, commoditized TuneLab, plunging revenue & cash burn risks\u00e2\u0080\u0094read now.",
+          "url": "https://finnhub.io/api/news?id=e01741a536c9140751c45236daec89cb90257f67aa3c467f24fd6cd204d4025e",
+          "source": "SeekingAlpha",
+          "published_at": "2026-10-07T12:42:44+00:00"
+        },
+        {
+          "headline": "Apogee Enterprises Posts Upbeat Q2 Earnings, Joins Constellation Energy, Freshworks  And Other Big Stocks Moving Higher On Tuesday",
+          "summary": "U.S. stocks rose; Apogee surged 10% on strong results and raised guidance, while Option Care, Ginkgo, PacBio and others posted double-digit gains.",
+          "url": "https://finnhub.io/api/news?id=775bb20d6d282e22da530780cee8ab498c2fa803b18f91f39b49bfc01878a376",
+          "source": "Benzinga",
+          "published_at": "2026-10-06T09:59:37+00:00"
+        },
+        {
+          "headline": "This Small-Cap Stock Announced a Deal With Eli Lilly. Then Its Shares Doubled",
+          "summary": "Eli Lilly is partnering with Ginkgo Bioworks on drug discovery.",
+          "url": "https://finnhub.io/api/news?id=193e9c81c570f2a415d53adc79ccf17062b47e792520dd4c897f7a3caeb17443",
+          "source": "Yahoo",
+          "published_at": "2026-10-05T16:05:02+00:00"
+        }
+      ]
+    },
+    {
+      "signal_name": "drop_with_news",
+      "symbol": "SDGR",
+      "severity": 6.076622353256015,
+      "headline": "SDGR dropped 6.08% \u2014 1 headline(s) found",
+      "details": {
+        "pct_change": -6.076622353256015,
+        "last_close": 27.290000915527344,
+        "prior_close": 29.0556,
+        "threshold": 2.0,
+        "cap_tier": null,
+        "description": "Schrodinger",
+        "category": "HOLDING"
+      },
+      "news": [
+        {
+          "headline": "Schrodinger (SDGR) Surges 7.6%: Is This an Indication of Further Gains?",
+          "summary": "Schrodinger (SDGR) witnessed a jump in share price last session on above-average trading volume. The latest trend in earnings estimate revisions for the stock suggests that there could be more strength down the road.",
+          "url": "https://finnhub.io/api/news?id=5a76d3dfbaa648d8bccc9725bbc7985b58d697f3bab6a0ffd840703db78b631c",
+          "source": "Yahoo",
+          "published_at": "2026-10-06T10:38:00+00:00"
+        }
+      ]
+    },
+    {
+      "signal_name": "drop_with_news",
+      "symbol": "ASST",
+      "severity": 5.641113271033205,
+      "headline": "ASST dropped 5.64% \u2014 10 headline(s) found",
+      "details": {
+        "pct_change": -5.641113271033205,
+        "last_close": 28.184999465942383,
+        "prior_close": 29.87,
+        "threshold": 2.0,
+        "cap_tier": null,
+        "description": "Asset Entities",
+        "category": "HOLDING"
+      },
+      "news": [
+        {
+          "headline": "Strive buys $169M as leveraged crypto trading expands",
+          "summary": "Scott Melker breaks down Strive\u2019s (ASST) purchase of 2,000 bitcoin (BTC-USD) for roughly $169 million, the Securities and Exchange Commission\u2019s approval of the first 3X leveraged bitcoin and ethereum (ETH-USD) funds, and the CFTC\u2019s new proposal outlining a framework for leveraged retail crypto trading. \"The Daily Wolf with Scott Melker\" airs every day at 12:00 p.m. Tune in for your daily dose of all things crypto.",
+          "url": "https://finnhub.io/api/news?id=137d2348b43349283b3afe66188ddeeda0575ce84637c541663ace2e2a9f3ccc",
+          "source": "Yahoo",
+          "published_at": "2026-10-06T16:01:00+00:00"
+        },
+        {
+          "headline": "Strive purchases $169M in bitcoin \u2014 nearly 6 times more than Strategy's recent buy",
+          "summary": "Strive (ASST) recently bought 2,000 bitcoin (BTC-USD) for about $169 million. Scott Melker discusses what this could mean for Strategy (MSTR).",
+          "url": "https://finnhub.io/api/news?id=1521388ef0ca0e4fde256bf174797bbd01ed409735c35034a9b4b5f0c9d0751b",
+          "source": "Yahoo",
+          "published_at": "2026-10-06T16:00:00+00:00"
+        },
+        {
+          "headline": "Strive's Matt Cole Says Bitcoin Could Hit $500,000 By The End Of 2030",
+          "summary": "Matt Cole expects a new Bitcoin bull market within the next 18 months, driven by a weaker dollar.",
+          "url": "https://finnhub.io/api/news?id=45dfc14adfac1980110cb1f592c3a8b23165e0ef8858427265fc20b522b0cf63",
+          "source": "Yahoo",
+          "published_at": "2026-10-06T13:25:20+00:00"
+        },
+        {
+          "headline": "TD Cowen: Bitcoin to Hit $132,750 by 2028, Strategy, Strive Could Outperform",
+          "summary": "Bitcoin may reach $132,750 by 2027 and $275,000 by 2029; well-run BTC treasury firms could outperform Bitcoin by ~50%.",
+          "url": "https://finnhub.io/api/news?id=270ac57c15dd4a7a25070aee7876f1c90f882a3ef954bafd2b963e24c90b1995",
+          "source": "Benzinga",
+          "published_at": "2026-10-06T09:12:02+00:00"
+        },
+        {
+          "headline": "Strive Adds $169M Bitcoin in Its Biggest Buy in Four Months",
+          "summary": "The Nasdaq-listed bitcoin treasury company, co-founded by Vivek Ramaswamy, paid roughly $169 million for 2,000 coins last week and now holds 29,462 BTC.",
+          "url": "https://finnhub.io/api/news?id=7181549298718f1927a7f364ebcc5a8c16b74f4598cda7ee058b38ba7c7fdad5",
+          "source": "Yahoo",
+          "published_at": "2026-10-05T22:30:20+00:00"
+        }
+      ]
+    },
+    {
+      "signal_name": "drop_with_news",
+      "symbol": "CRWD",
+      "severity": 4.8977097053469105,
+      "headline": "CRWD dropped 4.90% \u2014 52 headline(s) found",
+      "details": {
+        "pct_change": -4.8977097053469105,
+        "last_close": 265.44000244140625,
+        "prior_close": 279.11,
+        "threshold": 2.0,
+        "cap_tier": null,
+        "description": "CrowdStrike",
+        "category": "HOLDING"
+      },
+      "news": [
+        {
+          "headline": "Why CrowdStrike Stock Slumped on Wednesday",
+          "summary": "Despite positive news, gravity finally got the better of the cybersecurity specialist.",
+          "url": "https://finnhub.io/api/news?id=f195271f67ea99b82730af4e90d81a85fb749414301c92920b9b4b8805056448",
+          "source": "Yahoo",
+          "published_at": "2026-10-07T19:40:28+00:00"
+        },
+        {
+          "headline": "Exploring the top movers within the S&P500 index during today's session.",
+          "summary": "Uncover the latest developments among S&P500 stocks in today's session. Stay tuned to the S&P500 index's top gainers and losers on Wednesday.",
+          "url": "https://finnhub.io/api/news?id=4969bb37167e933cfd7558289b21f83b2434a2d4a02d1d83b878f78ff6fb8b48",
+          "source": "ChartMill",
+          "published_at": "2026-10-07T19:05:01+00:00"
+        },
+        {
+          "headline": "Dan Ives Thinks AI Buildout Still In Early Stages, With NVDA, MSFT, PLTR, AAPL And CRWD As Top AI Picks",
+          "summary": "Veteran tech analyst Dan Ives predicts a $4 trillion artificial intelligence spending boom is just beginning, naming Nvidia, Microsoft, Palantir, Apple, and CrowdStrike among his top equity picks.",
+          "url": "https://finnhub.io/api/news?id=1bc7e28d7009bc9b9c4a2a723dd899b3dd853fe658552bbb86d0f15bad9a4ad1",
+          "source": "Yahoo",
+          "published_at": "2026-10-07T19:00:18+00:00"
+        },
+        {
+          "headline": "Enterprise AI Adoption and CoCo Agent Expansion Drive Snowflake\u2019s (SNOW) Growth",
+          "summary": "Artisan Partners, an investment management company, released its third-quarter 2026 investor letter for the \u201cArtisan Developing World Fund\u201d. The letter can be downloaded here. The Artisan Developing World Fund (Investor Class) returned 3.50% in the quarter ending September 30, 2026, outperforming the MSCI Emerging Markets Index\u2019s -0.37%. Since June 30, 2015, its cumulative returns have [\u2026]",
+          "url": "https://finnhub.io/api/news?id=bff9213eccd5b06eed3e7a2804bec768ab03e5ba51564317aad6257b4c1c322b",
+          "source": "Yahoo",
+          "published_at": "2026-10-07T16:05:18+00:00"
+        },
+        {
+          "headline": "CrowdStrike (CRWD) is Monetizing the Complexities of the AI Cybersecurity Environment",
+          "summary": "Artisan Partners, an investment management company, released its third-quarter 2026 investor letter for the \u201cArtisan Developing World Fund\u201d. The letter can be downloaded here. The Artisan Developing World Fund (Investor Class) returned 3.50% in the quarter ending September 30, 2026, outperforming the MSCI Emerging Markets Index\u2019s -0.37%. Since June 30, 2015, its cumulative returns have [\u2026]",
+          "url": "https://finnhub.io/api/news?id=2567564f5dd501aab6ae272fa3d97fec27f44b05cda4cf31f029358a9267af89",
+          "source": "Yahoo",
+          "published_at": "2026-10-07T15:55:15+00:00"
+        }
+      ]
+    },
+    {
+      "signal_name": "drop_with_news",
+      "symbol": "COIN",
+      "severity": 4.404774699946604,
+      "headline": "COIN dropped 4.40% \u2014 54 headline(s) found",
+      "details": {
+        "pct_change": -4.404774699946604,
+        "last_close": 178.4499969482422,
+        "prior_close": 186.6725,
+        "threshold": 2.0,
+        "cap_tier": null,
+        "description": "Coinbase",
+        "category": "HOLDING"
+      },
+      "news": [
+        {
+          "headline": "Bitcoin, XRP, and Ethereum Drop as Cryptos Face a Perfect Storm",
+          "summary": "The Bitcoin rally was going so well but digital assets have suddenly run into a combination of problems.",
+          "url": "https://finnhub.io/api/news?id=75d87382d954d810f9e07c8e812d198b5f34352d09c83d0761887e484a221c23",
+          "source": "Yahoo",
+          "published_at": "2026-10-07T17:46:00+00:00"
+        },
+        {
+          "headline": "US Government Moves $103 Million in Seized Bitcoin and BNB, But Hasn't Said Why",
+          "summary": "Government-labeled wallets sent 833.6 BTC to Coinbase Prime deposit addresses and shuffled 40,285 BNB. No sale is confirmed, but the stash behind it is the largest any government holds in Arkham's ranking.",
+          "url": "https://finnhub.io/api/news?id=e5a323a35e4e36deab219d7e226f1252d64880ca2c7249deb04685ac04ea65c1",
+          "source": "Yahoo",
+          "published_at": "2026-10-07T16:56:56+00:00"
+        },
+        {
+          "headline": "Hunter Biden's LAPTOP Report Says Market Makers Made Millions: Who Are They?",
+          "summary": "Hunter Biden's LAPTOP report says 2 unnamed market makers made millions after the meme coin's 98% launch crash.",
+          "url": "https://finnhub.io/api/news?id=9b6edcf077398555b24070db0af29c6f9cd1f732c47f869ed3bb8dc0a939ec2f",
+          "source": "Yahoo",
+          "published_at": "2026-10-07T16:48:04+00:00"
+        },
+        {
+          "headline": "Can USDC Adoption Reshape Coinbase's Long-Term Growth Profile?",
+          "summary": "Coinbase's record USDC balances and expanding stablecoin use could strengthen recurring revenues across payments, custody, trading, lending and Base.",
+          "url": "https://finnhub.io/api/news?id=41a33ba172f2515f5e0063dbc32469fbc323e2adff9bb60fb71107ace2e9c069",
+          "source": "Yahoo",
+          "published_at": "2026-10-07T16:30:00+00:00"
+        },
+        {
+          "headline": "Coinbase Pro is coming back. Here's what you should know.",
+          "summary": "Scott Melker explains the latest updates crypto investors need to know regarding Coinbase (COIN), Deribit, and Coinbase Pro.",
+          "url": "https://finnhub.io/api/news?id=11409e9a9e1a060eabb3f27adf3f82730d8c15bd52532dbc4cca21c7c116be4d",
+          "source": "Yahoo",
+          "published_at": "2026-10-07T16:15:00+00:00"
+        }
+      ]
+    },
+    {
+      "signal_name": "drop_with_news",
+      "symbol": "BFLY",
+      "severity": 4.307875707118806,
+      "headline": "BFLY dropped 4.31% \u2014 3 headline(s) found",
+      "details": {
+        "pct_change": -4.307875707118806,
+        "last_close": 8.270000457763672,
+        "prior_close": 8.6423,
+        "threshold": 2.0,
+        "cap_tier": null,
+        "description": "Butterfly Network",
+        "category": "HOLDING"
+      },
+      "news": [
+        {
+          "headline": "Bridge Neurotech and Butterfly Network Announce Partnership to Develop Fully Non-Invasive Brain-Computer Interface",
+          "summary": "BURLINGTON, Mass. & REDWOOD CITY, Calif., October 06, 2026--Bridge Neurotech (\"Bridge\"), which emerged from stealth today with the goal of building a completely non-invasive brain-computer interface (BCI), and Butterfly Network, Inc. (\"Butterfly\") (NYSE: BFLY), a pioneer and leader in semiconductor-based ultrasound, programmable cloud software and AI, today announced a research and development agreement through Butterfly Embedded\u2122.",
+          "url": "https://finnhub.io/api/news?id=b70a63509233310df65cffb13ffae2a9741ba884b77c108079e33b4b8514d485",
+          "source": "Yahoo",
+          "published_at": "2026-10-06T20:05:00+00:00"
+        },
+        {
+          "headline": "Bridge Neurotech, Butterfly Network Announce Research, Development Agreement",
+          "summary": "Bridge Neurotech (&#34;Bridge&#34;), which emerged from stealth today with the goal of building a completely non-invasive brain-computer interface (BCI), and Butterfly Network, Inc. (&#34;Butterfly&#34;) (NYSE:BFLY), a",
+          "url": "https://finnhub.io/api/news?id=2a66c05df7550116f9faae218e6fd1b8a18629f60f3e83174cf0adc14a764c57",
+          "source": "Benzinga",
+          "published_at": "2026-10-06T16:11:31+00:00"
+        },
+        {
+          "headline": "Butterfly Network Appoints Mike Noonen to Board of Directors",
+          "summary": "NEW YORK & BURLINGTON, Mass., October 05, 2026--Butterfly Network, Inc. (NYSE: BFLY) (\"Butterfly\"), a pioneer and leader in semiconductor-based ultrasound devices, programmable cloud software and AI, today announced the appointment of Mike Noonen to its Board of Directors, effective October 9, 2026. Mr. Noonen will serve on the Board's Compensation Committee and Technology Committee. With his appointment, the Board expands to seven directors.",
+          "url": "https://finnhub.io/api/news?id=7f78d5f9b2a1605d6307a4b4aac1d742027199ca27a010208afb340269da6944",
+          "source": "Yahoo",
+          "published_at": "2026-10-05T12:00:00+00:00"
+        }
+      ]
+    },
+    {
+      "signal_name": "drop_with_news",
+      "symbol": "BAND",
+      "severity": 4.216664632161458,
+      "headline": "BAND dropped 4.22% \u2014 1 headline(s) found",
+      "details": {
+        "pct_change": -4.216664632161458,
+        "last_close": 57.470001220703125,
+        "prior_close": 60.0,
+        "threshold": 2.0,
+        "cap_tier": null,
+        "description": "Bandwidth",
+        "category": "HOLDING"
+      },
+      "news": [
+        {
+          "headline": "1 Cash-Producing Stock to Consider Right Now and 2 That Underwhelm",
+          "summary": "A company that generates cash isn\u2019t automatically a winner. Some businesses stockpile cash but fail to reinvest wisely, limiting their ability to expand.",
+          "url": "https://finnhub.io/api/news?id=ccdb48defaa6fdb2eaa371bbb92f209ca94c3f34f0cdf408a4cee07d8eacc59d",
+          "source": "Yahoo",
+          "published_at": "2026-10-05T08:51:00+00:00"
+        }
+      ]
+    },
+    {
+      "signal_name": "drop_with_news",
+      "symbol": "NET",
+      "severity": 3.456720275664145,
+      "headline": "NET dropped 3.46% \u2014 17 headline(s) found",
+      "details": {
+        "pct_change": -3.456720275664145,
+        "last_close": 342.9700012207031,
+        "prior_close": 355.25,
+        "threshold": 2.0,
+        "cap_tier": null,
+        "description": "Cloudflare",
+        "category": "HOLDING"
+      },
+      "news": [
+        {
+          "headline": "An AI Rally Built On Infrastructure",
+          "summary": "AI has been a winning theme this year, but which part of the theme you own has made a big difference.",
+          "url": "https://finnhub.io/api/news?id=3797dfd4cefa8badd6b170dbda82f5e7e386baf5736b6a70f4e8087a18ec4a0d",
+          "source": "SeekingAlpha",
+          "published_at": "2026-10-06T22:45:00+00:00"
+        },
+        {
+          "headline": "Closing Cyber-Insurance Gap: Cowbell CEO, Founder & Chairman Jack Kudale, Live at Nasdaq",
+          "summary": "Tech Edge hosted a fireside chat at Nasdaq MarketSite on Oct. 5 with Jack Kudale, Chief Executive Officer, Founder and Chairman of Cowbell. The in-person interview was joined by Editor-in-Chief John Jannarone and they discussed: How Cowbell\u2019s focus is closing the cyber-insurance gap for businesses. Mr. Kudale explained Cowbell\u2019s approach to combining technology, data, and [\u2026] The post Closing Cyber-Insurance Gap: Cowbell CEO, Founder & Chairman Jack Kudale, Live at Nasdaq appeared first on ExecE",
+          "url": "https://finnhub.io/api/news?id=cc7e6a000744c4840a5bda864a9845eb68f3248c807013ed934880d0c5fc9534",
+          "source": "Yahoo",
+          "published_at": "2026-10-06T20:25:55+00:00"
+        },
+        {
+          "headline": "Cloudflare Just Gained 28% in a Month: Is It Too Late to Buy NET Stock Now?",
+          "summary": "Cloudflare's network just crossed a threshold that changes the math on who actually uses the internet, and investors are betting that milestone turns into something much bigger than a one-month stock surge.",
+          "url": "https://finnhub.io/api/news?id=3ea39c3b3b0c684fd81c49ee4b2f8be10ed9a3764cb66c48d023aa664b5daba4",
+          "source": "Yahoo",
+          "published_at": "2026-10-06T18:51:33+00:00"
+        },
+        {
+          "headline": "Cybersecurity stocks hit new highs as AI agents spark 'biggest risk today': Chart of the Day",
+          "summary": "Cybersecurity stocks are at all-time highs as agentic AI adoption spurs security spending.",
+          "url": "https://finnhub.io/api/news?id=b279aebfb2e4320ca91b3938dd41a3730c1d9450345cea12ae43f21e42731fa3",
+          "source": "Yahoo",
+          "published_at": "2026-10-06T11:54:46+00:00"
+        },
+        {
+          "headline": "Here\u2019s How Much You Would Have Made Owning Cloudflare Stock In The Last 5 Years",
+          "summary": "Cloudflare (NYSE:NET) has outperformed the market over the past 5 years by 8.1% on an annualized basis producing an average annual return of 20.51%. Currently, Cloudflare has a market capitalization of $129.40 billion.",
+          "url": "https://finnhub.io/api/news?id=70b8ac8e55eef8001de676fa0ef5c1c2cd1596268740564f9fcb137a1c35a32c",
+          "source": "Benzinga",
+          "published_at": "2026-10-06T10:16:07+00:00"
+        }
+      ]
+    },
+    {
+      "signal_name": "drop_with_news",
+      "symbol": "CRSP",
+      "severity": 3.382804401165133,
+      "headline": "CRSP dropped 3.38% \u2014 3 headline(s) found",
+      "details": {
+        "pct_change": -3.382804401165133,
+        "last_close": 52.349998474121094,
+        "prior_close": 54.1829,
+        "threshold": 2.0,
+        "cap_tier": null,
+        "description": "CRISPR Therapeutics",
+        "category": "HOLDING"
+      },
+      "news": [
+        {
+          "headline": "CRISPR Therapeutics AG (CRSP) Stock Slides as Market Rises: Facts to Know Before You Trade",
+          "summary": "The latest trading day saw CRISPR Therapeutics AG (CRSP) settling at $54, representing a -5.82% change from its previous close.",
+          "url": "https://finnhub.io/api/news?id=dc0d1d1e08b4f2c159597288447be9f0ab378b52a35fa9af32f5d6ca0ec77fb1",
+          "source": "Yahoo",
+          "published_at": "2026-10-06T20:50:03+00:00"
+        },
+        {
+          "headline": "Cathie Wood Claps Back After Being Confronted as ARKK Fell Nearly 15% While QQQ Soared 112% in Five Years \u2014 Calls It an \u2018Incorrect Comparison\u2019",
+          "summary": "Cathie Wood defends ARKK&#39;s 15% drop vs QQQ&#39;s 112% 5-year gain, calling it an &#39;incorrect comparison&#39; and blaming &#39;endpoint sensitivity.&#39;",
+          "url": "https://finnhub.io/api/news?id=3ef1208dc23792129bb70dc851038f5bdf32bb6fd45801ebf346ed642b9ef852",
+          "source": "Benzinga",
+          "published_at": "2026-10-06T04:08:14+00:00"
+        },
+        {
+          "headline": "Wall Street Bulls Look Optimistic About CRISPR Therapeutics (CRSP): Should You Buy?",
+          "summary": "Based on the average brokerage recommendation (ABR), CRISPR Therapeutics (CRSP) should be added to one's portfolio. Wall Street analysts' overly optimistic recommendations cast doubt on the effectiveness of this highly sought-after metric. So, is the stock worth buying?",
+          "url": "https://finnhub.io/api/news?id=bceb6710019a444cd3bdaec0b1cffac8a5a67d90160385a93481b98d9f585c45",
+          "source": "Yahoo",
+          "published_at": "2026-10-05T12:30:03+00:00"
+        }
+      ]
+    },
+    {
+      "signal_name": "drop_with_news",
+      "symbol": "AXON",
+      "severity": 3.3333333333333335,
+      "headline": "AXON dropped 3.33% \u2014 4 headline(s) found",
+      "details": {
+        "pct_change": -3.3333333333333335,
+        "last_close": 406.0,
+        "prior_close": 420.0,
+        "threshold": 2.0,
+        "cap_tier": null,
+        "description": "Axon Enterprise",
+        "category": "HOLDING"
+      },
+      "news": [
+        {
+          "headline": "AXON Gains From Strong Software & Services Momentum: Can It Sustain?",
+          "summary": "Axon's Software & Services revenues jump 36.2% in Q2 as premium offerings gained traction, prompting a higher 2026 revenue growth outlook.",
+          "url": "https://finnhub.io/api/news?id=1ddb7895d014eadae119e93754eb40b470b5b60d155d265b210434b4e3afa6b5",
+          "source": "Yahoo",
+          "published_at": "2026-10-07T12:37:00+00:00"
+        },
+        {
+          "headline": "AXON Networks Launches AXON Datum, the Industry's First Data Governance and AI Sovereignty Layer Architected for the AI Demands of Telecoms, Enterprises, and Institutions",
+          "summary": "AXON Networks, a global leader in intelligent autonomous network and connectivity assurance platforms, today announced AXON Datum, a data management and secure sovereign governance layer that helps service providers, enterprises, and institutions such as governments control how information is accessed, protected and moved in an AI world. Critical to the success of every telecom and government moving into agentic AI who want the data and AI operating on it to stay under their own control, AXON Da",
+          "url": "https://finnhub.io/api/news?id=dd833a3df30f93d344b00d4fe2742cdb8e8181f14147064333633aa765860ec3",
+          "source": "Yahoo",
+          "published_at": "2026-10-06T12:00:00+00:00"
+        },
+        {
+          "headline": "Inside the Big-Money Business of Protecting Data Centers",
+          "summary": "Data centers are spending millions on high-tech security, from facial recognition and drones to robot dogs.",
+          "url": "https://finnhub.io/api/news?id=fe66760084e4df2fc1417522fe1d0a43025196215d4ccacce98184e2abcbcd19",
+          "source": "Yahoo",
+          "published_at": "2026-10-06T10:00:00+00:00"
+        },
+        {
+          "headline": "Nasdaq 100 Records Have Rarely Been This Narrow, 55 Stocks Are Still Below 50-Day Average",
+          "summary": "The Nasdaq 100 trades at records Monday, yet 55 of its 101 stocks sit below their 50-day average. QQQ has beaten equal-weight QQQE by 8% since late July.",
+          "url": "https://finnhub.io/api/news?id=d78ffd39021735e4739cfbbd4e7ce2c89bcdbad94ff4f003fc44637d8d221831",
+          "source": "Benzinga",
+          "published_at": "2026-10-05T15:00:29+00:00"
+        }
+      ]
+    },
+    {
+      "signal_name": "drop_with_news",
+      "symbol": "CLPT",
+      "severity": 3.1789296329508665,
+      "headline": "CLPT dropped 3.18% \u2014 1 headline(s) found",
+      "details": {
+        "pct_change": -3.1789296329508665,
+        "last_close": 10.65999984741211,
+        "prior_close": 11.01,
+        "threshold": 2.0,
+        "cap_tier": null,
+        "description": "ClearPoint Neuro",
+        "category": "HOLDING"
+      },
+      "news": [
+        {
+          "headline": "Cedar Grove Capital Q3 2026 Portfolio Update",
+          "summary": "During the quarter, we closed our long positions in MTY Food Group, uniQure, ClearPoint Neuro, and Suja Life Inc. Read more here.",
+          "url": "https://finnhub.io/api/news?id=8199d09c1f9f7471d9cef46b9b5a0f5819c04e5dd45efce183f4205620b9542b",
+          "source": "SeekingAlpha",
+          "published_at": "2026-10-07T15:48:00+00:00"
+        }
+      ]
+    },
+    {
+      "signal_name": "drop_with_news",
+      "symbol": "SBUX",
+      "severity": 2.915238270510751,
+      "headline": "SBUX dropped 2.92% \u2014 26 headline(s) found",
+      "details": {
+        "pct_change": -2.915238270510751,
+        "last_close": 93.58000183105469,
+        "prior_close": 96.39,
+        "threshold": 2.0,
+        "cap_tier": null,
+        "description": "Starbucks",
+        "category": "HOLDING"
+      },
+      "news": [
+        {
+          "headline": "Corporate QSR Cap Rates Sit 97 Bps Below Franchisee Deals",
+          "summary": "Corporate QSR properties carried a 5.90% asking cap rate in Q3 2026, 97 basis points below franchisee assets.",
+          "url": "https://finnhub.io/api/news?id=b6117e47f44f2aab192cd091d2d71c4f1d23a0ecf0caf6bacb28c67f117e723e",
+          "source": "Yahoo",
+          "published_at": "2026-10-07T17:07:58+00:00"
+        },
+        {
+          "headline": "The Design Strategy Behind Every Starbucks Store",
+          "summary": "The Design Strategy Behind Every Starbucks Store",
+          "url": "https://finnhub.io/api/news?id=2cec9024cabcc1f3f7c8a8992dab96860fc3ff67f3511507ae873b800238f7ee",
+          "source": "Yahoo",
+          "published_at": "2026-10-07T16:34:55+00:00"
+        },
+        {
+          "headline": "PEJ: Leisure Sector Growth Opportunities Tempered By Cyclical Headwinds",
+          "summary": "The Invesco Leisure and Entertainment ETF is rated Hold, as it faces headwinds from a hawkish Fed, interest rates, and cautious consumer spending. Read more.",
+          "url": "https://finnhub.io/api/news?id=898a9f33fc644a348555bff931341547dc44b2af753fd9d3867e110582ed8d07",
+          "source": "SeekingAlpha",
+          "published_at": "2026-10-07T13:29:37+00:00"
+        },
+        {
+          "headline": "Wall Street Breakfast Podcast: Pop Goes The AI Bubble?",
+          "summary": "Ray Dalio says rising rates could turn today's AI frenzy into tomorrow's reckoning. Spotify is about to get a lot more audible. Queso with your coffee?",
+          "url": "https://finnhub.io/api/news?id=502e8b83a45df8d0d97731899308a8025034679e6ed92556f3349450b5101cae",
+          "source": "SeekingAlpha",
+          "published_at": "2026-10-07T06:35:00+00:00"
+        },
+        {
+          "headline": "Starbucks (SBUX): The Comeback Is Working. Now Comes the Hard Part",
+          "summary": "Starbucks Corporation (NASDAQ:SBUX) has spent the past two years trying to fix a business that had lost some of what made it special. Stores had become slower, employees were under pressure, the customer experience was inconsistent, and the company had become too focused on growing rather than making its existing stores better. Brian Niccol\u2019s answer [\u2026]",
+          "url": "https://finnhub.io/api/news?id=6bc37f4c182321bc7d7b29305fc345a44bb74c4e9a252133239808eee2a94c52",
+          "source": "Yahoo",
+          "published_at": "2026-10-07T05:35:58+00:00"
+        }
+      ]
+    },
+    {
+      "signal_name": "drop_with_news",
+      "symbol": "QS",
+      "severity": 2.8103300379187206,
+      "headline": "QS dropped 2.81% \u2014 2 headline(s) found",
+      "details": {
+        "pct_change": -2.8103300379187206,
+        "last_close": 4.519999980926514,
+        "prior_close": 4.6507,
+        "threshold": 2.0,
+        "cap_tier": null,
+        "description": "QuantumScape",
+        "category": "HOLDING"
+      },
+      "news": [
+        {
+          "headline": "QuantumScape Corporation (QS) Discusses Expansion Into Advanced Solutions and Data Center Verticals for Battery Technology Transcript",
+          "summary": "QuantumScape Corporation (QS) Discusses Expansion Into Advanced Solutions and Data Center Verticals for Battery Technology October 5, 2026 8:00 PM...",
+          "url": "https://finnhub.io/api/news?id=bf9b84860faa89d1cb056b3d5743d2f5a75938bc8be6ff3cdbd50bc9376f9d10",
+          "source": "SeekingAlpha",
+          "published_at": "2026-10-07T15:22:26+00:00"
+        },
+        {
+          "headline": "QuantumScape Has No Revenue But Is Worth $2.8 Billion. Here's the 1 Milestone That Would Change Everything",
+          "summary": "The solid-state battery faces an uphill battle.",
+          "url": "https://finnhub.io/api/news?id=bef0c041b1945abf708327cf98383cd5f52e3390a4608e478277a6822c95125e",
+          "source": "Yahoo",
+          "published_at": "2026-10-05T15:50:00+00:00"
+        }
+      ]
+    },
+    {
+      "signal_name": "drop_with_news",
+      "symbol": "SEDG",
+      "severity": 2.6995309641663408,
+      "headline": "SEDG dropped 2.70% \u2014 2 headline(s) found",
+      "details": {
+        "pct_change": -2.6995309641663408,
+        "last_close": 33.15999984741211,
+        "prior_close": 34.08,
+        "threshold": 2.0,
+        "cap_tier": null,
+        "description": "SolarEdge Technologies",
+        "category": "HOLDING"
+      },
+      "news": [
+        {
+          "headline": "SolarEdge (SEDG): Buy, Sell, or Hold Post Q2 Earnings?",
+          "summary": "Shareholders of SolarEdge would probably like to forget the past six months even happened. The stock dropped 27% and now trades at $32.93. This may have investors wondering how to approach the situation.",
+          "url": "https://finnhub.io/api/news?id=62d0ca9c57ee365ac26306d0c2d26f35b40a93febda7e65f7325d4c7afd73df5",
+          "source": "Yahoo",
+          "published_at": "2026-10-05T21:15:00+00:00"
+        },
+        {
+          "headline": "What Does NVIDIA Offer That First Solar Does Not?",
+          "summary": "First Solar (FSLR) and NVIDIA are both classed in the semiconductor industry, but First Solar sells solar panels and NVIDIA sells chips for AI data centers. Investors have chosen NVIDIA, whose stock returned 24% in the past year, while First Solar lost 22%. But NVIDIA is short of supply, and its memory costs are rising. Did the two companies' latest forecasts back that choice.",
+          "url": "https://finnhub.io/api/news?id=245ffa8194a5290cfcd3abd58a830dfbee2785a8f9cd9d1de1315b2566d0ae22",
+          "source": "Yahoo",
+          "published_at": "2026-10-05T14:12:19+00:00"
+        }
+      ]
+    },
+    {
+      "signal_name": "drop_with_news",
+      "symbol": "ONL",
+      "severity": 2.5751081147419055,
+      "headline": "ONL dropped 2.58% \u2014 1 headline(s) found",
+      "details": {
+        "pct_change": -2.5751081147419055,
+        "last_close": 2.2699999809265137,
+        "prior_close": 2.33,
+        "threshold": 2.0,
+        "cap_tier": null,
+        "description": "Orion Office REIT",
+        "category": "HOLDING"
+      },
+      "news": [
+        {
+          "headline": "Millrose Properties & Lennar: Investigating The 14% Yield",
+          "summary": "",
+          "url": "https://finnhub.io/api/news?id=279dd28ebf7a7d1e07ca618b39af3054a315e835ee8302dcf48090fd36c5bbc6",
+          "source": "SeekingAlpha",
+          "published_at": "2026-10-07T13:26:20+00:00"
+        }
+      ]
+    },
+    {
+      "signal_name": "drop_with_news",
+      "symbol": "DAR",
+      "severity": 2.2440536016540085,
+      "headline": "DAR dropped 2.24% \u2014 3 headline(s) found",
+      "details": {
+        "pct_change": -2.2440536016540085,
+        "last_close": 60.02000045776367,
+        "prior_close": 61.3978,
+        "threshold": 2.0,
+        "cap_tier": null,
+        "description": "Darling Ingredients",
+        "category": "HOLDING"
+      },
+      "news": [
+        {
+          "headline": "Constellation Brands Q2 Earnings Top Estimates on Beer and Wine Growth",
+          "summary": "STZ beats fiscal Q2 estimates as beer and wine sales grew, while strong cash flow and an RTD acquisition supported its outlook.",
+          "url": "https://finnhub.io/api/news?id=ff2fd8c8aca4f02a830fbc581b20181e14f74d99ee334f58d11c8212ba05d673",
+          "source": "Yahoo",
+          "published_at": "2026-10-07T16:02:00+00:00"
+        },
+        {
+          "headline": "Can Darling Ingredients' Portfolio Reset Drive Long-Term Growth?",
+          "summary": "DAR is sharpening its portfolio with the CTH sausage casings sale, supporting debt reduction and a greater focus on integrated, higher-value businesses.",
+          "url": "https://finnhub.io/api/news?id=d54dc79737d02762467a8d9815891fe2b530edc9f205cc0501b017522cc8f34b",
+          "source": "Yahoo",
+          "published_at": "2026-10-06T15:20:00+00:00"
+        },
+        {
+          "headline": "Darling Ingredients Inc. Closes on Sale of CTH Sausage Casings Business",
+          "summary": "IRVING, Texas, October 05, 2026--Darling Ingredients Inc. (NYSE: DAR) closed on the sale of its CTH branded sausage casing business to SARIA for an undisclosed amount.",
+          "url": "https://finnhub.io/api/news?id=5b9669961e78ade803cd6e96cbc466a6affe43d90f9114796082aff8276c9cc9",
+          "source": "Yahoo",
+          "published_at": "2026-10-05T13:00:00+00:00"
+        }
+      ]
+    },
+    {
+      "signal_name": "drop_with_news",
+      "symbol": "RKT",
+      "severity": 2.222225808689731,
+      "headline": "RKT dropped 2.22% \u2014 5 headline(s) found",
+      "details": {
+        "pct_change": -2.222225808689731,
+        "last_close": 11.4399995803833,
+        "prior_close": 11.7,
+        "threshold": 2.0,
+        "cap_tier": null,
+        "description": "Rocket Companies",
+        "category": "HOLDING"
+      },
+      "news": [
+        {
+          "headline": "The Real Estate Markets Are Officially Cooked",
+          "summary": "US housing and commercial real estate are under stress as sales slump, rates stay high, and office delinquencies rise\u00e2\u0080\u0094see key stocks and risks.",
+          "url": "https://finnhub.io/api/news?id=9dc7c700573b256a54fafa4a91192fc183750c3dbce3ea21cf8ff7969e59643c",
+          "source": "SeekingAlpha",
+          "published_at": "2026-10-07T11:13:21+00:00"
+        },
+        {
+          "headline": "Stock Picks From Seeking Alpha's September 2026 New Analysts",
+          "summary": "Seeking Alpha welcomed 38 new analysts in September 2026. Read more on companies Qualcomm, Teladoc, and NewLake Capital Partners, as well as the TDAQ ETF here.",
+          "url": "https://finnhub.io/api/news?id=bcf3d87d4790c76efdb9f81b82b264678fd2118cba6bdac7427e6d2884743781",
+          "source": "SeekingAlpha",
+          "published_at": "2026-10-07T09:00:00+00:00"
+        },
+        {
+          "headline": "Winners And Losers Of Q2: Rocket Companies (NYSE:RKT) Vs The Rest Of The Thrifts & Mortgage Finance Stocks",
+          "summary": "As the Q2 earnings season comes to a close, it\u2019s time to take stock of this quarter\u2019s best and worst performers in the thrifts & mortgage finance industry, including Rocket Companies (NYSE:RKT) and its peers.",
+          "url": "https://finnhub.io/api/news?id=680d28f284816847fd5954da9b8bb022a22dad70a0fa42311c5220d5b024c0aa",
+          "source": "Yahoo",
+          "published_at": "2026-10-06T17:36:34+00:00"
+        },
+        {
+          "headline": "Wells Fargo Maintains Equal-Weight on Rocket Companies, Lowers Price Target to $13",
+          "summary": "Wells Fargo  analyst Donald Fandetti   maintains Rocket Companies (NYSE:RKT) with a Equal-Weight and lowers the price target from $15 to $13.",
+          "url": "https://finnhub.io/api/news?id=558a42564c9517a7a60385ff2a916a9dd7027193038e94a6a5fbcff3bb76f274",
+          "source": "Benzinga",
+          "published_at": "2026-10-06T09:04:15+00:00"
+        },
+        {
+          "headline": "Barclays Maintains Overweight on Rocket Companies, Lowers Price Target to $15",
+          "summary": "Barclays  analyst Terry Ma   maintains Rocket Companies (NYSE:RKT) with a Overweight and lowers the price target from $17 to $15.",
+          "url": "https://finnhub.io/api/news?id=bd6225ee78763c2913d7b593760769cb5127b729d357754f820eddb241e40f96",
+          "source": "Benzinga",
+          "published_at": "2026-10-05T11:41:09+00:00"
+        }
+      ]
+    },
+    {
+      "signal_name": "drop_with_news",
+      "symbol": "SMG",
+      "severity": 2.216940764293541,
+      "headline": "SMG dropped 2.22% \u2014 3 headline(s) found",
+      "details": {
+        "pct_change": -2.216940764293541,
+        "last_close": 49.400001525878906,
+        "prior_close": 50.52,
+        "threshold": 2.0,
+        "cap_tier": null,
+        "description": "Scotts Miracle-Gro",
+        "category": "HOLDING"
+      },
+      "news": [
+        {
+          "headline": "ScottsMiracle-Gro Names CIO to Accelerate Technology Transformation and SMG 2.0 Growth Strategy",
+          "summary": "MARYSVILLE, Ohio, Oct. 06, 2026 (GLOBE NEWSWIRE) -- The Scotts Miracle-Gro Company (NYSE: SMG), home to North America\u2019s leading consumer lawn and garden brands, today announced the naming of Prathima Hegde to senior vice president and chief information officer. In this new role, Hegde will lead enterprise IT with a focus on driving technology modernization, operational excellence, AI integration and digital capabilities to advance the SMG multi-year growth strategy and the evolution into a consu",
+          "url": "https://finnhub.io/api/news?id=8127304f13a61c37bc363ffbaf2846be6883e6f40bd58b697d7692bff9c74e8a",
+          "source": "Yahoo",
+          "published_at": "2026-10-06T20:05:00+00:00"
+        },
+        {
+          "headline": "Scotts Miracle-Gro: Slow But Steady Growth Can Drive Upside (Upgrade)",
+          "summary": "Scotts Miracle-Gro stock is upgraded to \"Buy\" after a 27% drop. Here's what investors need to know about SMG's margin expansion and resumed buybacks.",
+          "url": "https://finnhub.io/api/news?id=e227fcc46432d6d4131fb6a8d291254c0b6f034028f77416fe521aa5b55a5b64",
+          "source": "SeekingAlpha",
+          "published_at": "2026-10-06T11:29:13+00:00"
+        },
+        {
+          "headline": "Wells Fargo Maintains Overweight on Scotts Miracle Gro, Lowers Price Target to $60",
+          "summary": "Wells Fargo  analyst Chris Carey   maintains Scotts Miracle Gro (NYSE:SMG) with a Overweight and lowers the price target from $77 to $60.",
+          "url": "https://finnhub.io/api/news?id=b1c46a5c79566fb0d024d08afc37812da3499b36ead0d577e347199682c47289",
+          "source": "Benzinga",
+          "published_at": "2026-10-05T10:01:26+00:00"
+        }
+      ]
+    },
+    {
+      "signal_name": "drop_with_news",
+      "symbol": "SE",
+      "severity": 2.190531450599944,
+      "headline": "SE dropped 2.19% \u2014 4 headline(s) found",
+      "details": {
+        "pct_change": -2.190531450599944,
+        "last_close": 94.66000366210938,
+        "prior_close": 96.78,
+        "threshold": 2.0,
+        "cap_tier": null,
+        "description": "Sea Limited",
+        "category": "HOLDING"
+      },
+      "news": [
+        {
+          "headline": "MercadoLibre Fell 15% Over 12 Months: 50% Gains Coming in The Next 12 Says Wall Street Pro",
+          "summary": "MercadoLibre's revenue is growing at its fastest pace in four years, yet the stock keeps sliding while profits shrink and earnings estimates drift lower. One Wall Street analyst sees a massive rebound ahead, but his case depends on a single business unit that is still losing money.",
+          "url": "https://finnhub.io/api/news?id=07d8911b974a3de2505732b461f616238a99be7f32e38026300060b894919bb9",
+          "source": "Yahoo",
+          "published_at": "2026-10-06T11:15:59+00:00"
+        },
+        {
+          "headline": "Sea Limited Sponsored ADR (SE) Outperforms Broader Market: What You Need to Know",
+          "summary": "In the closing of the recent trading day, Sea Limited Sponsored ADR (SE) stood at $96.85, denoting a +1.74% move from the preceding trading day.",
+          "url": "https://finnhub.io/api/news?id=1b047081e73e458b2d65d9ca0c492811d6ecc9b3b5ca698355a497e05e8df2be",
+          "source": "Yahoo",
+          "published_at": "2026-10-05T20:45:03+00:00"
+        },
+        {
+          "headline": "MercadoLibre's GMV Growth Has More Room to Run Across Markets",
+          "summary": "MercadoLibre's GMV surges 44% in Q2 as buyer engagement, seller growth and cross-border trade fuel momentum across Latin America.",
+          "url": "https://finnhub.io/api/news?id=690a4ace316f87992d692471c868000a107c666cfa205e04e1c60f28a9608fce",
+          "source": "Yahoo",
+          "published_at": "2026-10-05T14:42:00+00:00"
+        },
+        {
+          "headline": "Asian Equities Traded in the US as American Depositary Receipts Start Week Higher in Monday Trading",
+          "summary": "Asian equities traded in the US as American depositary receipts started the week higher Monday morni",
+          "url": "https://finnhub.io/api/news?id=642a2cd386379ceb85e1a48337d8ffc27b50c03a232f2e2dce012550582c917f",
+          "source": "Yahoo",
+          "published_at": "2026-10-05T14:37:32+00:00"
+        }
+      ]
+    },
+    {
+      "signal_name": "drop_with_news",
+      "symbol": "DDOG",
+      "severity": 2.1704656987703306,
+      "headline": "DDOG dropped 2.17% \u2014 11 headline(s) found",
+      "details": {
+        "pct_change": -2.1704656987703306,
+        "last_close": 271.3399963378906,
+        "prior_close": 277.36,
+        "threshold": 2.0,
+        "cap_tier": null,
+        "description": "Datadog",
+        "category": "HOLDING"
+      },
+      "news": [
+        {
+          "headline": "Datadog (DDOG) vs. DT and CSCO: Can Multi-Product Adoption Sustain Its High-Growth Story?",
+          "summary": "Is DDOG a good stock to buy? We came across a bullish thesis on Datadog, Inc. on Astute Optics \u2013 US\u2019s Substack. In this article, we will summarize the bulls\u2019 thesis on DDOG. The thesis was published on August 23rd when the stock was trading at $225.77. DDOG gained 23.24% since then. The gain appears to reflect [\u2026]",
+          "url": "https://finnhub.io/api/news?id=fb788ac38c937148a859f8ae009277f68ccc03ae273c0d03df13ca4ab3d9e991",
+          "source": "Yahoo",
+          "published_at": "2026-10-07T15:13:18+00:00"
+        },
+        {
+          "headline": "Cybersecurity Rally Faces Valuation Test as Profitability Becomes the Real Story",
+          "summary": "Cybersecurity stocks rally on strong momentum, but high valuations put focus on earnings, margins, and free cash flow growth. FTNT, DDOG, OKTA, S",
+          "url": "https://finnhub.io/api/news?id=0c697eed392ae1f19d7b70caaa8b436b8dd4640c1220746c67cb70d0d34ed05a",
+          "source": "ChartMill",
+          "published_at": "2026-10-07T12:35:56+00:00"
+        },
+        {
+          "headline": "Cloudflare Just Gained 28% in a Month: Is It Too Late to Buy NET Stock Now?",
+          "summary": "Cloudflare's network just crossed a threshold that changes the math on who actually uses the internet, and investors are betting that milestone turns into something much bigger than a one-month stock surge.",
+          "url": "https://finnhub.io/api/news?id=3ea39c3b3b0c684fd81c49ee4b2f8be10ed9a3764cb66c48d023aa664b5daba4",
+          "source": "Yahoo",
+          "published_at": "2026-10-06T18:51:33+00:00"
+        },
+        {
+          "headline": "Hybrid Information Technology (IT) Management Market Global Report 2026 | Capitalize on $114.84 Billion AIOps and Cloud Demand with Dell, Cisco, Oracle, ServiceNow and Datadog",
+          "summary": "Boost ROI with unified hybrid IT platforms, AI-driven monitoring and automation to cut hardware reliance and waste, optimize resources, ensure compliance and improve reliability.Dublin, Oct. 06, 2026 (GLOBE NEWSWIRE) -- \"Hybrid Information Technology (IT) Management Market Report 2026\" has been added to ResearchAndMarkets.com's offering. The global hybrid information technology (IT) management market is experiencing rapid expansion as organizations seek greater visibility, control, security, and",
+          "url": "https://finnhub.io/api/news?id=a22d0643667e428386ab621268c00d0c0be9614e5394900256a2989ef1298db8",
+          "source": "Yahoo",
+          "published_at": "2026-10-06T16:51:00+00:00"
+        },
+        {
+          "headline": "Datadog, Inc. (DDOG) is Attracting Investor Attention: Here is What You Should Know",
+          "summary": "Recently, Zacks.com users have been paying close attention to Datadog (DDOG). This makes it worthwhile to examine what the stock has in store.",
+          "url": "https://finnhub.io/api/news?id=19be7c697aa8ec74d2a1f0cb7c205f3e2b053f858042b02ed68da31e5935734d",
+          "source": "Yahoo",
+          "published_at": "2026-10-06T12:00:04+00:00"
+        }
+      ]
+    },
+    {
+      "signal_name": "drop_with_news",
+      "symbol": "EPR",
+      "severity": 2.1530634502357797,
+      "headline": "EPR dropped 2.15% \u2014 4 headline(s) found",
+      "details": {
+        "pct_change": -2.1530634502357797,
+        "last_close": 54.08000183105469,
+        "prior_close": 55.27,
+        "threshold": 2.0,
+        "cap_tier": null,
+        "description": "EPR Properties",
+        "category": "HOLDING"
+      },
+      "news": [
+        {
+          "headline": "5 High-Yield Dividend Stocks Where the Payout Math Is Flashing Warning Signs",
+          "summary": "A 17% yield sounds like a windfall until you check what's holding it up. These five payouts carry specific cracks in coverage, cash flow, or debt that income investors need to see before the next dividend date arrives.",
+          "url": "https://finnhub.io/api/news?id=6d5eaea745996d9910e2481dfcc254b09cecafa6c8152df5d58b0f86dffac2aa",
+          "source": "Yahoo",
+          "published_at": "2026-10-07T16:15:45+00:00"
+        },
+        {
+          "headline": "The Roth IRA Advantage: How Much More These High-Yield Dividend Stocks Pay Tax Free",
+          "summary": "Every year, a five-figure slice of income from high-yield REITs and BDCs quietly routes to the IRS instead of your pocket, and the bracket you sit in determines exactly how much damage a taxable account does over time.",
+          "url": "https://finnhub.io/api/news?id=b44da82e6fbc485cf62478f2b7e77ecca649002126c9a63c5499f53a94666658",
+          "source": "Yahoo",
+          "published_at": "2026-10-07T16:00:47+00:00"
+        },
+        {
+          "headline": "All It Takes Is $15,182 Invested in This High-Yield Dividend Stock to Generate Over $1,000 in Yearly Dividends",
+          "summary": "The monthly dividend adds to the appeal of this real estate investment trust.",
+          "url": "https://finnhub.io/api/news?id=f4a64573ccb48685bf3dfeb669234352100940821575a154ba210a1e5b2790d8",
+          "source": "Yahoo",
+          "published_at": "2026-10-07T11:20:00+00:00"
+        },
+        {
+          "headline": "VICI Properties Expands Experiences: Can Non-Gaming Growth Scale?",
+          "summary": "VICI expands beyond casinos with Club Med St. Croix and other experiential assets, using partnerships and financing to grow its experiential real estate platform.",
+          "url": "https://finnhub.io/api/news?id=0e6268e63cc271b2d5b6d93503cfd9f1099d15ad97a4e342c28aabaffac4b511",
+          "source": "Yahoo",
+          "published_at": "2026-10-05T16:14:00+00:00"
+        }
+      ]
+    },
+    {
+      "signal_name": "drop_with_news",
+      "symbol": "ADBE",
+      "severity": 2.1275271643889484,
+      "headline": "ADBE dropped 2.13% \u2014 13 headline(s) found",
+      "details": {
+        "pct_change": -2.1275271643889484,
+        "last_close": 232.77000427246094,
+        "prior_close": 237.8299,
+        "threshold": 2.0,
+        "cap_tier": null,
+        "description": "Adobe",
+        "category": "HOLDING"
+      },
+      "news": [
+        {
+          "headline": "Salesforce Stock Falls 15% YTD: Should Investors Keep Holding CRM?",
+          "summary": "Salesforce plunges 15.1% YTD, but stabilizing growth, surging Agentforce adoption and a lower valuation support holding the stock for now.",
+          "url": "https://finnhub.io/api/news?id=e50878aa47cc456a418dee6e930cb480871e5503923ba4a4dbf5981dbacffcba",
+          "source": "Yahoo",
+          "published_at": "2026-10-07T14:47:00+00:00"
+        },
+        {
+          "headline": "Competitor Analysis: Evaluating Adobe And Competitors In Software Industry",
+          "summary": "In today&#39;s rapidly changing and fiercely competitive business landscape, it is essential for investors and industry enthusiasts to thoroughly analyze companies. In this article, we will conduct a comprehensive",
+          "url": "https://finnhub.io/api/news?id=e96d57227fe1166cebb09bc8b682d7ba970e376c6fed9e42d8558951d506360d",
+          "source": "Benzinga",
+          "published_at": "2026-10-07T05:59:06+00:00"
+        },
+        {
+          "headline": "SwishX Appoints Melonie Warfel as Chief Commercial Officer to Accelerate AI-Powered Content Creation for Life Sciences",
+          "summary": "SwishX, an AI-powered content technology company serving the life sciences industry (pharma, biotech, and medtech organizations), today announced the appointment of Melonie Warfel as Chief Commercial Officer.",
+          "url": "https://finnhub.io/api/news?id=623a88342eeda31e30b5335212ac3743bc4ace28e951f987438d16678dd542a2",
+          "source": "Yahoo",
+          "published_at": "2026-10-06T12:38:00+00:00"
+        },
+        {
+          "headline": "How Much Downside Is Left In Adobe Stock?",
+          "summary": "Adobe (ADBE) stock has lost 16.4% over the past month, while the S&P 500 gained 0.4%. The month included Adobe's fiscal Q3 2026 report on September 10, which MarketWatch said left Wall Street wanting more. For current shareholders, the stock's recent decline reflects an immediate mark-to-market drawdown, and any broader market correction could add further downward pressure. So how hard has Adobe been hit in past sell-offs.",
+          "url": "https://finnhub.io/api/news?id=4e810fe84e6a7c5b4a040b90980a37dc12d63fd0551402aaf2552c9e96ac884f",
+          "source": "Yahoo",
+          "published_at": "2026-10-06T12:02:48+00:00"
+        },
+        {
+          "headline": "Adobe Inc. (ADBE) Is a Trending Stock: Facts to Know Before Betting on It",
+          "summary": "Recently, Zacks.com users have been paying close attention to Adobe (ADBE). This makes it worthwhile to examine what the stock has in store.",
+          "url": "https://finnhub.io/api/news?id=82be50fc31dce8270d10dbf49635a335a4d1498319583b2f344b3a704fc5d2bb",
+          "source": "Yahoo",
+          "published_at": "2026-10-06T12:00:05+00:00"
+        }
+      ]
+    },
+    {
+      "signal_name": "drop_with_news",
+      "symbol": "QTUM",
+      "severity": 2.0672146852211406,
+      "headline": "QTUM dropped 2.07% \u2014 2 headline(s) found",
+      "details": {
+        "pct_change": -2.0672146852211406,
+        "last_close": 154.44000244140625,
+        "prior_close": 157.7,
+        "threshold": 2.0,
+        "cap_tier": null,
+        "description": "Defiance Quantum ETF",
+        "category": "HOLDING"
+      },
+      "news": [
+        {
+          "headline": "The 3 Top Quantum Computing ETFs to Buy Now",
+          "summary": "These ETFs take the guesswork out of finding the best quantum computing stock.",
+          "url": "https://finnhub.io/api/news?id=032181edbe6fa4b2b661ae4415f944436c7d1d2d52fbc55862be71b328c39a0d",
+          "source": "Yahoo",
+          "published_at": "2026-10-07T10:20:00+00:00"
+        },
+        {
+          "headline": "QTUM: Former Tailwinds Are Subsiding (Downgrade)",
+          "summary": "QTUM downgraded to Hold: AI/semis tailwinds priced in, premium valuation and higher rates cap upside as quantum commercialization lags.",
+          "url": "https://finnhub.io/api/news?id=52fe809ca0b9e4cf0877159e57eecf16cb7b2a3fc45368b79a65c44ed756a296",
+          "source": "SeekingAlpha",
+          "published_at": "2026-10-05T03:28:40+00:00"
+        }
+      ]
+    },
+    {
+      "signal_name": "drop_with_news",
+      "symbol": "SPG",
+      "severity": 2.057105017403283,
+      "headline": "SPG dropped 2.06% \u2014 2 headline(s) found",
+      "details": {
+        "pct_change": -2.057105017403283,
+        "last_close": 197.58999633789062,
+        "prior_close": 201.74,
+        "threshold": 2.0,
+        "cap_tier": null,
+        "description": "Simon Property Group",
+        "category": "HOLDING"
+      },
+      "news": [
+        {
+          "headline": "3 Retail REITs to Consider Despite Higher Rates and Industry Headwinds",
+          "summary": "Simon Property Group, Realty Income and Tanger stand out as retail REITs to consider amid rate pressure, limited supply and resilient tenant demand.",
+          "url": "https://finnhub.io/api/news?id=3a14ffcfb4504fd5785ff2f0ee825507de81b5e9ea89dbe69657f9fd01c715e1",
+          "source": "Yahoo",
+          "published_at": "2026-10-07T15:37:00+00:00"
+        },
+        {
+          "headline": "Simon\u00ae Announces Date For Its Third Quarter 2026 Earnings Release And Conference Call",
+          "summary": "Simon\u00ae, a real estate investment trust engaged in the ownership of premier shopping, dining, entertainment and mixed-use destinations, today announced details for its third quarter earnings release and conference call.",
+          "url": "https://finnhub.io/api/news?id=01528d3d4d0ec4cf270bfce1b83198c858c9019ca6301ab8978f3545551a1848",
+          "source": "Yahoo",
+          "published_at": "2026-10-06T20:05:00+00:00"
+        }
+      ]
+    },
+    {
+      "signal_name": "significant_gain",
+      "symbol": "PENG",
+      "severity": 6.8276422007458635,
+      "headline": "PENG gained +6.83%",
+      "details": {
+        "pct_change": 6.8276422007458635,
+        "last_close": 72.61000061035156,
+        "prior_close": 67.9693,
+        "threshold": 2.0,
+        "cap_tier": null,
+        "description": "Penguin Solutions",
+        "category": "HOLDING"
+      },
+      "news": [
+        {
+          "headline": "Wednesday's session: gap up and gap down stocks",
+          "summary": "The market is buzzing with gapping stocks on Wednesday. Let's uncover which stocks are experiencing notable gaps during today's session.",
+          "url": "https://finnhub.io/api/news?id=3069034a36df2be6de371d1681c8a46b83c3135d743357287302daa5921700df",
+          "source": "ChartMill",
+          "published_at": "2026-10-07T14:30:00+00:00"
+        },
+        {
+          "headline": "Penguin Solutions Says Agentic AI Is Creating New Memory Boom",
+          "summary": "Penguin Solutions (PENG) stock jumped over 17% after Q4 earnings and revenue beat estimates on strong AI demand.",
+          "url": "https://finnhub.io/api/news?id=92a00351d1d363ea6abc7f9dfa1d523caac4d03801e0f6f838a053ff540f1a0c",
+          "source": "Benzinga",
+          "published_at": "2026-10-07T10:11:23+00:00"
+        },
+        {
+          "headline": "Penguin's Mystery 36,000-GPU Norway Deal Appears to Be Volta's $10B Anthropic AI Project",
+          "summary": "Penguin\u2019s mystery 36,000-GPU Norway project closely matches Volta\u2019s $10 billion Anthropic AI buildout.",
+          "url": "https://finnhub.io/api/news?id=a4cea613affb7800dddcdee3d1c1bfb3a556dc4b4dca262498d43de2408a5e27",
+          "source": "Benzinga",
+          "published_at": "2026-10-07T10:10:26+00:00"
+        },
+        {
+          "headline": "BKV, Lamb Weston, Penguin Solutions And Other Big Stocks Moving Higher On Wednesday",
+          "summary": "U.S. stocks fell, while BKV surged 9.2% on an equipment contract announcement; Penguin Solutions led gainers with a 16.3% jump on strong results.",
+          "url": "https://finnhub.io/api/news?id=09436ebce3941a4b4e487fa358d5acf3e18ad7acc0cc974958320b1c9cf634e5",
+          "source": "Benzinga",
+          "published_at": "2026-10-07T10:08:50+00:00"
+        },
+        {
+          "headline": "These Analysts Increase Their Forecasts On Penguin Solutions Following Upbeat Q4 Results",
+          "summary": "Penguin Solutions beats Q4 estimates, reports 68% revenue growth, guides above FY27 forecasts, appoints CFO; shares rise 4.4%.",
+          "url": "https://finnhub.io/api/news?id=9b2dda6c204866d782a057c5c7535b8e280c08c232c4847bd12588a4ba18db32",
+          "source": "Benzinga",
+          "published_at": "2026-10-07T09:31:02+00:00"
+        }
+      ]
+    },
+    {
+      "signal_name": "significant_gain",
+      "symbol": "CMBMF",
+      "severity": 4.545454545454537,
+      "headline": "CMBMF gained +4.55%",
+      "details": {
+        "pct_change": 4.545454545454537,
+        "last_close": 0.0023,
+        "prior_close": 0.0022,
+        "threshold": 2.0,
+        "cap_tier": null,
+        "description": "Canadian Western Bank OTC",
+        "category": "HOLDING"
+      },
+      "news": []
+    },
+    {
+      "signal_name": "significant_gain",
+      "symbol": "MTCH",
+      "severity": 3.2334364413306775,
+      "headline": "MTCH gained +3.23%",
+      "details": {
+        "pct_change": 3.2334364413306775,
+        "last_close": 40.86000061035156,
+        "prior_close": 39.5802,
+        "threshold": 2.0,
+        "cap_tier": null,
+        "description": "Match Group",
+        "category": "HOLDING"
+      },
+      "news": []
+    },
+    {
+      "signal_name": "significant_gain",
+      "symbol": "OM",
+      "severity": 2.933986262762171,
+      "headline": "OM gained +2.93%",
+      "details": {
+        "pct_change": 2.933986262762171,
+        "last_close": 4.210000038146973,
+        "prior_close": 4.09,
+        "threshold": 2.0,
+        "cap_tier": null,
+        "description": "Outset Medical",
+        "category": "HOLDING"
+      },
+      "news": []
+    },
+    {
+      "signal_name": "significant_gain",
+      "symbol": "APPN",
+      "severity": 2.8042426396221245,
+      "headline": "APPN gained +2.80%",
+      "details": {
+        "pct_change": 2.8042426396221245,
+        "last_close": 37.7599983215332,
+        "prior_close": 36.73,
+        "threshold": 2.0,
+        "cap_tier": null,
+        "description": "Appian",
+        "category": "HOLDING"
+      },
+      "news": [
+        {
+          "headline": "Best Application Software Stocks: Citi\u2019s Latest Top Picks",
+          "summary": "Investing.com -- Citi has updated its rankings for U.S. application software stocks, focusing on back office software coverage following recent adjustments to earnings estimates and valuations. The investment bank is prioritizing companies with clear acceleration paths supported by differentiated artificial intelligence strategies that analysts believe remain underappreciated by the market.",
+          "url": "https://finnhub.io/api/news?id=fc110872ebfe5f7c91ffae78f425370ca821a81d9f39a10323c4db8010e20c0f",
+          "source": "Yahoo",
+          "published_at": "2026-10-06T13:51:02+00:00"
+        },
+        {
+          "headline": "Asana, Zscaler, Appian, Atlassian, and Shopify Stocks Trade Up, What You Need To Know",
+          "summary": "A number of stocks jumped in the afternoon session after softer labor market data tempered expectations for an October interest rate increase by the Federal Reserve.",
+          "url": "https://finnhub.io/api/news?id=dcec4179c9d41617ba8fce82035824ea86996de2fa96ac19e64b1e600283e1eb",
+          "source": "Yahoo",
+          "published_at": "2026-10-06T00:11:00+00:00"
+        }
+      ]
+    },
+    {
+      "signal_name": "significant_gain",
+      "symbol": "BL",
+      "severity": 2.523830271874723,
+      "headline": "BL gained +2.52%",
+      "details": {
+        "pct_change": 2.523830271874723,
+        "last_close": 28.329999923706055,
+        "prior_close": 27.6326,
+        "threshold": 2.0,
+        "cap_tier": null,
+        "description": "BlackLine",
+        "category": "HOLDING"
+      },
+      "news": [
+        {
+          "headline": "BlackLine Deepens Industry Investment to Accelerate Financial Operations Transformation",
+          "summary": "Expanded program pairs dedicated Industry Principals from Citi, Deloitte, ExxonMobil, and the US Armed Forces with preconfigured workflows and purpose-built technology to deliver industry-specific insights and rapid time-to-valueLOS ANGELES, Oct. 06, 2026 (GLOBE NEWSWIRE) -- BlackLine, Inc. (Nasdaq: BL), the Agentic Financial Operations Platform\u2122 for the Office of the CFO, today announced a major expansion of its industry-specific financial operations modernization program, equipping organizatio",
+          "url": "https://finnhub.io/api/news?id=e6426af6218f58ff5024c418b699181d1966c18d835f1323e6b42263df643ec7",
+          "source": "Yahoo",
+          "published_at": "2026-10-06T13:00:00+00:00"
+        }
+      ]
+    },
+    {
+      "signal_name": "significant_gain",
+      "symbol": "OTEX.TO",
+      "severity": 2.1671826625387087,
+      "headline": "OTEX.TO gained +2.17%",
+      "details": {
+        "pct_change": 2.1671826625387087,
+        "last_close": 33.0,
+        "prior_close": 32.3,
+        "threshold": 2.0,
+        "cap_tier": null,
+        "description": "Open Text",
+        "category": "WATCHLIST"
+      },
+      "news": []
+    },
+    {
+      "signal_name": "significant_gain",
+      "symbol": "VRSK",
+      "severity": 2.1065330967198923,
+      "headline": "VRSK gained +2.11%",
+      "details": {
+        "pct_change": 2.1065330967198923,
+        "last_close": 168.67999267578125,
+        "prior_close": 165.2,
+        "threshold": 2.0,
+        "cap_tier": null,
+        "description": "Verisk Analytics",
+        "category": "HOLDING"
+      },
+      "news": []
+    },
+    {
+      "signal_name": "significant_gain",
+      "symbol": "ISRG",
+      "severity": 2.0585507187263814,
+      "headline": "ISRG gained +2.06%",
+      "details": {
+        "pct_change": 2.0585507187263814,
+        "last_close": 414.5199890136719,
+        "prior_close": 406.159,
+        "threshold": 2.0,
+        "cap_tier": null,
+        "description": "Intuitive Surgical",
+        "category": "HOLDING"
+      },
+      "news": []
+    }
+  ]
+}

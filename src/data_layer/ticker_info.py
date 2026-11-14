@@ -67,9 +67,14 @@ def _save_cache(cache: dict) -> None:
 
 
 def _fresh(entry: dict) -> bool:
-    ts = entry.get("fetched_at", 0)
-    ttl = NEG_CACHE_TTL_SEC if entry.get("unresolved") else CACHE_TTL_SEC
-    return (time.time() - ts) < ttl
+    now = time.time()
+    if entry.get("unresolved"):
+        return (now - entry.get("fetched_at", 0)) < NEG_CACHE_TTL_SEC
+    if (now - entry.get("fetched_at", 0)) < CACHE_TTL_SEC:
+        return True
+    # An expired *good* entry whose refresh failed recently: don't hammer the
+    # source again before the negative TTL — keep serving the old snapshot.
+    return (now - entry.get("last_attempt", 0)) < NEG_CACHE_TTL_SEC
 
 
 def _fetch_one(symbol: str) -> tuple[dict | None, str | None]:
@@ -126,9 +131,12 @@ def fetch_ticker_info(
     cache = _load_cache()
     result: dict[str, dict] = {}
     todo: list[str] = []
+    # Expired-but-good snapshots: shown (with their own date) if we can't
+    # refresh them this run, instead of the stock losing its card.
+    fallback: dict[str, dict] = {}
     for t in tickers:
         t = (t or "").upper()
-        if not t:
+        if not t or t in result or t in fallback or t in todo:
             continue
         entry = cache.get(t)
         if entry and _fresh(entry):
@@ -136,9 +144,13 @@ def fetch_ticker_info(
                 result[t] = entry
         else:
             todo.append(t)
+            if entry and not entry.get("unresolved"):
+                fallback[t] = entry
 
+    # Priority tickers first; otherwise keep the caller's order (it is
+    # already sorted by importance). sort() is stable.
     pri = priority or set()
-    todo.sort(key=lambda t: (t not in pri, t))
+    todo.sort(key=lambda t: t not in pri)
 
     deadline = time.monotonic() + budget_sec
     fetched = failed = skipped = 0
@@ -153,7 +165,13 @@ def fetch_ticker_info(
             result[t] = info
             fetched += 1
         else:
-            cache[t] = {"fetched_at": time.time(), "unresolved": True}
+            old = fallback.get(t)
+            if old is not None:
+                old["last_attempt"] = time.time()
+                cache[t] = old
+                result[t] = old
+            else:
+                cache[t] = {"fetched_at": time.time(), "unresolved": True}
             failed += 1
             if first_error is None:
                 first_error = f"{t}: {err}"
@@ -162,9 +180,15 @@ def fetch_ticker_info(
         if (i + 1) % 25 == 0:
             _save_cache(cache)
         time.sleep(0.05)
+    stale_used = 0
+    for t, old in fallback.items():
+        if t not in result:
+            result[t] = old
+            stale_used += 1
     _save_cache(cache)
     print(f"  [13f] ticker_info: {len(result)} usable | "
-          f"{fetched} new, {failed} failed, {skipped} skipped (budget)")
+          f"{fetched} new, {failed} failed, {skipped} skipped (budget), "
+          f"{stale_used} served from an older snapshot")
     if first_error and fetched == 0:
         print(f"  [13f] ticker_info: first failure was — {first_error}")
     return result
@@ -273,6 +297,7 @@ def fetch_wiki_summaries(issuer_names: list[str], budget_sec: float = WIKI_BUDGE
     cache = _load_wiki_cache()
     result: dict[str, dict] = {}
     todo: list[tuple[str, str]] = []
+    fallback: dict[str, dict] = {}
     for name in issuer_names:
         if not name:
             continue
@@ -283,6 +308,8 @@ def fetch_wiki_summaries(issuer_names: list[str], budget_sec: float = WIKI_BUDGE
                 result[name] = entry
         else:
             todo.append((name, key))
+            if entry and not entry.get("unresolved"):
+                fallback[name] = entry
 
     deadline = time.monotonic() + budget_sec
     new = failed = 0
@@ -298,13 +325,21 @@ def fetch_wiki_summaries(issuer_names: list[str], budget_sec: float = WIKI_BUDGE
             result[orig] = summ
             new += 1
         else:
-            cache[key] = {"fetched_at": time.time(), "unresolved": True}
+            old = fallback.get(orig)
+            if old is not None:
+                old["last_attempt"] = time.time()
+                cache[key] = old
+                result[orig] = old
+            else:
+                cache[key] = {"fetched_at": time.time(), "unresolved": True}
             failed += 1
             if first_error is None and title is None:
                 first_error = f"{orig}: no search hit"
         if (i + 1) % 20 == 0:
             _save_wiki_cache(cache)
         time.sleep(0.15)  # be polite to Wikipedia
+    for orig, old in fallback.items():
+        result.setdefault(orig, old)
     _save_wiki_cache(cache)
     print(f"  [13f] wiki: {len(result)} usable | {new} new, {failed} failed")
     if first_error and new == 0:

@@ -44,9 +44,13 @@ def main() -> None:
     (DOCS_DIR / "13f.html").write_text(html, encoding="utf-8")
 
     date_tag = datetime.now(timezone.utc).strftime("%Y-%m-%d")
-    (HISTORY_DIR / f"13f-{date_tag}.json").write_text(json.dumps(dataset, indent=2), encoding="utf-8")
+    # Compact JSON: each weekly archive is several MB and is deployed with the
+    # Pages site, so indentation alone cost ~2.4 MB per week.
+    (HISTORY_DIR / f"13f-{date_tag}.json").write_text(
+        json.dumps(dataset, separators=(",", ":")), encoding="utf-8")
 
-    print(f"\nWrote docs/13f.html ({len(dataset.get('stocks', []))} stocks, "
+    print(f"\nWrote docs/13f.html ({len(html) / 1e6:.1f} MB, "
+          f"{len(dataset.get('stocks', []))} stocks, "
           f"{dataset.get('investor_count', 0)} investors)")
 
 

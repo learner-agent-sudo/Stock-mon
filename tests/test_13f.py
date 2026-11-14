@@ -81,8 +81,113 @@ def test_ranking_order():
     assert order[-1] == "191216100"  # KO: -1 investor
 
 
+def test_estimated_flow_strips_price_moves():
+    # Trimmed 10 of 100 shares while the price doubled: reported value went
+    # UP (+$8,000) but the investor was a SELLER — flow must be negative.
+    prv = {"shares": 100, "value": 10_000}       # $100/share
+    cur = {"shares": 90, "value": 18_000}        # $200/share
+    assert h.estimated_flow(-10, cur, prv) == -2_000
+    # Full exit: priced at the prior filing's price.
+    assert h.estimated_flow(-100, {}, prv) == -10_000
+    # New position: the whole current value.
+    assert h.estimated_flow(50, {"shares": 50, "value": 7_500}, {}) == 7_500
+    assert h.estimated_flow(0, cur, prv) == 0
+
+
+def test_flow_and_pct_in_aggregate():
+    inv = h.InvestorHoldings(name="Fund A", cik=1)
+    inv.prior = {"C1": {"issuer": "ONE", "shares": 100, "value": 10_000},
+                 "C2": {"issuer": "TWO", "shares": 10, "value": 90_000}}
+    inv.latest = {"C1": {"issuer": "ONE", "shares": 90, "value": 18_000},
+                  "C2": {"issuer": "TWO", "shares": 10, "value": 82_000}}
+    stocks = {s["cusip"]: s for s in h.aggregate([inv], {}, watchlist=set())}
+    assert "C2" not in stocks                       # HOLD — no share change
+    one = stocks["C1"]
+    assert one["sellers"] == 1 and one["net_value"] == 8_000   # value rose...
+    assert one["net_flow"] == -2_000                            # ...but it was a sale
+    # Denominator = max(latest 100k, prior 100k) = 100k -> -2%.
+    assert abs(one["conviction"] - (-2.0)) < 1e-9
+    assert abs(one["detail"][0]["pct"] - (-2.0)) < 1e-9
+
+
+def test_normalize_value_units_thousands():
+    filed = {"A": {"shares": 1_000, "value": 150},     # $0.15/share -> thousands
+             "B": {"shares": 2_000, "value": 80},
+             "C": {"shares": 500, "value": 40}}
+    fixed, rescaled = h.normalize_value_units(filed)
+    assert rescaled and fixed["A"]["value"] == 150_000
+    assert filed["A"]["value"] == 150                   # input not mutated
+    dollars = {"A": {"shares": 1_000, "value": 150_000}}
+    same, rescaled = h.normalize_value_units(dollars)
+    assert not rescaled and same is dollars
+    # Bond-heavy book (price ~1.0 per $1 principal) must NOT be rescaled.
+    bonds = {"A": {"shares": 1_000_000, "value": 1_010_000}}
+    assert not h.normalize_value_units(bonds)[1]
+
+
+def test_mark_stale_and_quarter_label():
+    assert h.quarter_label("2026-06-30") == "Q2'26"
+    assert h.quarter_label("2025-12-31") == "Q4'25"
+    assert h.quarter_label(None) == "" and h.quarter_label("bad") == ""
+
+    def inv(name, as_of, status="ok"):
+        i = h.InvestorHoldings(name=name, cik=0, status=status)
+        i.as_of = as_of
+        return i
+    newest, one_behind = inv("A", "2026-09-30"), inv("B", "2026-06-30")
+    two_behind, errored = inv("C", "2026-03-31"), inv("D", "2011-12-31", "error")
+    flagged = h.mark_stale([newest, one_behind, two_behind, errored])
+    assert flagged == [two_behind]
+    assert two_behind.status == "stale" and "Q1'26" in two_behind.detail
+    assert newest.status == one_behind.status == "ok"
+    assert errored.status == "error"                    # untouched
+    # Stale investors are excluded from aggregation.
+    two_behind.prior = {"C9": {"issuer": "X", "shares": 1, "value": 10}}
+    assert h.aggregate([two_behind], {}, watchlist=set()) == []
+
+
+def test_page_payload_and_render():
+    from src.output import holdings_13f_page as page
+    berk = h.fetch_investor_holdings("Berkshire Hathaway", 1067983, "Warren Buffett")
+    scion = h.fetch_investor_holdings("Scion Asset Management", 1649339, "Michael Burry")
+    scion.style, berk.short = "diversified", "Buffett"
+    stocks = h.aggregate([berk, scion], {"037833100": "AAPL"}, watchlist={"AAPL"},
+                         categories={"AAPL": "HOLDING"})
+    stocks[0]["info"] = {"name": "</script><b>x", "sector": "Tech", "fetched_at": 1.0,
+                         "website": "javascript:alert(1)"}
+    dataset = {
+        "generated_at": "2026-11-14T17:00:00+00:00", "as_of": "2026-03-31",
+        "investor_count": 2,
+        "investors": [
+            {"name": i.name, "manager": i.manager, "short": i.short, "style": i.style,
+             "status": i.status, "as_of": i.as_of, "prior_as_of": i.prior_as_of,
+             "holdings": len(i.latest), "total_value": h.portfolio_value(i.latest)}
+            for i in (berk, scion)
+        ],
+        "stocks": stocks,
+    }
+    payload = page.build_payload(dataset)
+    assert [i["s"] for i in payload["inv"]] == ["Buffett", "Burry"]
+    assert payload["inv"][1]["st"] == "diversified" and payload["inv"][0]["q"] == "Q1'26"
+    aapl = next(s for s in payload["stk"] if s["c"] == "037833100")
+    assert aapl["k"] == "H" and aapl["t"] == "AAPL"
+    # [investor, action code, shares delta, flow, pct] per move; ADD=1, TRIM=2.
+    assert sorted((m[0], m[1], m[2]) for m in aapl["d"]) == [(0, 1, 20), (1, 2, -10)]
+    html = page.render(dataset)
+    # The embedded payload can't terminate its <script> early, and an unsafe
+    # website URL from third-party data never becomes a link.
+    body = html.split('id="payload">', 1)[1].split("</script>", 1)[0]
+    assert "</script" not in body and "javascript:alert" not in html
+    assert "13F Net Flow" in html and "Stock-pickers (1)" in html and "All (2)" in html
+
+
 if __name__ == "__main__":
     test_infotable_parse_skips_options()
     test_aggregate_net_flow()
     test_ranking_order()
+    test_estimated_flow_strips_price_moves()
+    test_flow_and_pct_in_aggregate()
+    test_normalize_value_units_thousands()
+    test_mark_stale_and_quarter_label()
+    test_page_payload_and_render()
     print("all 13F tests passed")

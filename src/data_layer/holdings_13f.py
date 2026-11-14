@@ -48,6 +48,18 @@ SEC_THROTTLE_SEC = 0.2  # SEC fair-access: stay well under 10 req/s
 # (Citadel, Point72, etc. — 5-10 MB info tables) can never blow the job.
 SEC_PHASE_BUDGET_SEC = 720
 _sec_phase_deadline = 0.0  # set per run from build_dataset()
+# Whole-build wall-clock budget. The job timeout is 20 min; the SEC phase,
+# OpenFIGI, ticker info, Wikipedia and insider phases each have their own
+# cap, but on a cold-cache week (e.g. the Saturday after a 13F deadline,
+# when every investor has a new filing) their caps could add up past the
+# job timeout. Every enrichment phase is clamped to what's left of this.
+BUILD_BUDGET_SEC = 14 * 60
+# An investor whose latest 13F is more than this far behind the newest
+# filing in the set is "stale": its quarter-over-quarter change is old news
+# (e.g. a fund that stopped filing) and would pollute this quarter's totals.
+# 120 days = more than one quarter behind; a filer exactly one quarter
+# behind (still inside the 45-day filing window) is kept.
+STALE_AFTER_DAYS = 120
 
 
 @dataclass
@@ -55,12 +67,62 @@ class InvestorHoldings:
     name: str
     cik: int
     manager: str = ""
-    status: str = "ok"          # ok | error | mismatch
+    status: str = "ok"          # ok | error | mismatch | stale
     detail: str = ""
     as_of: str | None = None    # report date of latest filing
     prior_as_of: str | None = None
     latest: dict[str, dict] = field(default_factory=dict)  # cusip -> {issuer, shares, value}
     prior: dict[str, dict] = field(default_factory=dict)
+    style: str = "picker"       # picker | diversified (see super_investors.json)
+    short: str = ""             # compact chart label, e.g. "Buffett"
+    units_note: str = ""        # set when a filing's values were in $ thousands
+
+
+def quarter_label(date_str: str | None) -> str:
+    """'2026-06-30' -> "Q2'26". Returns '' for missing/unparseable input."""
+    if not date_str:
+        return ""
+    try:
+        d = datetime.strptime(date_str[:10], "%Y-%m-%d")
+    except ValueError:
+        return ""
+    return f"Q{(d.month - 1) // 3 + 1}'{d.year % 100:02d}"
+
+
+def portfolio_value(holdings: dict[str, dict]) -> int:
+    """Total reported market value of a parsed info table (13F long equity)."""
+    return sum(int(h.get("value") or 0) for h in holdings.values())
+
+
+def mark_stale(investors: list[InvestorHoldings],
+               stale_after_days: int = STALE_AFTER_DAYS) -> list[InvestorHoldings]:
+    """Flag ok investors whose latest filing lags the newest one in the set.
+
+    Their status becomes 'stale' so aggregate() skips them and the page
+    shows why. Returns the investors that were flagged.
+    """
+    dated = []
+    for inv in investors:
+        if inv.status != "ok" or not inv.as_of:
+            continue
+        try:
+            dated.append((inv, datetime.strptime(inv.as_of[:10], "%Y-%m-%d")))
+        except ValueError:
+            continue
+    if not dated:
+        return []
+    newest = max(d for _, d in dated)
+    flagged = []
+    for inv, d in dated:
+        lag = (newest - d).days
+        if lag > stale_after_days:
+            behind = max(1, round(lag / 91.3))
+            inv.status = "stale"
+            inv.detail = (f"latest 13F found is {quarter_label(inv.as_of)}, "
+                          f"{behind} quarter{'s' if behind != 1 else ''} behind the newest "
+                          f"({quarter_label(newest.strftime('%Y-%m-%d'))}) — excluded from totals")
+            flagged.append(inv)
+    return flagged
 
 
 # --------------------------------------------------------------------------
@@ -200,6 +262,27 @@ def _parse_infotable(xml_text: str) -> dict[str, dict]:
     return holdings
 
 
+THOUSANDS_PRICE_THRESHOLD = 0.5
+
+
+def normalize_value_units(holdings: dict[str, dict]) -> tuple[dict[str, dict], bool]:
+    """Fix filings that report <value> in thousands of dollars.
+
+    Since 2023 the SEC requires whole dollars, but some filers (e.g. Baupost,
+    Duquesne) still report in $ thousands, which made their books look
+    1,000x smaller. Detect it from the implied share price: the median
+    value/shares across a real portfolio is tens of dollars (bond-heavy books
+    like Oaktree's sit near 1.0 per $1 principal), never below $0.50.
+    Returns (holdings, rescaled?). The input dict is not mutated.
+    """
+    prices = sorted(h["value"] / h["shares"] for h in holdings.values()
+                    if h.get("shares", 0) > 0 and h.get("value", 0) > 0)
+    if not prices or prices[len(prices) // 2] >= THOUSANDS_PRICE_THRESHOLD:
+        return holdings, False
+    return ({c: {**h, "value": int(h.get("value") or 0) * 1000} for c, h in holdings.items()},
+            True)
+
+
 def _parsed_from_cache_entry(entry: dict | None) -> tuple[str | None, str | None, dict]:
     if not entry:
         return None, None, {}
@@ -258,7 +341,8 @@ def fetch_investor_holdings(name: str, cik: int, manager: str = "",
         return inv
 
     # Update cache only after a successful parse so a partial run never
-    # corrupts the cache with empty entries.
+    # corrupts the cache with empty entries. The cache keeps the values as
+    # filed; unit normalization happens below, on every run.
     if holdings_cache is not None:
         holdings_cache[str(cik)] = {
             "name": name, "manager": manager,
@@ -269,7 +353,19 @@ def fetch_investor_holdings(name: str, cik: int, manager: str = "",
                        "report_date": filings[1]["report_date"],
                        "holdings": inv.prior} if len(filings) > 1 else None),
         }
+    apply_unit_fix(inv)
     return inv
+
+
+def apply_unit_fix(inv: InvestorHoldings) -> None:
+    """Rescale an investor's filings reported in $ thousands (see
+    normalize_value_units) and note it in inv.units_note."""
+    inv.latest, fixed_latest = normalize_value_units(inv.latest)
+    inv.prior, fixed_prior = normalize_value_units(inv.prior)
+    legs = [q for q, f in ((inv.as_of, fixed_latest), (inv.prior_as_of, fixed_prior)) if f]
+    if legs:
+        inv.units_note = ("values filed in $ thousands for " + " and ".join(quarter_label(q) for q in legs)
+                          + " — rescaled to dollars")
 
 
 def _name_matches(expected: str, actual: str) -> bool:
@@ -299,7 +395,8 @@ def _save_cusip_cache(cache: dict[str, str]) -> None:
         pass
 
 
-def resolve_cusip_tickers(cusips: set[str]) -> dict[str, str]:
+def resolve_cusip_tickers(cusips: set[str],
+                          max_budget_sec: float | None = None) -> dict[str, str]:
     """Map CUSIP -> ticker via OpenFIGI, caching results. Unmapped CUSIPs are
     cached as "" so we don't re-query them every run.
 
@@ -319,6 +416,8 @@ def resolve_cusip_tickers(cusips: set[str]) -> dict[str, str]:
     if key:
         headers["X-OPENFIGI-APIKEY"] = key
     budget_sec = 600 if key else 120  # plenty when fast; firm cap when slow
+    if max_budget_sec is not None:
+        budget_sec = max(0.0, min(budget_sec, max_budget_sec))
     deadline = time.monotonic() + budget_sec
     resolved = skipped = 0
     for i in range(0, len(todo), batch):
@@ -368,6 +467,28 @@ def _classify(prior_shares: int, latest_shares: int) -> str:
     return "HOLD"
 
 
+def _sig(x: float, digits: int = 6) -> float:
+    """Round to significant figures (keeps tiny values non-zero, sign intact)."""
+    return float(f"{x:.{digits}g}")
+
+
+def estimated_flow(shares_delta: int, cur: dict, prv: dict) -> int:
+    """Dollars actually traded = share change x the filing's implied price.
+
+    The implied price (value / shares) comes from the latest filing when the
+    position still exists, else from the prior one (a full exit). This
+    strips out price drift: a position that was trimmed while the stock
+    rallied has a *higher* reported value but a *negative* flow.
+    """
+    if not shares_delta:
+        return 0
+    for leg in (cur, prv):
+        sh, val = leg.get("shares", 0), leg.get("value", 0)
+        if sh > 0 and val > 0:
+            return int(round(shares_delta * (val / sh)))
+    return 0
+
+
 def aggregate(investors: list[InvestorHoldings], cusip_to_ticker: dict[str, str],
               watchlist: set[str], categories: dict[str, str] | None = None) -> list[dict]:
     """Per-stock net flow across investors, comparing each investor's latest
@@ -382,6 +503,10 @@ def aggregate(investors: list[InvestorHoldings], cusip_to_ticker: dict[str, str]
     for inv in investors:
         if inv.status not in ("ok",):
             continue
+        # "% of portfolio" denominator: the larger of the two quarters' book
+        # values, so a fund that liquidated most of its book can't show a
+        # single exit as >100% of its (now tiny) latest portfolio.
+        denom = max(portfolio_value(inv.latest), portfolio_value(inv.prior))
         cusips = set(inv.latest) | set(inv.prior)
         for cusip in cusips:
             cur = inv.latest.get(cusip, {})
@@ -396,7 +521,8 @@ def aggregate(investors: list[InvestorHoldings], cusip_to_ticker: dict[str, str]
                 "cusip": cusip, "issuer": issuer,
                 "ticker": cusip_to_ticker.get(cusip, ""),
                 "buyers": 0, "sellers": 0, "net_investors": 0,
-                "net_value": 0, "net_shares": 0, "detail": [],
+                "net_value": 0, "net_shares": 0, "net_flow": 0,
+                "conviction": 0.0, "detail": [],
             })
             if not st["issuer"]:
                 st["issuer"] = issuer
@@ -404,28 +530,72 @@ def aggregate(investors: list[InvestorHoldings], cusip_to_ticker: dict[str, str]
                 st["buyers"] += 1
             else:
                 st["sellers"] += 1
-            st["net_shares"] += cur_sh - prv_sh
+            shares_delta = cur_sh - prv_sh
+            flow = estimated_flow(shares_delta, cur, prv)
+            pct = (flow / denom * 100.0) if denom else 0.0
+            st["net_shares"] += shares_delta
             st["net_value"] += cur_val - prv_val
+            st["net_flow"] += flow
+            st["conviction"] += pct
             st["detail"].append({
                 "investor": inv.name,
                 "manager": inv.manager,
                 "action": action,
-                "shares_delta": cur_sh - prv_sh,
+                "shares_delta": shares_delta,
+                # Change in reported market value — mixes price moves with
+                # trading, so it can even have the opposite sign to the trade.
+                # Kept for reference; `flow` is what the page shows.
                 "value_delta": cur_val - prv_val,
+                # Estimated dollars actually traded: share change priced at
+                # the filing's own quarter-end price.
+                "flow": flow,
+                # That trade as a % of the investor's whole 13F portfolio —
+                # the size-neutral "conviction" signal. Significant-figure
+                # rounding: a small trim by a $170B book is ~1e-5 % and must
+                # not round to 0 (which would erase its sign).
+                "pct": _sig(pct),
                 "shares_now": cur_sh,
                 "shares_prior": prv_sh,
             })
     out = []
     for st in stocks.values():
         st["net_investors"] = st["buyers"] - st["sellers"]
+        st["conviction"] = _sig(st["conviction"])
         ticker = st["ticker"].upper() if st["ticker"] else ""
         st["in_watchlist"] = bool(ticker and ticker in watchlist)
         # 'HOLDING' / 'WATCHLIST' / '' — drives the per-stock mark on the page.
         st["category"] = cats.get(ticker, "") if ticker else ""
-        st["detail"].sort(key=lambda d: abs(d["value_delta"]), reverse=True)
+        st["detail"].sort(key=lambda d: abs(d["flow"]), reverse=True)
         out.append(st)
-    out.sort(key=lambda s: (s["net_investors"], s["net_value"]), reverse=True)
+    out.sort(key=lambda s: (s["net_investors"], s["net_flow"]), reverse=True)
     return out
+
+
+def info_fetch_order(stocks: list[dict], investors: list[InvestorHoldings],
+                     top_n: int = 500) -> tuple[list[str], dict[str, int]]:
+    """Tickers to fetch company info for, most important first.
+
+    1) your holdings / watchlist, 2) every stock a *stock-picker* investor
+    traded (the page's default view — so its sector chart and cards are
+    well covered), 3) the top-N by absolute estimated $ flow across everyone.
+    Returns (ordered unique tickers, {group: count}) for logging.
+    """
+    pickers = {i.name for i in investors if i.status == "ok" and i.style != "diversified"}
+    tracked = [s["ticker"].upper() for s in stocks if s.get("ticker") and s.get("category")]
+    picker_stocks = sorted(
+        (s for s in stocks if s.get("ticker")
+         and any(d["investor"] in pickers for d in s["detail"])),
+        key=lambda s: sum(abs(d.get("pct", 0)) for d in s["detail"] if d["investor"] in pickers),
+        reverse=True,
+    )
+    by_impact = sorted((s for s in stocks if s.get("ticker")),
+                       key=lambda s: abs(s.get("net_flow", 0)), reverse=True)
+    order = list(dict.fromkeys(
+        tracked
+        + [s["ticker"].upper() for s in picker_stocks]
+        + [s["ticker"].upper() for s in by_impact[:top_n]]
+    ))
+    return order, {"tracked": len(set(tracked)), "picker": len(picker_stocks), "top": top_n}
 
 
 def build_dataset(watchlist_tickers: set[str] | None = None,
@@ -436,17 +606,24 @@ def build_dataset(watchlist_tickers: set[str] | None = None,
     is the combined membership set (holdings + watchlist) for the toggle.
     """
     global _sec_phase_deadline
+    build_deadline = time.monotonic() + BUILD_BUDGET_SEC
+
+    def remaining() -> float:
+        return build_deadline - time.monotonic()
+
     watchlist = {t.upper() for t in (watchlist_tickers or set())}
     cats = {t.upper(): c for t, c in (categories or {}).items()}
     config = json.loads(INVESTORS_PATH.read_text())
     holdings_cache = _load_holdings_cache()
     print(f"  [13f] holdings cache: {len(holdings_cache)} investors pre-cached")
-    _sec_phase_deadline = time.monotonic() + SEC_PHASE_BUDGET_SEC
+    _sec_phase_deadline = time.monotonic() + min(SEC_PHASE_BUDGET_SEC, BUILD_BUDGET_SEC)
 
     investors: list[InvestorHoldings] = []
     for entry in config.get("investors", []):
         inv = fetch_investor_holdings(entry["name"], int(entry["cik"]),
                                       entry.get("manager", ""), holdings_cache)
+        inv.style = entry.get("style") or "picker"
+        inv.short = entry.get("short") or (inv.manager or inv.name).split(" (")[0].split()[-1]
         print(f"  [13f] {inv.name}: {inv.status}"
               + (f" ({inv.detail})" if inv.detail else "")
               + (f" — {len(inv.latest)} holdings, as of {inv.as_of}" if inv.status == "ok" else ""))
@@ -457,35 +634,33 @@ def build_dataset(watchlist_tickers: set[str] | None = None,
         print(f"  [13f] SEC phase budget ({SEC_PHASE_BUDGET_SEC}s) exhausted — "
               "remaining investors will show as errors.")
 
+    for inv in mark_stale(investors):
+        print(f"  [13f] {inv.name}: STALE — {inv.detail}")
+
     all_cusips: set[str] = set()
     for inv in investors:
         all_cusips |= set(inv.latest) | set(inv.prior)
-    cusip_to_ticker = resolve_cusip_tickers(all_cusips)
+    cusip_to_ticker = resolve_cusip_tickers(all_cusips, max_budget_sec=max(0.0, remaining() - 240))
 
     stocks = aggregate(investors, cusip_to_ticker, watchlist, cats)
 
     # Attach brief company info + price for each mapped ticker (build-time
-    # snapshot; the page is static). Fetching for ALL ~7000 unique stocks is
-    # impractical — limit to the ones you're most likely to click:
-    #   1) every watchlist/holdings ticker (always relevant)
-    #   2) top-N by absolute net dollar value (the most-moved names)
-    # This keeps the fetch list under ~400 even with a huge investor universe.
+    # snapshot; the page is static). Fetching for ALL ~8000 unique stocks is
+    # impractical — fetch in priority order (see info_fetch_order) and let
+    # the wall-clock budget decide how far down the list we get. Entries
+    # that can't be refreshed in time fall back to their last good snapshot.
     INFO_TOP_N = 500
-    pri_tickers = [s["ticker"].upper() for s in stocks
-                   if s.get("ticker") and s["category"]]
-    by_impact = sorted(
-        (s for s in stocks if s.get("ticker")),
-        key=lambda s: abs(s.get("net_value", 0)), reverse=True,
-    )
-    top_tickers = [s["ticker"].upper() for s in by_impact[:INFO_TOP_N]]
-    info_tickers = list(dict.fromkeys(pri_tickers + top_tickers))  # dedupe, preserve order
+    info_tickers, groups = info_fetch_order(stocks, investors, INFO_TOP_N)
 
     if info_tickers and os.environ.get(FIXTURE_ENV) != "1":
         print(f"  [13f] ticker_info: targeting {len(info_tickers)} tickers "
-              f"({len(pri_tickers)} tracked + top {INFO_TOP_N} by $ impact)")
+              f"({groups['tracked']} tracked + {groups['picker']} stock-picker names "
+              f"+ top {INFO_TOP_N} by $ flow, deduped); {int(remaining())}s of build budget left")
         try:
             from . import ticker_info
-            info_map = ticker_info.fetch_ticker_info(info_tickers, priority=watchlist)
+            info_budget = max(0.0, min(ticker_info.DEFAULT_BUDGET_SEC, remaining() * 0.6))
+            info_map = ticker_info.fetch_ticker_info(info_tickers, priority=watchlist,
+                                                     budget_sec=info_budget)
             attached = 0
             for s in stocks:
                 t = (s.get("ticker") or "").upper()
@@ -505,7 +680,8 @@ def build_dataset(watchlist_tickers: set[str] | None = None,
                 names = sorted({s["issuer"] for s in need_wiki})
                 print(f"  [13f] wiki: targeting {len(names)} issuer name(s) "
                       f"missed by yfinance")
-                wiki_map = ticker_info.fetch_wiki_summaries(names)
+                wiki_budget = max(0.0, min(ticker_info.WIKI_BUDGET_SEC, remaining() * 0.4))
+                wiki_map = ticker_info.fetch_wiki_summaries(names, budget_sec=wiki_budget)
                 wiki_attached = 0
                 for s in need_wiki:
                     summ = wiki_map.get(s["issuer"])
@@ -523,7 +699,9 @@ def build_dataset(watchlist_tickers: set[str] | None = None,
         # CEO/CFO open-market buying/selling alongside the institutional flow.
         try:
             from . import insider
-            ins_map = insider.fetch_insider_summaries(info_tickers)
+            ins_budget = max(0.0, min(insider.DEFAULT_BUDGET_SEC, remaining() - 20))
+            print(f"  [13f] insider: {int(ins_budget)}s budget")
+            ins_map = insider.fetch_insider_summaries(info_tickers, budget_sec=ins_budget)
             ins_attached = 0
             for s in stocks:
                 t = (s.get("ticker") or "").upper()
@@ -544,9 +722,12 @@ def build_dataset(watchlist_tickers: set[str] | None = None,
         "as_of": max(latest_dates) if latest_dates else None,
         "investor_count": len(ok),
         "investors": [
-            {"name": i.name, "manager": i.manager, "cik": i.cik, "status": i.status,
+            {"name": i.name, "manager": i.manager, "short": i.short, "style": i.style,
+             "cik": i.cik, "status": i.status, "units_note": i.units_note,
              "detail": i.detail, "as_of": i.as_of, "prior_as_of": i.prior_as_of,
-             "holdings": len(i.latest)}
+             "holdings": len(i.latest),
+             "total_value": portfolio_value(i.latest),
+             "prior_total_value": portfolio_value(i.prior)}
             for i in investors
         ],
         "stocks": stocks,
@@ -573,4 +754,5 @@ def _fixture_investor(name: str, cik: int, manager: str = "") -> InvestorHolding
     if prior_p.exists():
         inv.prior = _parse_infotable(prior_p.read_text())
         inv.prior_as_of = "2025-12-31"
+    apply_unit_fix(inv)
     return inv

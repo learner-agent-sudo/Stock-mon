@@ -20,6 +20,7 @@ textContent, never innerHTML.
 from __future__ import annotations
 
 import json
+import math
 from datetime import datetime, timezone
 from html import escape
 from typing import Any
@@ -177,11 +178,43 @@ def _render_insider(stock: dict) -> str:
 # Payload
 # --------------------------------------------------------------------------
 
+def _sig4(x: float) -> float:
+    return float(f"{x:.4g}")
+
+
+def _prior_weight(d: dict) -> float | None:
+    """Position size before the trade, ≈ % of the investor's book.
+
+    pct is the trade as a % of the book, so pct × prior shares / shares traded
+    is the prior position on the same footing (the filing's price, the same
+    book denominator). None when the archive predates shares_prior.
+    """
+    sd, sp, p = d.get("shares_delta"), d.get("shares_prior"), d.get("pct")
+    if not sd or sp is None or p is None:
+        return None
+    try:
+        w = float(p) * float(sp) / float(sd)
+    except (TypeError, ValueError, ZeroDivisionError):
+        return None
+    if not math.isfinite(w) or w < 0:
+        return None
+    return _sig4(w)
+
+
+def _market_cap(info: dict) -> float | None:
+    mc = info.get("market_cap")
+    if isinstance(mc, (int, float)) and not isinstance(mc, bool) and math.isfinite(mc) and mc > 0:
+        return float(f"{mc:.3g}")
+    return None
+
+
 def build_payload(dataset: dict[str, Any]) -> dict[str, Any]:
     """Compact, client-side-aggregatable view of the dataset.
 
     inv:  [{n,m,s,st,status,ok,det,q,pq,h,tv}]  (index = investor id)
-    stk:  [{c,t,n,k,sec,d:[[inv_id, action_code, shares_delta, flow, pct]]}]
+    stk:  [{c,t,n,k,sec,mc?,d:[[inv_id, action_code, shares_delta, flow, pct, w0]]}]
+          w0 = position size before the trade, % of the book (null if unknown)
+          mc = market cap in dollars, only when known
     cards: {cusip: escaped HTML snapshot card}
     """
     investors = dataset.get("investors", [])
@@ -218,19 +251,23 @@ def build_payload(dataset: dict[str, Any]) -> dict[str, Any]:
             # pct to 4 significant figures, not fixed decimals: a 1e-5 % trim
             # must stay negative, not round to 0.
             moves.append([ii, ac, int(d.get("shares_delta", 0)), int(flow),
-                          float(f"{float(d.get('pct', 0.0)):.4g}")])
+                          _sig4(float(d.get("pct", 0.0))), _prior_weight(d)])
         if not moves:
             continue
         cat = s.get("category") or ""
         info = s.get("info") or {}
-        stk_out.append({
+        row = {
             "c": s.get("cusip", ""),
             "t": s.get("ticker") or "",
             "n": s.get("issuer") or "",
             "k": "H" if cat == "HOLDING" else "W" if cat == "WATCHLIST" else "",
             "sec": info.get("sector") or "",
             "d": moves,
-        })
+        }
+        mc = _market_cap(info)
+        if mc:
+            row["mc"] = mc
+        stk_out.append(row)
         card = _render_info_card(s) + _render_insider(s)
         if card:
             cards[s.get("cusip", "")] = card
@@ -469,6 +506,45 @@ table.tbl{width:100%;border-collapse:separate;border-spacing:0;font-size:.78rem}
 .mv .a{font-weight:700} .a0{color:var(--up)} .a1{color:#69f0ae} .a2{color:#ffb74d} .a3{color:var(--down)}
 .mv .who b{color:#fff} .mv .who span{color:var(--muted);font-size:.66rem;margin-left:.3rem}
 .mv .r{text-align:right;white-space:nowrap}
+/* SVG charts (bubble / scatter / investor map) */
+.chart{position:relative;width:100%;min-height:40px}
+.chart svg{display:block;width:100%;height:auto;overflow:visible;touch-action:manipulation}
+.chart .gl{stroke:var(--line2);stroke-width:1}
+.chart .ax{stroke:var(--axis);stroke-width:1}
+.chart .ref{stroke:var(--axis);stroke-width:1}
+.chart text{font-family:inherit}
+.chart .tick{fill:var(--muted);font-size:10px;font-variant-numeric:tabular-nums}
+.chart .ann{fill:var(--faint);font-size:10px}
+.chart circle.pt{stroke:var(--card);stroke-width:1.5}
+.chart .pt-buy{fill:var(--buy)} .chart .pt-sell{fill:var(--sell)} .chart .pt-flat{fill:var(--muted)}
+.chart .pt-dim{opacity:.28}
+.chart .hring{fill:none;stroke:var(--ink);stroke-width:1.5;pointer-events:none}
+.chart .olab{cursor:pointer;outline:none}
+.chart .olt{fill:var(--ink);font-size:10.5px;font-weight:700;paint-order:stroke;stroke:var(--card);
+  stroke-width:3px;stroke-linejoin:round}
+.chart .olab:focus-visible .olt{fill:var(--accent)}
+.legend .dot{width:10px;height:10px;border-radius:50%}
+.legend .sw{width:14px;height:10px;border-radius:2px}
+.legend .sw.buy{background:var(--buy)} .legend .sw.sell{background:var(--sell)} .legend .sw.soft{opacity:.5}
+.grid2>.card{min-width:0}
+.legend .dot.buy{background:var(--buy)} .legend .dot.sell{background:var(--sell)} .legend .dot.flat{background:var(--muted)}
+.legend .ln{width:16px;height:0;border-top:1px solid var(--axis);border-radius:0}
+.foot{color:var(--muted);font-size:.64rem;margin-top:.3rem}
+/* Pyramids: stacked halves + click-to-list drill-down */
+.half .bar.soft{opacity:.5}
+.half.r .bar.gap{box-shadow:inset 2px 0 0 var(--card)}
+.half.l .bar.gap{box-shadow:inset -2px 0 0 var(--card)}
+.drow.sel{background:#1a2733}
+.drill{margin-top:.45rem;border-top:1px dotted var(--line2);padding-top:.35rem}
+.drill .dh{font-size:.62rem;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:.2rem}
+.ditem{font:inherit;font-size:.72rem;color:var(--ink2);background:none;border:0;cursor:pointer;width:100%;text-align:left;
+  display:grid;grid-template-columns:4.6rem 1fr auto auto;gap:.6rem;padding:.2rem .2rem;border-radius:3px;align-items:baseline}
+.ditem:hover,.ditem:focus-visible{background:#132232;outline:none}
+.ditem b{color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ditem .w{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ditem .r{text-align:right;white-space:nowrap}
+.ditem .a{font-weight:700}
+.ditem .a0{color:var(--up)} .ditem .a1{color:#69f0ae} .ditem .a2{color:#ffb74d} .ditem .a3{color:var(--down)}
 footer{color:#3a4a5a;font-size:.66rem;margin-top:1rem;border-top:1px solid var(--line);padding-top:.5rem;line-height:1.5}
 footer p{margin-bottom:.3rem}
 @media (max-width:760px){
@@ -505,7 +581,8 @@ var MEAS = {
   count:{name:'# investors', unit:'investors'}
 };
 var st = {group:'picker', inv:-1, scope:'all', measure:'conv', q:'',
-          page:{buy:25,sell:25,mixed:25}, sort:{buy:null,sell:null,mixed:null}, open:null};
+          page:{buy:25,sell:25,mixed:25}, sort:{buy:null,sell:null,mixed:null}, open:null,
+          dsize:-1, dcap:-1};  // pyramid row whose drill-down list is open
 // Restore the viewer's last view — only values this version understands, so a
 // stale or hand-edited preference can never break the page.
 var ALLOWED = {group:['picker','all'], scope:['all','mine'], measure:['conv','flow','count']};
@@ -590,6 +667,9 @@ function showTip(ev, build){
   if (ev && ev.type !== 'focus' && ev.clientX != null) { tipAnchor = null; placeTip(ev.clientX + 14, ev.clientY + 14); }
   else { tipAnchor = ev.currentTarget; var rc = tipAnchor.getBoundingClientRect(); placeTip(rc.left + 12, rc.bottom + 6); }
 }
+function showTipAt(x, y, build){
+  clear(tip); build(tip); tip.style.display = 'block'; tipAnchor = null; placeTip(x, y);
+}
 function hideTip(){ tip.style.display = 'none'; tipAnchor = null; }
 function onScroll(){
   // A pointer tooltip would drift away from the mouse, so hide it; a keyboard
@@ -604,12 +684,13 @@ function bindTip(node, build){
   node.addEventListener('focus', function(ev){ showTip(ev, build); });
   node.addEventListener('blur', hideTip);
 }
-function tipStock(r){
+function tipStock(r, extra){
   return function(t){
     t.appendChild(el('div', 'tv', fmtM(mval(r)) + '  ' + (r.s.t || '')));
     t.appendChild(el('div', 'tl', r.s.n + (r.s.sec ? ' · ' + r.s.sec : '')));
     t.appendChild(el('div', 'tr', 'Est. flow ' + money(r.flow) + ' · conviction ' + pct(r.conv)));
     t.appendChild(el('div', 'tr', r.b + ' buying · ' + r.se + ' selling'));
+    (extra || []).forEach(function(x){ t.appendChild(el('div', 'tr', x)); });
     r.moves.slice().sort(function(a, b){ return Math.abs(b[4]) - Math.abs(a[4]); }).slice(0, 4).forEach(function(d){
       var row = el('div', 'tr');
       var k = el('span', 'key'); k.style.background = d[1] < 2 ? 'var(--buy)' : 'var(--sell)';
@@ -743,6 +824,22 @@ function renderTakeaways(C){
     var sp = rows.filter(function(r){ return r.b >= 2 && r.se >= 2; })
       .sort(function(a, b){ return (Math.min(b.b, b.se) - Math.min(a.b, a.se)) || ((b.b + b.se) - (a.b + a.se)); })[0];
     if (sp) ul.appendChild(li(['Split decision: ', tkBtn(sp), ' — ' + sp.b + ' buying vs ' + sp.se + ' selling.']));
+    // Outliers among the investors themselves (relative to their own size).
+    var ist = investorStats().filter(function(p){ return C.act[p.i] && p.nm; });
+    if (ist.length >= 2) {
+      var busy = ist.slice().sort(function(a, b){ return b.turn - a.turn; })[0];
+      var byNet = ist.slice().sort(function(a, b){ return b.net - a.net; });
+      var txt = 'Busiest: ' + invName(busy.i) + ' traded ≈' + pct(busy.turn, false) + ' of the portfolio';
+      if (byNet[0].net > 0) txt += '; biggest net buyer for its size: ' + invName(byNet[0].i) + ' (' + pct(byNet[0].net) + ' of the book)';
+      var lastN = byNet[byNet.length - 1];
+      if (lastN.net < 0) txt += '; biggest net seller: ' + invName(lastN.i) + ' (' + pct(lastN.net) + ')';
+      ul.appendChild(li([txt + '.']));
+    }
+    // Breadth and size pointing opposite ways: the crowd says one thing, the money another.
+    var dv = rows.filter(function(r){ return r.ni * r.conv < 0; }).sort(function(a, b){ return Math.abs(b.conv) - Math.abs(a.conv); });
+    if (dv.length) ul.appendChild(li(['Crowd vs money disagree on ' + dv.length + ' stock' + (dv.length === 1 ? '' : 's') + ' — strongest: ', tkBtn(dv[0]),
+      ', where ' + (dv[0].ni > 0 ? 'more investors bought, but the sellers moved more of their portfolios' :
+                                   'more investors sold, but the buyers moved more of their portfolios') + ' (' + pct(dv[0].conv) + ' net).']));
   }
   var sec = sectorAgg(rows).filter(function(x){ return x.name !== 'Unclassified'; });
   if (sec.length) {
@@ -974,6 +1071,500 @@ function renderHeatmap(C){
   body.appendChild(lg);
 }
 
+/* ---------- SVG chart toolkit ---------- */
+var NS = 'http://www.w3.org/2000/svg';
+function S(tag, attrs, parent){
+  var e = document.createElementNS(NS, tag);
+  if (attrs) Object.keys(attrs).forEach(function(k){ e.setAttribute(k, attrs[k]); });
+  if (parent) parent.appendChild(e);
+  return e;
+}
+function stext(parent, x, y, txt, cls, anchor){
+  var t = S('text', {x: x, y: y, 'class': cls || 'tick'}, parent);
+  if (anchor) t.setAttribute('text-anchor', anchor);
+  t.textContent = txt;
+  return t;
+}
+function ssqrt(v){ return v < 0 ? -Math.sqrt(-v) : Math.sqrt(v); }
+function num3(x){ return String(Number(x.toPrecision(3))); }
+// Axis ticks: compact, trailing zeros trimmed ("+0.5%", "−$200M", "12").
+function tickFmt(v, kind){
+  var a = Math.abs(v), s = kind === 'pct+' ? '' : sgn(v);
+  if (!a) return '0';
+  if (kind === 'conv' || kind === 'pct+') return s + num3(a) + '%';
+  if (kind === 'flow') return s + '$' + (a >= 1e9 ? num3(a / 1e9) + 'B' : a >= 1e6 ? num3(a / 1e6) + 'M' : a >= 1e3 ? num3(a / 1e3) + 'K' : num3(a));
+  return s + num3(a);
+}
+function capFmt(v){ return '$' + (v >= 1e12 ? num3(v / 1e12) + 'T' : v >= 1e9 ? num3(v / 1e9) + 'B' : num3(v / 1e6) + 'M'); }
+function niceStep(raw){  // the 1-2-5 step nearest to raw
+  var p = Math.pow(10, Math.floor(Math.log10(raw))), f = raw / p;
+  return (f < 1.5 ? 1 : f < 3 ? 2 : f < 7 ? 5 : 10) * p;
+}
+function niceSteps(max){  // 1-2-5 sequence up to max, ascending
+  var out = [], e0 = Math.floor(Math.log10(max)) - 5;
+  for (var k = e0; k <= e0 + 6; k++) [1, 2, 5].forEach(function(m){ var v = m * Math.pow(10, k); if (v <= max) out.push(v); });
+  return out;
+}
+// Keep candidates (largest first) at least `gap` px apart and clear of the 0 tick.
+function pickTicks(cands, px, gap){
+  var out = [], last = Infinity;
+  for (var i = cands.length - 1; i >= 0; i--){
+    var p = px(cands[i]);
+    if (last - p >= gap && p >= gap * 0.9) { out.push(cands[i]); last = p; }
+  }
+  return out;
+}
+function linTicks(max, n){
+  var step = niceStep(max / n), out = [];
+  for (var v = step; v <= max * 1.0001; v += step) out.push(Number(v.toPrecision(6)));
+  return out;
+}
+function makeFrame(box, H, m, aria){
+  var W = Math.max(280, Math.floor(box.clientWidth));
+  var svg = S('svg', {width: W, height: H, viewBox: '0 0 ' + W + ' ' + H, role: 'group', 'aria-label': aria});
+  box.appendChild(svg);
+  return {svg: svg, W: W, H: H, L: m[3], R: W - m[1], T: m[0], B: H - m[2]};
+}
+function chartH(box){ var w = box.clientWidth; return w < 460 ? 250 : w > 760 ? 320 : 290; }
+// Nearest-point hover layer: the pointer only has to be *near* a dot, not on
+// it. Touch: first tap shows the tooltip, a second tap on the same dot opens it.
+function wirePoints(F, pts){
+  var svg = F.svg, ring = S('circle', {'class': 'hring', cx: -99, cy: -99, r: 0}, svg);
+  var cur = null, tapped = null;
+  function at(ev){
+    var lab = ev.target && ev.target.closest ? ev.target.closest('.olab') : null;
+    if (lab && lab._p) return lab._p;
+    var rc = svg.getBoundingClientRect(), k = F.W / (rc.width || F.W);
+    var mx = (ev.clientX - rc.left) * k, my = (ev.clientY - rc.top) * k, best = null, bd = Infinity;
+    for (var i = 0; i < pts.length; i++){
+      var p = pts[i], dx = p.x - mx, dy = p.y - my, dd = Math.sqrt(dx * dx + dy * dy);
+      if (dd - p.r <= 10 && dd < bd) { bd = dd; best = p; }
+    }
+    return best;
+  }
+  function mark(p){
+    if (p) { ring.setAttribute('cx', p.x); ring.setAttribute('cy', p.y); ring.setAttribute('r', p.r + 3); }
+    else ring.setAttribute('r', 0);
+  }
+  svg.addEventListener('pointermove', function(ev){
+    if (ev.pointerType && ev.pointerType !== 'mouse' && ev.pointerType !== 'pen') return;
+    var p = at(ev);
+    svg.style.cursor = p ? 'pointer' : '';
+    if (p !== cur) { cur = p; mark(p); if (p) { clear(tip); p.tip(tip); tip.style.display = 'block'; tipAnchor = null; } else hideTip(); }
+    if (p) placeTip(ev.clientX + 14, ev.clientY + 14);
+  });
+  svg.addEventListener('pointerleave', function(){ cur = null; mark(null); hideTip(); });
+  svg.addEventListener('click', function(ev){
+    var p = at(ev);
+    if (!p) { tapped = null; mark(null); hideTip(); return; }
+    if (ev.pointerType === 'touch' && tapped !== p) { tapped = p; mark(p); showTipAt(ev.clientX + 14, ev.clientY + 14, p.tip); return; }
+    tapped = null; hideTip(); p.open();
+  });
+  return mark;
+}
+// Direct labels for the outliers only. Each is tried right/left/above/below
+// its dot: never over another label, and preferably not over other dots (the
+// text has a surface-coloured halo when it has to). A labelled dot is
+// keyboard-focusable. `boxes` holds space already taken and is extended.
+function boxFree(boxes, bx, by, w, h){
+  return !boxes.some(function(b){ return bx < b.x + b.w && bx + w > b.x && by < b.y + b.h && by + h > b.y; });
+}
+function dotsHit(all, self, bx, by, w, h){
+  var n = 0;
+  for (var i = 0; i < all.length; i++){
+    var q = all[i]; if (q === self) continue;
+    var cx = Math.max(bx, Math.min(q.x, bx + w)), cy = Math.max(by, Math.min(q.y, by + h));
+    if ((cx - q.x) * (cx - q.x) + (cy - q.y) * (cy - q.y) < q.r * q.r) n++;
+  }
+  return n;
+}
+function placeLabels(F, pts, mark, all, boxes){
+  boxes = boxes || [];
+  pts.forEach(function(p){
+    var w = p.lab.length * 6.4 + 2, h = 12, best = null;
+    var cand = [[p.x + p.r + 3, p.y + 4, 'start'], [p.x - p.r - 3, p.y + 4, 'end'],
+                [p.x, p.y - p.r - 4, 'middle'], [p.x, p.y + p.r + 12, 'middle']];
+    for (var i = 0; i < cand.length; i++){
+      var x = cand[i][0], y = cand[i][1], a = cand[i][2];
+      var bx = a === 'start' ? x : a === 'end' ? x - w : x - w / 2, by = y - 10;
+      if (bx < 2 || bx + w > F.W - 2 || by < 0 || by + h > F.B + 2 || !boxFree(boxes, bx, by, w, h)) continue;
+      var hit = dotsHit(all || [], p, bx, by, w, h);
+      if (!best || hit < best.hit) best = {x: x, y: y, a: a, bx: bx, by: by, hit: hit};
+      if (!hit) break;
+    }
+    if (!best) return;
+    boxes.push({x: best.bx, y: best.by, w: w, h: h});
+    var g = S('g', {'class': 'olab', tabindex: 0, role: 'button', 'aria-label': p.aria}, F.svg);
+    g._p = p;
+    stext(g, best.x, best.y, p.lab, 'olt', best.a);
+    g.addEventListener('focus', function(ev){ mark(p); showTip(ev, p.tip); });
+    g.addEventListener('blur', function(){ mark(null); hideTip(); });
+    g.addEventListener('keydown', function(ev){ if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); p.open(); } });
+  });
+  return boxes;
+}
+// An in-plot annotation that yields to labels and dots: tries each spot in turn.
+function annotate(F, spots, txt, all, boxes){
+  var w = txt.length * 6.1, h = 11;
+  for (var i = 0; i < spots.length; i++){
+    var x = spots[i][0], y = spots[i][1], a = spots[i][2] || 'start';
+    var bx = a === 'end' ? x - w : x, by = y - 9;
+    if (bx < F.L || bx + w > F.R || by < F.T - 2 || by + h > F.B + 2) continue;
+    if (boxFree(boxes, bx, by, w, h) && !dotsHit(all, null, bx, by, w, h)) {
+      boxes.push({x: bx, y: by, w: w, h: h}); stext(F.svg, x, y, txt, 'ann', a); return;
+    }
+  }
+}
+
+/* ---------- bubble: bets by company size ---------- */
+function renderCapMap(C){
+  var box = clear($('capmap'));
+  var have = C.rows.filter(function(r){ return r.s.mc > 0; });
+  var miss = C.rows.length - have.length;
+  $('capmap-note').textContent = miss ? 'Not plotted: ' + miss + ' of ' + C.rows.length +
+    ' stocks have no market-cap data (they are still in the tables below).' : '';
+  if (!have.length) { box.appendChild(el('div', 'empty', C.rows.length ? 'No market-cap data for the stocks in this view.' : 'No trades for this selection.')); return; }
+  var cnt = st.measure === 'count', lo = Infinity, hi = -Infinity, maxY = 0;
+  have.forEach(function(r){
+    var l = Math.log10(r.s.mc); if (l < lo) lo = l; if (l > hi) hi = l;
+    maxY = Math.max(maxY, Math.abs(mval(r)));
+  });
+  lo = Math.floor(lo); hi = Math.ceil(hi); if (hi - lo < 2) { lo--; hi++; }
+  var F = makeFrame(box, chartH(box), [12, 16, 26, 56], 'Bubble chart of ' + have.length + ' stocks: market cap across, ' +
+    MEAS[st.measure].name.toLowerCase() + ' up (net bought) or down (net sold). Labelled outliers can be focused.');
+  var tf = cnt ? function(v){ return v; } : ssqrt;
+  var top = tf(maxY || 1) * 1.1, mid = (F.T + F.B) / 2, half = (F.B - F.T) / 2;
+  function X(mc){ return F.L + (Math.log10(mc) - lo) / (hi - lo) * (F.R - F.L); }
+  function Y(v){ return mid - tf(v) / top * half; }
+  var g = S('g', null, F.svg);
+  var ticks = cnt ? linTicks(maxY || 1, 2).filter(function(v){ return v === Math.round(v); })
+                  : pickTicks(niceSteps(maxY || 1), function(v){ return tf(v) / top * half; }, 16);
+  ticks.forEach(function(v){
+    [v, -v].forEach(function(u){
+      var y = Y(u); S('line', {x1: F.L, x2: F.R, y1: y, y2: y, 'class': 'gl'}, g);
+      stext(g, F.L - 6, y + 3, tickFmt(u, st.measure), 'tick', 'end');
+    });
+  });
+  for (var k = lo; k <= hi; k++){
+    var x = X(Math.pow(10, k));
+    S('line', {x1: x, x2: x, y1: F.T, y2: F.B, 'class': 'gl'}, g);
+    stext(g, x, F.B + 15, capFmt(Math.pow(10, k)), 'tick', 'middle');
+  }
+  S('line', {x1: F.L, x2: F.R, y1: mid, y2: mid, 'class': 'ax'}, g);
+  stext(g, F.L - 6, mid + 3, '0', 'tick', 'end');
+  stext(g, F.L + 5, F.T + 9, 'net bought ↑', 'ann');
+  stext(g, F.L + 5, F.B - 5, 'net sold ↓', 'ann');
+  var pts = have.map(function(r){
+    var v = mval(r), n = r.b + r.se;
+    return {x: X(r.s.mc), y: Y(v), r: Math.min(18, 4.5 * Math.sqrt(n)), v: v, lab: label(r.s),
+      c: v > 0 ? 'pt-buy' : v < 0 ? 'pt-sell' : 'pt-flat',
+      aria: label(r.s) + ': ' + fmtM(v) + ', market cap ' + capFmt(r.s.mc) + ', ' + r.b + ' buying, ' + r.se + ' selling. Opens details.',
+      tip: tipStock(r, ['Market cap ' + capFmt(r.s.mc) + ' · bubble = ' + n + ' investor' + (n === 1 ? '' : 's')]),
+      open: function(){ openStock(r.s.c); }};
+  });
+  var pg = S('g', null, F.svg);
+  // Biggest bubbles first so the small ones stay visible on top.
+  pts.slice().sort(function(a, b){ return b.r - a.r; }).forEach(function(p){
+    S('circle', {cx: p.x, cy: p.y, r: p.r, 'class': 'pt ' + p.c}, pg);
+  });
+  var mark = wirePoints(F, pts);
+  var ups = pts.filter(function(p){ return p.v > 0; }).sort(function(a, b){ return b.v - a.v; }).slice(0, 4);
+  var dns = pts.filter(function(p){ return p.v < 0; }).sort(function(a, b){ return a.v - b.v; }).slice(0, 3);
+  placeLabels(F, ups.concat(dns), mark, pts);
+}
+
+/* ---------- scatter: position size before -> after ---------- */
+var POS_CAP = 600;
+function tipMove(r, d, w0, w1){
+  return function(t){
+    t.appendChild(el('div', 'tv', ACT[d[1]] + '  ' + pct(d[4]) + ' of portfolio'));
+    t.appendChild(el('div', 'tl', (r.s.t || r.s.n) + ' · ' + invName(d[0])));
+    t.appendChild(el('div', 'tr', 'position ≈' + pct(w0, false) + ' → ' + pct(w1, false) + ' of the book'));
+    t.appendChild(el('div', 'tr', 'est. ' + money(d[3]) + ' · ' + shares(d[2]) + ' shares'));
+    t.appendChild(el('div', 'tr', 'Click for details ↓'));
+  };
+}
+function renderPosMap(C){
+  var box = clear($('posmap')), note = $('posmap-note'), all = [];
+  C.rows.forEach(function(r){ r.moves.forEach(function(d){
+    if (d[5] == null) return;
+    var w0 = d[1] === 0 ? 0 : d[5], w1 = d[1] === 3 ? 0 : Math.max(0, d[5] + d[4]);
+    all.push({row: r, d: d, w0: w0, w1: w1, m: Math.max(w0, w1)});
+  }); });
+  note.textContent = '';
+  if (!all.length) { box.appendChild(el('div', 'empty', C.rows.length ? 'Position sizes are not available in this archive.' : 'No trades for this selection.')); return; }
+  all.sort(function(a, b){ return b.m - a.m; });
+  var shown = all.slice(0, POS_CAP);
+  if (all.length > shown.length) note.textContent = 'Showing the ' + shown.length + ' largest positions of ' +
+    all.length.toLocaleString('en-US') + ' trades — the rest are tiny and would pile up at the origin.';
+  var M = (shown[0].m || 1) * 1.06;
+  var F = makeFrame(box, chartH(box), [12, 16, 26, 50], 'Scatter chart of ' + shown.length +
+    ' trades: position size before (across) and after (up), as a share of the investor’s portfolio. Above the diagonal = bought more. Labelled outliers can be focused.');
+  function X(v){ return F.L + Math.sqrt(v / M) * (F.R - F.L); }
+  function Y(v){ return F.B - Math.sqrt(v / M) * (F.B - F.T); }
+  var g = S('g', null, F.svg);
+  pickTicks(niceSteps(M), function(v){ return Math.sqrt(v / M) * (F.R - F.L); }, 36).forEach(function(v){
+    var x = X(v); S('line', {x1: x, x2: x, y1: F.T, y2: F.B, 'class': 'gl'}, g);
+    stext(g, x, F.B + 15, tickFmt(v, 'pct+'), 'tick', 'middle');
+  });
+  pickTicks(niceSteps(M), function(v){ return Math.sqrt(v / M) * (F.B - F.T); }, 16).forEach(function(v){
+    var y = Y(v); S('line', {x1: F.L, x2: F.R, y1: y, y2: y, 'class': 'gl'}, g);
+    stext(g, F.L - 6, y + 3, tickFmt(v, 'pct+'), 'tick', 'end');
+  });
+  S('line', {x1: F.L, x2: F.R, y1: F.B, y2: F.B, 'class': 'ax'}, g);
+  S('line', {x1: F.L, x2: F.L, y1: F.T, y2: F.B, 'class': 'ax'}, g);
+  stext(g, F.L - 6, F.B + 3, '0', 'tick', 'end');
+  S('line', {x1: X(0), y1: Y(0), x2: X(M), y2: Y(M), 'class': 'ref'}, g);
+  stext(g, F.L + 8, F.T + 9, '↖ bought more', 'ann');
+  stext(g, F.R - 4, F.B - 6, 'sold some ↘', 'ann', 'end');
+  var one = st.inv >= 0;
+  var pts = shown.map(function(q){
+    var r = q.row, d = q.d;
+    return {x: X(q.w0), y: Y(q.w1), r: 4, v: d[4], c: d[1] < 2 ? 'pt-buy' : 'pt-sell',
+      lab: label(r.s) + (one ? '' : ' · ' + invShort(d[0])),
+      aria: invName(d[0]) + ' ' + ACT[d[1]] + ' ' + label(r.s) + ': ' + pct(q.w0, false) + ' to ' + pct(q.w1, false) + ' of the portfolio. Opens details.',
+      tip: tipMove(r, d, q.w0, q.w1), open: function(){ openStock(r.s.c); }};
+  });
+  var pg = S('g', null, F.svg);
+  pts.forEach(function(p){ S('circle', {cx: p.x, cy: p.y, r: p.r, 'class': 'pt ' + p.c}, pg); });
+  var mark = wirePoints(F, pts);
+  placeLabels(F, pts.slice().sort(function(a, b){ return Math.abs(b.v) - Math.abs(a.v); }).slice(0, 5), mark, pts);
+}
+
+/* ---------- pyramids ---------- */
+var SIZE_BANDS = [[5, '≥5%'], [2, '2–5%'], [1, '1–2%'], [0.5, '0.5–1%'], [0.25, '0.25–0.5%'], [0.1, '0.1–0.25%'], [0, '<0.1%']];
+var CAP_BANDS = [[2e11, 'Mega', '≥$200B'], [1e10, 'Large', '$10–200B'], [2e9, 'Mid', '$2–10B'], [3e8, 'Small', '$0.3–2B'], [0, 'Micro', '<$300M']];
+function bandIdx(bands, v){ for (var i = 0; i < bands.length; i++) if (v >= bands[i][0]) return i; return bands.length - 1; }
+function valShort(v){ return st.measure === 'count' ? sgn(v) + Math.abs(v) : fmtM(v); }
+function endShort(v){ return st.measure === 'count' ? String(Math.abs(v)) : fmtM(v, false); }
+function axisHead(l, r, v){
+  var head = el('div', 'axis-head'); head.appendChild(el('span'));
+  head.appendChild(el('span', 'l', l)); head.appendChild(el('span', 'r', r)); head.appendChild(el('span', 'v', v));
+  return head;
+}
+// One half of a pyramid row: segments stacked outward from the centre axis,
+// a 2px surface gap between them, the 4px rounded end on the outermost one.
+function pyrHalf(side, segs, max){
+  var h = el('span', 'half ' + side), off = 0, tot = 0, last = -1;
+  segs.forEach(function(s, i){ if (s.v > 0) { tot += s.v; last = i; } });
+  segs.forEach(function(s, i){
+    if (!(s.v > 0)) return;
+    var w = s.v / max * 100, b = el('span', 'bar' + (s.soft ? ' soft' : '') + (off > 0 ? ' gap' : ''));
+    b.style.width = w + '%';
+    if (side === 'r') { b.style.left = off + '%'; b.style.borderRadius = i === last ? '0 4px 4px 0' : '0'; }
+    else { b.style.left = 'auto'; b.style.right = off + '%'; b.style.borderRadius = i === last ? '4px 0 0 4px' : '0'; }
+    h.appendChild(b); off += w;
+  });
+  return {node: h, w: tot / max * 100, tot: tot};
+}
+function pyrRow(lab, lsegs, rsegs, max, ltxt, rtxt, valTxt, onClick, tipFn, selected){
+  var b = el('button', 'drow' + (selected ? ' sel' : '')); b.type = 'button';
+  b.setAttribute('aria-expanded', selected ? 'true' : 'false');
+  b.addEventListener('click', onClick);
+  b.appendChild(lab);
+  [['l', lsegs, ltxt], ['r', rsegs, rtxt]].forEach(function(x){
+    var h = pyrHalf(x[0], x[1], max || 1);
+    if (h.tot && x[2]) {
+      var n = el('span', 'num' + (h.w > 62 ? ' in' : ''), x[2]);
+      n.style.setProperty('--w', Math.max(1, h.w) + '%'); h.node.appendChild(n);
+    }
+    b.appendChild(h.node);
+  });
+  b.appendChild(el('span', 'val', valTxt));
+  bindTip(b, tipFn);
+  return b;
+}
+function swatches(items){
+  var lg = el('div', 'legend');
+  items.forEach(function(x){ var s = el('span'); s.appendChild(el('i', 'sw ' + x[0])); s.appendChild(document.createTextNode(x[1])); lg.appendChild(s); });
+  return lg;
+}
+function refocus(body, i){ var rows = body.querySelectorAll('.drow'); if (rows[i]) rows[i].focus(); }
+function tipBand(b){
+  return function(t){
+    var nb = b.n[0] + b.n[1], ns = b.n[2] + b.n[3];
+    t.appendChild(el('div', 'tv', (nb + ns) + ' trade' + (nb + ns === 1 ? '' : 's') + ' of ' + b.lab + ' of the portfolio'));
+    t.appendChild(el('div', 'tl', 'NEW ' + b.n[0] + ' · ADD ' + b.n[1] + ' · TRIM ' + b.n[2] + ' · EXIT ' + b.n[3]));
+    t.appendChild(el('div', 'tr', 'bought ≈' + money(b.fb, false) + ' · sold ≈' + money(-b.fs, false)));
+    b.list.slice().sort(function(x, y){ return Math.abs(y.d[4]) - Math.abs(x.d[4]); }).slice(0, 3).forEach(function(x){
+      var row = el('div', 'tr'), k = el('span', 'key');
+      k.style.background = x.d[1] < 2 ? 'var(--buy)' : 'var(--sell)'; row.appendChild(k);
+      row.appendChild(el('span', null, label(x.r.s) + ' ' + invShort(x.d[0]) + ' ' + ACT[x.d[1]] + ' ' + pct(x.d[4])));
+      t.appendChild(row);
+    });
+    t.appendChild(el('div', 'tr', 'Click to list them'));
+  };
+}
+function drillItem(cells, onClick){
+  var it = el('button', 'ditem'); it.type = 'button';
+  cells.forEach(function(c){ it.appendChild(c); });
+  it.addEventListener('click', onClick);
+  return it;
+}
+function renderSizePyramid(C){
+  var body = clear($('pyr-size'));
+  var bands = SIZE_BANDS.map(function(b){ return {lab: b[1], n: [0, 0, 0, 0], fb: 0, fs: 0, list: []}; }), total = 0;
+  C.rows.forEach(function(r){ r.moves.forEach(function(d){
+    var b = bands[bandIdx(SIZE_BANDS, Math.abs(d[4]))];
+    b.n[d[1]]++; total++; if (d[1] < 2) b.fb += d[3]; else b.fs += d[3];
+    b.list.push({r: r, d: d});
+  }); });
+  if (!total) { body.appendChild(el('div', 'empty', 'No trades for this selection.')); return; }
+  var max = 0; bands.forEach(function(b){ max = Math.max(max, b.n[0] + b.n[1], b.n[2] + b.n[3]); });
+  body.appendChild(axisHead('← sells', 'buys →', 'net'));
+  bands.forEach(function(b, i){
+    var nb = b.n[0] + b.n[1], ns = b.n[2] + b.n[3], d = nb - ns;
+    var lab = el('span', 'lab', b.lab); lab.appendChild(el('span', 'cnt', (nb + ns) + ' trade' + (nb + ns === 1 ? '' : 's')));
+    var row = pyrRow(lab, [{v: b.n[2], soft: 1}, {v: b.n[3]}], [{v: b.n[1], soft: 1}, {v: b.n[0]}], max,
+      ns ? String(ns) : '', nb ? String(nb) : '', sgn(d) + Math.abs(d),
+      function(ev){ st.dsize = st.dsize === i ? -1 : i; hideTip(); renderSizePyramid(LAST); if (!ev.detail) refocus(body, i); }, tipBand(b), st.dsize === i);
+    row.setAttribute('aria-label', 'Trades of ' + b.lab + ' of the portfolio: ' + nb + ' buys (' + b.n[0] + ' new, ' + b.n[1] +
+      ' added), ' + ns + ' sells (' + b.n[2] + ' trimmed, ' + b.n[3] + ' sold out). Press to list them.');
+    body.appendChild(row);
+  });
+  body.appendChild(swatches([['sell', 'sold out'], ['sell soft', 'trimmed'], ['buy soft', 'added'], ['buy', 'new position']]));
+  var sel = bands[st.dsize];
+  if (sel) {
+    var w = el('div', 'drill'), list = sel.list.slice().sort(function(x, y){ return Math.abs(y.d[4]) - Math.abs(x.d[4]); });
+    w.appendChild(el('div', 'dh', 'Trades of ' + sel.lab + ' of the portfolio · ' + list.length + (list.length > 15 ? ' · largest 15' : '')));
+    if (!list.length) w.appendChild(el('div', 'empty', 'No trades of this size in this view.'));
+    list.slice(0, 15).forEach(function(x){
+      w.appendChild(drillItem([el('b', null, label(x.r.s)), el('span', 'w', invName(x.d[0])),
+        el('span', 'a a' + x.d[1], ACT[x.d[1]]), el('span', 'r ' + cls(x.d[4]), pct(x.d[4]))], function(){ openStock(x.r.s.c); }));
+    });
+    body.appendChild(w);
+  }
+}
+function sides(r){ return st.measure === 'conv' ? [r.cb, r.cs] : st.measure === 'flow' ? [r.gb, r.gs] : [r.b, -r.se]; }
+function renderCapPyramid(C){
+  var body = clear($('pyr-cap'));
+  $('pyr-cap-h').textContent = 'by ' + MEAS[st.measure].name.toLowerCase() + ' · click a row to list';
+  if (!C.rows.length) { body.appendChild(el('div', 'empty', 'No trades for this selection.')); return; }
+  var bands = CAP_BANDS.map(function(b){ return {lab: b[1], rng: b[2], buy: 0, sell: 0, n: 0, rows: []}; });
+  var unk = {n: 0, buy: 0, sell: 0, rows: []};
+  C.rows.forEach(function(r){
+    var sd = sides(r), x = r.s.mc > 0 ? bands[bandIdx(CAP_BANDS, r.s.mc)] : unk;
+    x.buy += sd[0]; x.sell += sd[1]; x.n++; x.rows.push(r);
+  });
+  var max = 0; bands.forEach(function(b){ max = Math.max(max, Math.abs(b.buy), Math.abs(b.sell)); });
+  body.appendChild(axisHead('← sold', 'bought →', 'net'));
+  bands.forEach(function(b, i){
+    var lab = el('span', 'lab', b.lab); lab.appendChild(el('span', 'cnt', b.rng + ' · ' + b.n));
+    var row = pyrRow(lab, [{v: -b.sell}], [{v: b.buy}], max, b.sell ? endShort(b.sell) : '', b.buy ? endShort(b.buy) : '',
+      b.n ? valShort(b.buy + b.sell) : '', function(ev){ st.dcap = st.dcap === i ? -1 : i; hideTip(); renderCapPyramid(LAST); if (!ev.detail) refocus(body, i); },
+      function(t){
+        t.appendChild(el('div', 'tv', valShort(b.buy + b.sell) + ' net'));
+        t.appendChild(el('div', 'tl', b.lab + ' caps (' + b.rng + ') · ' + b.n + ' stock' + (b.n === 1 ? '' : 's')));
+        t.appendChild(el('div', 'tr', 'bought ' + endShort(b.buy) + ' · sold ' + endShort(b.sell)));
+        t.appendChild(el('div', 'tr', 'Click to list them'));
+      }, st.dcap === i);
+    row.setAttribute('aria-label', b.lab + ' caps, ' + b.rng + ': ' + b.n + ' stocks, bought ' + endShort(b.buy) + ', sold ' +
+      endShort(b.sell) + '. Press to list them.');
+    body.appendChild(row);
+  });
+  if (unk.n) body.appendChild(el('div', 'foot', 'Not shown: ' + unk.n + ' stock' + (unk.n === 1 ? '' : 's') +
+    ' without market-cap data (bought ' + endShort(unk.buy) + ', sold ' + endShort(unk.sell) + ').'));
+  var sel = bands[st.dcap];
+  if (sel) {
+    var w = el('div', 'drill'), list = sel.rows.slice().sort(function(x, y){ return Math.abs(mval(y)) - Math.abs(mval(x)); });
+    w.appendChild(el('div', 'dh', sel.lab + ' caps (' + sel.rng + ') · ' + list.length + ' stock' + (list.length === 1 ? '' : 's') + (list.length > 12 ? ' · strongest 12' : '')));
+    if (!list.length) w.appendChild(el('div', 'empty', 'No stocks of this size in this view.'));
+    list.slice(0, 12).forEach(function(r){
+      w.appendChild(drillItem([el('b', null, label(r.s)), el('span', 'w', r.s.n), el('span', 'r', r.b + '↑ ' + r.se + '↓'),
+        el('span', 'r ' + cls(mval(r)), valShort(mval(r)))], function(){ openStock(r.s.c); }));
+    });
+    body.appendChild(w);
+  }
+}
+
+/* ---------- bubble: investor activity map ---------- */
+// Per-investor totals for the investor group (plus a focused investor), on
+// the current stock scope — independent of st.inv so the map keeps context.
+function investorStats(){
+  var per = {}, ids = [];
+  INV.forEach(function(v, i){
+    if (v.ok && (st.group === 'all' || v.st === 'picker' || i === st.inv)) { ids.push(i); per[i] = {i: i, turn: 0, net: 0, nm: 0, gb: 0, gs: 0, big: null}; }
+  });
+  for (var k = 0; k < STK.length; k++){
+    var s = STK[k];
+    if (st.scope === 'mine' && !s.k) continue;
+    for (var j = 0; j < s.d.length; j++){
+      var d = s.d[j], p = per[d[0]];
+      if (!p) continue;
+      p.turn += Math.abs(d[4]); p.net += d[4]; p.nm++;
+      if (d[1] < 2) p.gb += d[3]; else p.gs += d[3];
+      if (!p.big || Math.abs(d[4]) > Math.abs(p.big.d[4])) p.big = {s: s, d: d};
+    }
+  }
+  return ids.map(function(i){ return per[i]; });
+}
+function focusInvestor(i){
+  st.inv = (st.inv === i) ? -1 : i; hideTip(); resetPaging(); renderAll();
+  $('dash').scrollIntoView({behavior: 'smooth', block: 'start'});
+}
+function tipInv(p){
+  var v = INV[p.i];
+  return function(t){
+    t.appendChild(el('div', 'tv', pct(p.net) + ' net · traded ' + pct(p.turn, false) + ' of the book'));
+    t.appendChild(el('div', 'tl', v.m + ' · ' + v.n + ' · ' + v.q + ' vs ' + v.pq));
+    t.appendChild(el('div', 'tr', 'bought ≈' + money(p.gb, false) + ' · sold ≈' + money(-p.gs, false)));
+    t.appendChild(el('div', 'tr', p.nm + ' position change' + (p.nm === 1 ? '' : 's') + ' · 13F book ' + money(v.tv, false)));
+    if (p.big) t.appendChild(el('div', 'tr', 'biggest move: ' + label(p.big.s) + ' ' + ACT[p.big.d[1]] + ' ' + pct(p.big.d[4])));
+    t.appendChild(el('div', 'tr', st.inv === p.i ? 'Click to show the whole group again' : 'Click to show only this investor'));
+  };
+}
+function renderInvMap(){
+  var box = clear($('invmap'));
+  var list = investorStats().filter(function(p){ return p.nm > 0; });
+  if (!list.length) { box.appendChild(el('div', 'empty', 'No investors traded in this view.')); return; }
+  var maxT = 0, maxN = 0, maxV = 1;
+  list.forEach(function(p){ maxT = Math.max(maxT, p.turn); maxN = Math.max(maxN, Math.abs(p.net)); maxV = Math.max(maxV, INV[p.i].tv || 0); });
+  var xs = (maxT || 1) * 1.1, ys = Math.max(maxN * 1.2, xs * 0.08);
+  var F = makeFrame(box, chartH(box), [14, 18, 26, 50], 'Bubble chart of ' + list.length +
+    ' investors: share of their own portfolio traded (across) and net bought or sold (up or down); bubble size = portfolio size. Each labelled investor can be focused.');
+  var mid = (F.T + F.B) / 2, half = (F.B - F.T) / 2;
+  function X(v){ return F.L + v / xs * (F.R - F.L); }
+  function Y(v){ return mid - v / ys * half; }
+  var g = S('g', null, F.svg);
+  linTicks(xs, F.W < 460 ? 3 : 5).forEach(function(v){
+    var x = X(v); S('line', {x1: x, x2: x, y1: F.T, y2: F.B, 'class': 'gl'}, g);
+    stext(g, x, F.B + 15, tickFmt(v, 'pct+'), 'tick', 'middle');
+  });
+  linTicks(ys, 2).forEach(function(v){
+    [v, -v].forEach(function(u){
+      var y = Y(u); S('line', {x1: F.L, x2: F.R, y1: y, y2: y, 'class': 'gl'}, g);
+      stext(g, F.L - 6, y + 3, tickFmt(u, 'conv'), 'tick', 'end');
+    });
+  });
+  S('line', {x1: F.L, x2: F.R, y1: mid, y2: mid, 'class': 'ax'}, g);
+  S('line', {x1: F.L, x2: F.L, y1: F.T, y2: F.B, 'class': 'ax'}, g);
+  stext(g, F.L - 6, mid + 3, '0', 'tick', 'end');
+  // Net can never exceed what was traded: the wedge y = ±x bounds every dot.
+  var t = Math.min(xs, ys);
+  S('line', {x1: X(0), y1: Y(0), x2: X(t), y2: Y(t), 'class': 'ref'}, g);
+  S('line', {x1: X(0), y1: Y(0), x2: X(t), y2: Y(-t), 'class': 'ref'}, g);
+  stext(g, F.L + 5, F.T + 9, 'net bought ↑', 'ann');
+  stext(g, F.L + 5, F.B - 5, 'net sold ↓', 'ann');
+  var pts = list.map(function(p){
+    var v = INV[p.i];
+    return {x: X(p.turn), y: Y(p.net), r: 6 + 12 * Math.sqrt((v.tv || 0) / maxV), v: p.net, lab: v.s,
+      c: (p.net > 0 ? 'pt-buy' : p.net < 0 ? 'pt-sell' : 'pt-flat') + (st.inv >= 0 && st.inv !== p.i ? ' pt-dim' : ''),
+      aria: v.m + ': traded ' + pct(p.turn, false) + ' of the portfolio, net ' + pct(p.net) + '. ' +
+        (st.inv === p.i ? 'Press to show the whole group again.' : 'Press to show only this investor.'),
+      tip: tipInv(p), open: function(){ focusInvestor(p.i); }};
+  });
+  var pg = S('g', null, F.svg);
+  pts.slice().sort(function(a, b){ return b.r - a.r; }).forEach(function(p){
+    S('circle', {cx: p.x, cy: p.y, r: p.r, 'class': 'pt ' + p.c}, pg);
+  });
+  var mark = wirePoints(F, pts);
+  var boxes = placeLabels(F, pts.slice().sort(function(a, b){ return b.r - a.r; }), mark, pts);
+  [[t, 'all buying'], [-t, 'all selling']].forEach(function(x){
+    annotate(F, [0.85, 0.65, 0.45, 0.3].map(function(f){ return [X(Math.abs(x[0]) * f) + 6, Y(x[0] * f) + (x[0] > 0 ? 12 : -4)]; }), x[1], pts, boxes);
+  });
+}
+function renderCharts(C){ renderCapMap(C); renderPosMap(C); renderInvMap(); }
+
 /* ---------- tables ---------- */
 var LAST = null;
 var COLS = [
@@ -1118,12 +1709,20 @@ function openStock(cusip){
 function renderAll(){
   hideTip();
   var C = compute(); LAST = C;
-  renderFilters(); renderKpis(C); renderTakeaways(C); renderMovers(C); renderMine(C);
+  renderFilters(); renderKpis(C); renderTakeaways(C); renderMovers(C); renderCharts(C);
+  renderSizePyramid(C); renderCapPyramid(C); renderMine(C);
   renderSectors(C); renderInvestors(C); renderHeatmap(C); renderTables(C);
 }
 wireFilters();
 renderAll();
 window.addEventListener('scroll', onScroll, {passive:true});
+// SVG charts are drawn at the container's pixel width (so text stays a
+// constant size); redraw them when the width actually changes.
+var lastW = $('dash').clientWidth, rzT = null;
+window.addEventListener('resize', function(){
+  clearTimeout(rzT);
+  rzT = setTimeout(function(){ var w = $('dash').clientWidth; if (w !== lastW) { lastW = w; hideTip(); renderCharts(LAST); } }, 150);
+});
 document.documentElement.dataset.ready = '1';
 })();
 """
@@ -1180,11 +1779,31 @@ def render(dataset: dict[str, Any]) -> str:
   <section class="card"><h2>Most bought <span class="hint" id="m-unit"></span></h2><div class="body bars" id="m-buy"></div></section>
   <section class="card"><h2>Most sold <span class="hint">hover for who · click for details</span></h2><div class="body bars" id="m-sell"></div></section>
 </div>
+<div class="grid2 wrap-gap">
+  <section class="card"><h2>Bets by company size <span class="hint">bubble = a stock · hover or tap</span></h2>
+    <div class="body"><div class="chart" id="capmap"></div>
+      <div class="legend"><span><i class="dot buy"></i>net bought</span><span><i class="dot sell"></i>net sold</span><span><i class="dot flat"></i>balanced</span><span>bigger bubble = more investors trading it</span></div>
+      <div class="foot">Across: market cap (log scale). Up/down: the measure picked above, on a square-root scale so small and large bets both fit. Lone dots far from the middle are the outliers.</div>
+      <div class="foot" id="capmap-note"></div></div></section>
+  <section class="card"><h2>Position size: before → after <span class="hint">dot = one investor’s trade</span></h2>
+    <div class="body"><div class="chart" id="posmap"></div>
+      <div class="legend"><span><i class="dot buy"></i>bought (new / added)</span><span><i class="dot sell"></i>sold (trimmed / exited)</span><span><i class="ln"></i>no change</span></div>
+      <div class="foot">% of the investor’s portfolio before vs after the trade (√ scale). New positions sit on the left edge, complete exits on the bottom edge; the farther from the diagonal, the bigger the change.</div>
+      <div class="foot" id="posmap-note"></div></div></section>
+</div>
+<div class="grid2 wrap-gap">
+  <section class="card"><h2>Trade-size pyramid <span class="hint">trades by % of portfolio · click a row to list</span></h2><div class="body" id="pyr-size"></div></section>
+  <section class="card"><h2>Company-size pyramid <span class="hint" id="pyr-cap-h"></span></h2><div class="body" id="pyr-cap"></div></section>
+</div>
 <section class="card" id="c-mine"><h2>Your holdings &amp; watchlist <span class="hint" id="mine-n"></span></h2><div class="body" id="mine"></div></section>
 <div class="grid2 wrap-gap">
   <section class="card"><h2>Sector rotation <span class="hint" id="sec-cov"></span></h2><div class="body" id="sectors"></div></section>
   <section class="card"><h2>Who agrees <span class="hint">stocks traded by 2+ investors</span></h2><div class="body" id="heatmap"></div></section>
 </div>
+<section class="card"><h2>Investor activity map <span class="hint">bubble = an investor · click to focus on one</span></h2>
+  <div class="body"><div class="chart" id="invmap"></div>
+    <div class="legend"><span><i class="dot buy"></i>net buyer</span><span><i class="dot sell"></i>net seller</span><span><i class="ln"></i>limit: everything traded was a buy / a sale</span><span>bigger bubble = bigger 13F portfolio</span></div>
+    <div class="foot">Across: how much of their own portfolio each investor traded (buys + sells). Up/down: net bought or sold, also as % of their portfolio. Far right = unusually busy quarter; near a diagonal = trading all one way.</div></div></section>
 <section class="card"><h2>What each investor did <span class="hint">sold ← → bought · click to focus on one investor</span></h2><div class="body" id="investors"></div></section>
 <div class="tools"><input id="q" type="search" placeholder="Search ticker or company…" aria-label="Search stocks"><span class="muted" id="t-count"></span></div>
 <section class="section buy" id="t-buy"></section>
@@ -1227,7 +1846,10 @@ def render(dataset: dict[str, Any]) -> str:
 <footer>
   <p><b>How to read this.</b> Each investor's latest 13F is compared with their previous one. <b>Est. $ flow</b> = change in
   shares × the quarter-end price implied by the filing (so a position that was trimmed while its price rose still counts as
-  selling). <b>Conviction</b> = that trade as a % of the investor's whole 13F portfolio, summed across investors.</p>
+  selling). <b>Conviction</b> = that trade as a % of the investor's whole 13F portfolio, summed across investors.
+  <b>Position size before → after</b> backs each position's weight out of the share counts at the filing's price, as a %
+  of the larger of the investor's two quarterly portfolios. Market caps (bubble chart, company-size pyramid) come from the
+  Yahoo Finance snapshot and are missing for some stocks — those are left out of those two charts only.</p>
   <p>13F filings are quarterly, due 45 days after quarter end, and show US-listed long positions only (no shorts; options
   excluded). Investors file on different days, so near a deadline some are a quarter behind — each one's quarter is shown
   above. Filers more than a quarter behind are marked stale and excluded. Prices in the company cards come from Yahoo

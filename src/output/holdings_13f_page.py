@@ -566,6 +566,14 @@ footer p{margin-bottom:.3rem}
   .iss{max-width:8.5rem}
   .seg button{padding:.3rem .45rem}
 }
+/* Very narrow phones (320px): the investor grid scrolls inside its card
+   instead of widening the page, and the tables tighten a little more. */
+#heatmap{overflow-x:auto}
+@media (max-width:360px){
+  .tbl td{padding:.32rem .18rem}
+  .tbl thead th{padding:.4rem .18rem}
+  .iss{max-width:6.8rem}
+}
 """
 
 JS = r"""
@@ -574,6 +582,9 @@ JS = r"""
 var D = JSON.parse(document.getElementById('payload').textContent);
 var INV = D.inv, STK = D.stk, CARDS = D.cards || {};
 var ACT = ['NEW','ADD','TRIM','EXIT'];
+// Archives from before % of portfolio existed carry pct = 0 on every move.
+var HAS_PCT = STK.some(function(s){ return s.d.some(function(d){ return d[4] !== 0; }); });
+var NO_PCT = 'Portfolio percentages are not available in this older archive.';
 var GLYPH = ['N','+','−','×'];
 var MEAS = {
   conv: {name:'Conviction', unit:'% of portfolio'},
@@ -826,7 +837,7 @@ function renderTakeaways(C){
     if (sp) ul.appendChild(li(['Split decision: ', tkBtn(sp), ' — ' + sp.b + ' buying vs ' + sp.se + ' selling.']));
     // Outliers among the investors themselves (relative to their own size).
     var ist = investorStats().filter(function(p){ return C.act[p.i] && p.nm; });
-    if (ist.length >= 2) {
+    if (ist.length >= 2 && HAS_PCT) {
       var busy = ist.slice().sort(function(a, b){ return b.turn - a.turn; })[0];
       var byNet = ist.slice().sort(function(a, b){ return b.net - a.net; });
       var txt = 'Busiest: ' + invName(busy.i) + ' traded ≈' + pct(busy.turn, false) + ' of the portfolio';
@@ -875,7 +886,7 @@ function barRow(r, v, max, side){
   var tr = el('span', 'track'), bar = el('span', 'bar ' + side);
   bar.style.width = (max ? Math.max(1, Math.abs(v) / max * 100) : 0) + '%';
   tr.appendChild(bar);
-  b.appendChild(lab); b.appendChild(tr); b.appendChild(el('span', 'val', fmtM(v)));
+  b.appendChild(lab); b.appendChild(tr); b.appendChild(el('span', 'val', valShort(v)));
   b.setAttribute('aria-label', label(r.s) + ' ' + fmtM(v) + ', ' + r.b + ' buying, ' + r.se + ' selling');
   bindTip(b, tipStock(r));
   b.addEventListener('click', function(){ openStock(r.s.c); });
@@ -928,7 +939,7 @@ function renderMine(C){
     var v = mval(r), lab = el('span', 'lab', label(r.s));
     lab.appendChild(el('span', 'tag ' + r.s.k, r.s.k));
     lab.appendChild(el('span', 'cnt', r.b + '↑ ' + r.se + '↓'));
-    var row = divRow(lab, v < 0 ? v : 0, v > 0 ? v : 0, max, fmtM(v), function(){ openStock(r.s.c); }, tipStock(r));
+    var row = divRow(lab, v < 0 ? v : 0, v > 0 ? v : 0, max, valShort(v), function(){ openStock(r.s.c); }, tipStock(r));
     row.setAttribute('aria-label', label(r.s) + ' ' + fmtM(v));
     body.appendChild(row);
   });
@@ -962,11 +973,11 @@ function renderSectors(C){
   if (!known.length) body.appendChild(el('div', 'empty', 'No sector data for these stocks yet.'));
   known.forEach(function(x){
     var lab = el('span', 'lab', SEC_SHORT[x.name] || x.name); lab.appendChild(el('span', 'cnt', x.n + ' stock' + (x.n === 1 ? '' : 's')));
-    var row = divRow(lab, x.sell, x.buy, max, fmtM(x.net), null, function(t){
+    var row = divRow(lab, x.sell, x.buy, max, valShort(x.net), null, function(t){
       t.appendChild(el('div', 'tv', fmtM(x.net) + ' net'));
       t.appendChild(el('div', 'tl', x.name + ' · ' + x.n + ' stocks'));
       t.appendChild(el('div', 'tr', 'bought ' + fmtM(x.buy, false) + ' · sold ' + fmtM(-x.sell, false)));
-    }, x.sell ? fmtM(-x.sell, false) : '', x.buy ? fmtM(x.buy, false) : '');
+    }, x.sell ? endShort(x.sell) : '', x.buy ? endShort(x.buy) : '');
     row.tabIndex = 0;
     row.setAttribute('aria-label', x.name + ': bought ' + fmtM(x.buy, false) + ', sold ' + fmtM(-x.sell, false) + ', net ' + fmtM(x.net));
     body.appendChild(row);
@@ -1002,7 +1013,7 @@ function renderInvestors(C){
     if (p.sell) { var bl = el('span', 'bar'); bl.style.width = Math.max(1, Math.abs(p.sell) / max * 100) + '%'; l.appendChild(bl); }
     if (p.buy) { var br = el('span', 'bar'); br.style.width = Math.max(1, Math.abs(p.buy) / max * 100) + '%'; r.appendChild(br); }
     b.appendChild(l); b.appendChild(r);
-    b.appendChild(el('span', 'val', fmtM(p.buy + p.sell)));
+    b.appendChild(el('span', 'val', valShort(p.buy + p.sell)));
     var acts = el('span', 'acts');
     var total = p.n[0] + p.n[1] + p.n[2] + p.n[3];
     if (!total) acts.appendChild(document.createTextNode('no position changes in this view'));
@@ -1178,16 +1189,24 @@ function dotsHit(all, self, bx, by, w, h){
   }
   return n;
 }
+// Rendered text width (falls back to a monospace estimate when not laid out).
+function textW(svg, txt, cls, perChar){
+  var t = stext(svg, -9999, -9999, txt, cls), w = 0;
+  try { w = t.getComputedTextLength(); } catch (e) {}
+  svg.removeChild(t);
+  return w || txt.length * perChar;
+}
 function placeLabels(F, pts, mark, all, boxes){
   boxes = boxes || [];
   pts.forEach(function(p){
-    var w = p.lab.length * 6.4 + 2, h = 12, best = null;
-    var cand = [[p.x + p.r + 3, p.y + 4, 'start'], [p.x - p.r - 3, p.y + 4, 'end'],
-                [p.x, p.y - p.r - 4, 'middle'], [p.x, p.y + p.r + 12, 'middle']];
+    var w = textW(F.svg, p.lab, 'olt', 6.4) + 4, h = 14, best = null;  // +4: text halo
+    var cand = [[p.x + p.r + 4, p.y + 4, 'start'], [p.x - p.r - 4, p.y + 4, 'end'],
+                [p.x, p.y - p.r - 5, 'middle'], [p.x, p.y + p.r + 13, 'middle']];
     for (var i = 0; i < cand.length; i++){
       var x = cand[i][0], y = cand[i][1], a = cand[i][2];
-      var bx = a === 'start' ? x : a === 'end' ? x - w : x - w / 2, by = y - 10;
-      if (bx < 2 || bx + w > F.W - 2 || by < 0 || by + h > F.B + 2 || !boxFree(boxes, bx, by, w, h)) continue;
+      var bx = (a === 'start' ? x : a === 'end' ? x - w + 4 : x - w / 2) - 2, by = y - 11;
+      // Stay right of the y-axis (its tick labels live there) and inside the SVG.
+      if (bx < F.L + 1 || bx + w > F.W - 1 || by < 0 || by + h > F.B + 3 || !boxFree(boxes, bx, by, w, h)) continue;
       var hit = dotsHit(all || [], p, bx, by, w, h);
       if (!best || hit < best.hit) best = {x: x, y: y, a: a, bx: bx, by: by, hit: hit};
       if (!hit) break;
@@ -1205,15 +1224,36 @@ function placeLabels(F, pts, mark, all, boxes){
 }
 // An in-plot annotation that yields to labels and dots: tries each spot in turn.
 function annotate(F, spots, txt, all, boxes){
-  var w = txt.length * 6.1, h = 11;
+  var w = textW(F.svg, txt, 'ann', 6.1), h = 12;
   for (var i = 0; i < spots.length; i++){
     var x = spots[i][0], y = spots[i][1], a = spots[i][2] || 'start';
-    var bx = a === 'end' ? x - w : x, by = y - 9;
-    if (bx < F.L || bx + w > F.R || by < F.T - 2 || by + h > F.B + 2) continue;
+    var bx = a === 'end' ? x - w : x, by = y - 10;
+    if (bx < F.L + 1 || bx + w > F.R || by < F.T - 2 || by + h > F.B + 2) continue;
     if (boxFree(boxes, bx, by, w, h) && !dotsHit(all, null, bx, by, w, h)) {
       boxes.push({x: bx, y: by, w: w, h: h}); stext(F.svg, x, y, txt, 'ann', a); return;
     }
   }
+}
+// Bar-end numbers on the diverging/pyramid rows: keep each inside its half —
+// outside the bar end if there is room, else inside the bar, else hidden (the
+// row's tooltip and aria-label still carry the value). Needs layout, so it
+// runs after render and again on resize.
+function fitNums(root){
+  Array.prototype.forEach.call(root.querySelectorAll('.half .num'), function(n){
+    var h = n.parentNode, left = h.classList.contains('l');
+    n.style.visibility = '';
+    function fits(){
+      var a = n.getBoundingClientRect(), b = h.getBoundingClientRect();
+      if (n.classList.contains('in')) {
+        var bw = b.width * parseFloat(n.style.getPropertyValue('--w')) / 100;
+        return a.width + 8 <= bw;
+      }
+      return left ? a.left >= b.left - 0.5 : a.right <= b.right + 0.5;
+    }
+    if (fits()) return;
+    n.classList.toggle('in');
+    if (!fits()) n.style.visibility = 'hidden';
+  });
 }
 
 /* ---------- bubble: bets by company size ---------- */
@@ -1233,8 +1273,11 @@ function renderCapMap(C){
   var F = makeFrame(box, chartH(box), [12, 16, 26, 56], 'Bubble chart of ' + have.length + ' stocks: market cap across, ' +
     MEAS[st.measure].name.toLowerCase() + ' up (net bought) or down (net sold). Labelled outliers can be focused.');
   var tf = cnt ? function(v){ return v; } : ssqrt;
-  var top = tf(maxY || 1) * 1.1, mid = (F.T + F.B) / 2, half = (F.B - F.T) / 2;
-  function X(mc){ return F.L + (Math.log10(mc) - lo) / (hi - lo) * (F.R - F.L); }
+  var rmax = 0; have.forEach(function(r){ rmax = Math.max(rmax, Math.min(18, 4.5 * Math.sqrt(r.b + r.se))); });
+  var mid = (F.T + F.B) / 2, half = (F.B - F.T) / 2;
+  // Head-room so the largest bubble at the extreme stays inside the plot.
+  var top = tf(maxY || 1) * half / Math.max(half - rmax - 2, half * 0.6), pad = Math.min(rmax, 12);
+  function X(mc){ return F.L + pad + (Math.log10(mc) - lo) / (hi - lo) * (F.R - F.L - 2 * pad); }
   function Y(v){ return mid - tf(v) / top * half; }
   var g = S('g', null, F.svg);
   var ticks = cnt ? linTicks(maxY || 1, 2).filter(function(v){ return v === Math.round(v); })
@@ -1245,10 +1288,12 @@ function renderCapMap(C){
       stext(g, F.L - 6, y + 3, tickFmt(u, st.measure), 'tick', 'end');
     });
   });
+  // Label every decade if there is room, else every 2nd/3rd (aligned on $1B).
+  var every = Math.max(1, Math.ceil(42 / ((F.R - F.L - 2 * pad) / (hi - lo))));
   for (var k = lo; k <= hi; k++){
     var x = X(Math.pow(10, k));
     S('line', {x1: x, x2: x, y1: F.T, y2: F.B, 'class': 'gl'}, g);
-    stext(g, x, F.B + 15, capFmt(Math.pow(10, k)), 'tick', 'middle');
+    if (((k - 9) % every + every) % every === 0) stext(g, x, F.B + 15, capFmt(Math.pow(10, k)), 'tick', 'middle');
   }
   S('line', {x1: F.L, x2: F.R, y1: mid, y2: mid, 'class': 'ax'}, g);
   stext(g, F.L - 6, mid + 3, '0', 'tick', 'end');
@@ -1410,6 +1455,7 @@ function renderSizePyramid(C){
     b.list.push({r: r, d: d});
   }); });
   if (!total) { body.appendChild(el('div', 'empty', 'No trades for this selection.')); return; }
+  if (!HAS_PCT) { body.appendChild(el('div', 'empty', NO_PCT)); return; }
   var max = 0; bands.forEach(function(b){ max = Math.max(max, b.n[0] + b.n[1], b.n[2] + b.n[3]); });
   body.appendChild(axisHead('← sells', 'buys →', 'net'));
   bands.forEach(function(b, i){
@@ -1417,7 +1463,7 @@ function renderSizePyramid(C){
     var lab = el('span', 'lab', b.lab); lab.appendChild(el('span', 'cnt', (nb + ns) + ' trade' + (nb + ns === 1 ? '' : 's')));
     var row = pyrRow(lab, [{v: b.n[2], soft: 1}, {v: b.n[3]}], [{v: b.n[1], soft: 1}, {v: b.n[0]}], max,
       ns ? String(ns) : '', nb ? String(nb) : '', sgn(d) + Math.abs(d),
-      function(ev){ st.dsize = st.dsize === i ? -1 : i; hideTip(); renderSizePyramid(LAST); if (!ev.detail) refocus(body, i); }, tipBand(b), st.dsize === i);
+      function(ev){ st.dsize = st.dsize === i ? -1 : i; hideTip(); renderSizePyramid(LAST); fitNums(body); if (!ev.detail) refocus(body, i); }, tipBand(b), st.dsize === i);
     row.setAttribute('aria-label', 'Trades of ' + b.lab + ' of the portfolio: ' + nb + ' buys (' + b.n[0] + ' new, ' + b.n[1] +
       ' added), ' + ns + ' sells (' + b.n[2] + ' trimmed, ' + b.n[3] + ' sold out). Press to list them.');
     body.appendChild(row);
@@ -1451,7 +1497,7 @@ function renderCapPyramid(C){
   bands.forEach(function(b, i){
     var lab = el('span', 'lab', b.lab); lab.appendChild(el('span', 'cnt', b.rng + ' · ' + b.n));
     var row = pyrRow(lab, [{v: -b.sell}], [{v: b.buy}], max, b.sell ? endShort(b.sell) : '', b.buy ? endShort(b.buy) : '',
-      b.n ? valShort(b.buy + b.sell) : '', function(ev){ st.dcap = st.dcap === i ? -1 : i; hideTip(); renderCapPyramid(LAST); if (!ev.detail) refocus(body, i); },
+      b.n ? valShort(b.buy + b.sell) : '', function(ev){ st.dcap = st.dcap === i ? -1 : i; hideTip(); renderCapPyramid(LAST); fitNums(body); if (!ev.detail) refocus(body, i); },
       function(t){
         t.appendChild(el('div', 'tv', valShort(b.buy + b.sell) + ' net'));
         t.appendChild(el('div', 'tl', b.lab + ' caps (' + b.rng + ') · ' + b.n + ' stock' + (b.n === 1 ? '' : 's')));
@@ -1516,10 +1562,16 @@ function tipInv(p){
 function renderInvMap(){
   var box = clear($('invmap'));
   var list = investorStats().filter(function(p){ return p.nm > 0; });
+  if (!HAS_PCT) { box.appendChild(el('div', 'empty', NO_PCT)); return; }
   if (!list.length) { box.appendChild(el('div', 'empty', 'No investors traded in this view.')); return; }
   var maxT = 0, maxN = 0, maxV = 1;
   list.forEach(function(p){ maxT = Math.max(maxT, p.turn); maxN = Math.max(maxN, Math.abs(p.net)); maxV = Math.max(maxV, INV[p.i].tv || 0); });
-  var xs = (maxT || 1) * 1.1, ys = Math.max(maxN * 1.2, xs * 0.08);
+  var F0 = {w: Math.max(280, Math.floor(box.clientWidth)) - 68, h: chartH(box) - 40};  // plot size, see margins below
+  var rOf = function(p){ return 6 + 12 * Math.sqrt((INV[p.i].tv || 0) / maxV); };
+  var rx = 0, ry = 0;
+  list.forEach(function(p){ var r = rOf(p); if (p.turn >= maxT * 0.7) rx = Math.max(rx, r); if (Math.abs(p.net) >= maxN * 0.7) ry = Math.max(ry, r); });
+  var xs = (maxT || 1) * F0.w / Math.max(F0.w - rx - 4, F0.w * 0.7);
+  var ys = Math.max((maxN || 0) * (F0.h / 2) / Math.max(F0.h / 2 - ry - 4, F0.h * 0.3), xs * 0.08);
   var F = makeFrame(box, chartH(box), [14, 18, 26, 50], 'Bubble chart of ' + list.length +
     ' investors: share of their own portfolio traded (across) and net bought or sold (up or down); bubble size = portfolio size. Each labelled investor can be focused.');
   var mid = (F.T + F.B) / 2, half = (F.B - F.T) / 2;
@@ -1547,7 +1599,7 @@ function renderInvMap(){
   stext(g, F.L + 5, F.B - 5, 'net sold ↓', 'ann');
   var pts = list.map(function(p){
     var v = INV[p.i];
-    return {x: X(p.turn), y: Y(p.net), r: 6 + 12 * Math.sqrt((v.tv || 0) / maxV), v: p.net, lab: v.s,
+    return {x: X(p.turn), y: Y(p.net), r: rOf(p), v: p.net, lab: v.s,
       c: (p.net > 0 ? 'pt-buy' : p.net < 0 ? 'pt-sell' : 'pt-flat') + (st.inv >= 0 && st.inv !== p.i ? ' pt-dim' : ''),
       aria: v.m + ': traded ' + pct(p.turn, false) + ' of the portfolio, net ' + pct(p.net) + '. ' +
         (st.inv === p.i ? 'Press to show the whole group again.' : 'Press to show only this investor.'),
@@ -1700,7 +1752,8 @@ function openStock(cusip){
   if (pos >= st.page[which]) st.page[which] = Math.ceil((pos + 1) / 25) * 25;
   st.open = cusip;
   $('t-' + which).classList.remove('collapsed');
-  renderTable(LAST, which, titles[which]);
+  // Re-render all three tables so a row opened earlier in another one closes.
+  renderTables(LAST);
   var tr = document.querySelector('#t-' + which + ' tr.srow[data-c="' + cusip + '"]');
   if (tr) { tr.scrollIntoView({behavior:'smooth', block:'center'}); tr.focus && tr.focus(); }
 }
@@ -1712,6 +1765,7 @@ function renderAll(){
   renderFilters(); renderKpis(C); renderTakeaways(C); renderMovers(C); renderCharts(C);
   renderSizePyramid(C); renderCapPyramid(C); renderMine(C);
   renderSectors(C); renderInvestors(C); renderHeatmap(C); renderTables(C);
+  fitNums($('dash'));
 }
 wireFilters();
 renderAll();
@@ -1721,7 +1775,7 @@ window.addEventListener('scroll', onScroll, {passive:true});
 var lastW = $('dash').clientWidth, rzT = null;
 window.addEventListener('resize', function(){
   clearTimeout(rzT);
-  rzT = setTimeout(function(){ var w = $('dash').clientWidth; if (w !== lastW) { lastW = w; hideTip(); renderCharts(LAST); } }, 150);
+  rzT = setTimeout(function(){ var w = $('dash').clientWidth; if (w !== lastW) { lastW = w; hideTip(); renderCharts(LAST); fitNums($('dash')); } }, 150);
 });
 document.documentElement.dataset.ready = '1';
 })();

@@ -535,6 +535,8 @@ table.tbl{width:100%;border-collapse:separate;border-spacing:0;font-size:.78rem}
 .chart circle.pt{stroke:var(--card);stroke-width:1.5}
 .chart .pt-buy{fill:var(--buy)} .chart .pt-sell{fill:var(--sell)} .chart .pt-flat{fill:var(--muted)}
 .chart .pt-dim{opacity:.28}
+.chart .pt-loss{fill:var(--sell)} .chart .pt-gain{fill:var(--ink2)} .chart .pt-mixed{fill:var(--faint)}
+.chart .pt-pre{fill:none;stroke:var(--ink2);stroke-width:1.5}
 .chart .hring{fill:none;stroke:var(--ink);stroke-width:1.5;pointer-events:none}
 .chart .olab{cursor:pointer;outline:none}
 .chart .olt{fill:var(--ink);font-size:10.5px;font-weight:700;paint-order:stroke;stroke:var(--card);
@@ -542,6 +544,12 @@ table.tbl{width:100%;border-collapse:separate;border-spacing:0;font-size:.78rem}
 .chart .olab:focus-visible .olt{fill:var(--accent)}
 .legend .dot{width:10px;height:10px;border-radius:50%}
 .legend .sw{width:14px;height:10px;border-radius:2px}
+.legend .dot.gain{background:var(--ink2)} .legend .dot.mixed{background:var(--faint)}
+.legend .dia{width:9px;height:9px;border:1.5px solid var(--ink2);transform:rotate(45deg);border-radius:1px;margin:0 2px}
+.plist .dh{font-size:.62rem;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin:.15rem 0 .2rem}
+.plist .dh~.dh{margin-top:.7rem;padding-top:.45rem;border-top:1px dotted var(--line2)}
+.mv .pl{grid-column:1/-1;color:var(--muted);font-size:.66rem;padding:0 0 .1rem 4rem}
+.mv .pl.loss{color:#ff8a80}
 .legend .sw.buy{background:var(--buy)} .legend .sw.sell{background:var(--sell)} .legend .sw.soft{opacity:.5}
 .grid2>.card{min-width:0}
 .legend .dot.buy{background:var(--buy)} .legend .dot.sell{background:var(--sell)} .legend .dot.flat{background:var(--muted)}
@@ -580,6 +588,7 @@ footer p{margin-bottom:.3rem}
   .tbl .hide-sm{display:none}
   .mv{grid-template-columns:2.8rem 1fr auto auto}
   .mv .r.pct{display:none}
+  .mv .pl{padding-left:3.6rem}
   .iss{max-width:8.5rem}
   .seg button{padding:.3rem .45rem}
 }
@@ -723,7 +732,8 @@ function tipStock(r, extra){
       var row = el('div', 'tr');
       var k = el('span', 'key'); k.style.background = d[1] < 2 ? 'var(--buy)' : 'var(--sell)';
       row.appendChild(k);
-      row.appendChild(el('span', null, invShort(d[0]) + ' ' + ACT[d[1]] + ' ' + money(d[3]) + ' (' + pct(d[4]) + ')'));
+      var lossTxt = d[6] && d[1] >= 2 && verdict(d[6]) === 'loss' ? ' · ≈' + rpct(d[6][0], false) + ' below cost' : '';
+      row.appendChild(el('span', null, invShort(d[0]) + ' ' + ACT[d[1]] + ' ' + money(d[3]) + ' (' + pct(d[4]) + ')' + lossTxt));
       t.appendChild(row);
     });
     t.appendChild(el('div', 'tr', 'Click for details ↓'));
@@ -868,6 +878,21 @@ function renderTakeaways(C){
     if (dv.length) ul.appendChild(li(['Crowd vs money disagree on ' + dv.length + ' stock' + (dv.length === 1 ? '' : 's') + ' — strongest: ', tkBtn(dv[0]),
       ', where ' + (dv[0].ni > 0 ? 'more investors bought, but the sellers moved more of their portfolios' :
                                    'more investors sold, but the buyers moved more of their portfolios') + ' (' + pct(dv[0].conv) + ' net).']));
+  }
+  var bySize = function(a, b){ return Math.abs(b.d[4]) - Math.abs(a.d[4]); };
+  var sales = lossMoves(C, true), known = sales.filter(function(m){ return m.v !== 'pre'; });
+  var lossS = sales.filter(function(m){ return m.v === 'loss'; }).sort(bySize);
+  if (lossS.length) {
+    var ls = lossS[0];
+    ul.appendChild(li(['Sold at a loss: ' + lossS.length + ' of ' + known.length + ' sales with a known cost were clearly below the investor’s est. average cost — biggest: ' +
+      invName(ls.d[0]) + (ls.d[1] === 3 ? ' sold out of ' : ' trimmed '), tkBtn(ls.r), ' ≈' + rpct(ls.d[6][0], false) +
+      ' below cost (held since ' + ls.d[6][3] + '). Selling at a loss usually means lost conviction — or tax-loss selling.']));
+  }
+  var avgDown = lossMoves(C, false).filter(function(m){ return m.v === 'loss'; }).sort(bySize);
+  if (avgDown.length) {
+    var ad = avgDown[0];
+    ul.appendChild(li(['Averaging down: ' + avgDown.length + ' add' + (avgDown.length === 1 ? '' : 's') + ' to positions below est. cost — biggest: ' +
+      invName(ad.d[0]) + ' bought more ', tkBtn(ad.r), ' ≈' + rpct(ad.d[6][0], false) + ' below cost.']));
   }
   var sec = sectorAgg(rows).filter(function(x){ return x.name !== 'Unclassified'; });
   if (sec.length) {
@@ -1341,8 +1366,9 @@ function tipMove(r, d, w0, w1){
   return function(t){
     t.appendChild(el('div', 'tv', ACT[d[1]] + '  ' + pct(d[4]) + ' of portfolio'));
     t.appendChild(el('div', 'tl', (r.s.t || r.s.n) + ' · ' + invName(d[0])));
-    t.appendChild(el('div', 'tr', 'position ≈' + pct(w0, false) + ' → ' + pct(w1, false) + ' of the book'));
+    if (w0 != null) t.appendChild(el('div', 'tr', 'position ≈' + pct(w0, false) + ' → ' + pct(w1, false) + ' of the book'));
     t.appendChild(el('div', 'tr', 'est. ' + money(d[3]) + ' · ' + shares(d[2]) + ' shares'));
+    var x = estLine(d); if (x) t.appendChild(el('div', 'tr', x));
     t.appendChild(el('div', 'tr', 'Click for details ↓'));
   };
 }
@@ -1632,7 +1658,109 @@ function renderInvMap(){
     annotate(F, [0.85, 0.65, 0.45, 0.3].map(function(f){ return [X(Math.abs(x[0]) * f) + 6, Y(x[0] * f) + (x[0] > 0 ? 12 : -4)]; }), x[1], pts, boxes);
   });
 }
-function renderCharts(C){ renderCapMap(C); renderPosMap(C); renderInvMap(); }
+/* ---------- estimated price vs average cost ---------- */
+// d[6] = [pnl, lo, hi, since, pre, held_q, basis, px]: the trade's estimated
+// price vs the investor's average cost as ratios (-0.25 = 25% below cost),
+// lo/hi from the two quarter-end prices around the trade. pre = held before
+// the oldest filing we have, so the "cost" is that filing's price.
+function verdict(e){ return e[4] ? 'pre' : e[2] < 0 ? 'loss' : e[1] > 0 ? 'gain' : 'mixed'; }
+function rpct(x, signed){
+  var a = Math.abs(x) * 100, s = signed === false ? '' : sgn(x);
+  return s + (a >= 10 ? String(Math.round(a)) : a.toFixed(1)) + '%';
+}
+function usd(v){ return !v ? '?' : '$' + (v >= 100 ? Math.round(v).toLocaleString('en-US') : v.toFixed(2)); }
+function estLine(d){
+  var e = d[6]; if (!e) return '';
+  var v = verdict(e), held = ' · held since ' + e[3];
+  if (d[1] >= 2) {
+    if (v === 'pre') return 'Sold ≈' + rpct(e[0]) + ' vs its ' + e[3] + ' price — held longer than our 13F history, so the real cost is unknown';
+    if (v === 'loss') return 'Sold ≈' + rpct(e[0], false) + ' below est. avg cost (≈' + usd(e[7]) + ' vs ≈' + usd(e[6]) + ') — at a loss' + held;
+    if (v === 'gain') return 'Sold ≈' + rpct(e[0], false) + ' above est. avg cost (≈' + usd(e[7]) + ' vs ≈' + usd(e[6]) + ') — taking profit' + held;
+    return 'Sold near est. avg cost (≈' + rpct(e[0]) + '; the quarter’s prices straddle it)' + held;
+  }
+  if (v === 'pre') return 'Bought more ≈' + rpct(e[0]) + ' vs its ' + e[3] + ' price';
+  if (v === 'loss') return 'Averaging down: bought ≈' + rpct(e[0], false) + ' below est. avg cost (≈' + usd(e[6]) + ')';
+  if (v === 'gain') return 'Adding to a winner: ≈' + rpct(e[0], false) + ' above est. avg cost (≈' + usd(e[6]) + ')';
+  return 'Added near est. avg cost (≈' + usd(e[6]) + ')';
+}
+function lossMoves(C, sells){
+  var out = [];
+  C.rows.forEach(function(r){ r.moves.forEach(function(d){
+    if (d[6] && (sells ? d[1] >= 2 : d[1] === 1)) out.push({r: r, d: d, v: verdict(d[6])});
+  }); });
+  return out;
+}
+var PNL_TICKS = [-0.9, -0.75, -0.5, -0.25, 0, 0.25, 0.5, 1, 2, 4, 9, 19];
+function renderPnl(C){
+  var box = clear($('pnlmap')), note = $('pnlmap-note'), list = clear($('pnl-list'));
+  var all = lossMoves(C, true);
+  var cnt = {loss: 0, gain: 0, mixed: 0, pre: 0};
+  all.forEach(function(m){ cnt[m.v]++; });
+  note.textContent = all.length ? all.length + ' sale' + (all.length === 1 ? '' : 's') + ' with a cost estimate: ' + cnt.loss +
+    ' below cost, ' + cnt.gain + ' above, ' + cnt.mixed + ' too close to call, ' + cnt.pre + ' held longer than our history.' : '';
+  if (!all.length) {
+    box.appendChild(el('div', 'empty', C.rows.length ? 'No cost estimates for the sales in this view yet — they are rebuilt from each investor’s past 13F filings, which are still being downloaded (newest quarters first).' : 'No trades for this selection.'));
+    list.appendChild(el('div', 'empty', 'Nothing to list yet.'));
+    return;
+  }
+  var lnMin = 0, lnMax = 0, M = 0;
+  all.forEach(function(m){
+    var l = Math.log(1 + Math.max(-0.95, Math.min(19, m.d[6][0])));
+    lnMin = Math.min(lnMin, l); lnMax = Math.max(lnMax, l); M = Math.max(M, Math.abs(m.d[4]));
+  });
+  lnMin -= 0.12; lnMax += 0.12; M = (M || 1) * 1.08;
+  var F = makeFrame(box, chartH(box), [16, 16, 26, 50], 'Scatter chart of ' + all.length +
+    ' sales: estimated sale price versus the investor’s average cost (across; left of the line = at a loss) and size of the sale as a share of the portfolio (up). The biggest sales at a loss are labelled and can be focused.');
+  function X(ratio){ return F.L + (Math.log(1 + Math.max(-0.95, Math.min(19, ratio))) - lnMin) / (lnMax - lnMin) * (F.R - F.L); }
+  function Y(v){ return F.B - Math.sqrt(Math.abs(v) / M) * (F.B - F.T); }
+  var g = S('g', null, F.svg), last = -Infinity;
+  PNL_TICKS.forEach(function(t){
+    var l = Math.log(1 + t); if (l < lnMin || l > lnMax) return;
+    var x = X(t); if (x - last < 38 && t !== 0) return; last = x;
+    S('line', {x1: x, x2: x, y1: F.T, y2: F.B, 'class': t === 0 ? 'ax' : 'gl'}, g);
+    stext(g, x, F.B + 15, t === 0 ? 'cost' : tickFmt(t * 100, 'conv'), 'tick', 'middle');
+  });
+  pickTicks(niceSteps(M), function(v){ return Math.sqrt(v / M) * (F.B - F.T); }, 16).forEach(function(v){
+    var y = Y(v); S('line', {x1: F.L, x2: F.R, y1: y, y2: y, 'class': 'gl'}, g);
+    stext(g, F.L - 6, y + 3, tickFmt(v, 'pct+'), 'tick', 'end');
+  });
+  S('line', {x1: F.L, x2: F.R, y1: F.B, y2: F.B, 'class': 'ax'}, g);
+  stext(g, F.L - 6, F.B + 3, '0', 'tick', 'end');
+  var one = st.inv >= 0;
+  var pts = all.map(function(m){
+    var r = m.r, d = m.d, e = d[6];
+    return {x: X(e[0]), y: Y(d[4]), r: 4.5, v: d[4], kind: m.v, lab: label(r.s) + (one ? '' : ' · ' + invShort(d[0])),
+      aria: invName(d[0]) + ' ' + ACT[d[1]] + ' ' + label(r.s) + ': ' + estLine(d) + '. Opens details.',
+      tip: tipMove(r, d, null, null), open: function(){ openStock(r.s.c); }};
+  });
+  var pg = S('g', null, F.svg), order = {mixed: 0, pre: 1, gain: 2, loss: 3};   // losses drawn on top
+  pts.slice().sort(function(a, b){ return order[a.kind] - order[b.kind]; }).forEach(function(p){
+    if (p.kind === 'pre') S('path', {d: 'M' + p.x + ' ' + (p.y - 5) + 'L' + (p.x + 5) + ' ' + p.y + 'L' + p.x + ' ' + (p.y + 5) + 'L' + (p.x - 5) + ' ' + p.y + 'Z', 'class': 'pt-pre'}, pg);
+    else S('circle', {cx: p.x, cy: p.y, r: p.r, 'class': 'pt pt-' + p.kind}, pg);
+  });
+  var mark = wirePoints(F, pts);
+  var losses = pts.filter(function(p){ return p.kind === 'loss'; }).sort(function(a, b){ return Math.abs(b.v) - Math.abs(a.v); });
+  var boxes = placeLabels(F, losses.slice(0, 5), mark, pts);
+  var x0 = X(0);
+  annotate(F, [[x0 - 6, F.T + 10, 'end'], [x0 - 6, F.T + 24, 'end']], '← sold at a loss', pts, boxes);
+  annotate(F, [[x0 + 6, F.T + 10], [x0 + 6, F.T + 24]], 'at a profit →', pts, boxes);
+
+  // Ranked lists: the clearest capitulations, then averaging down.
+  function section(title, items, empty){
+    list.appendChild(el('div', 'dh', title));
+    if (!items.length) { list.appendChild(el('div', 'empty', empty)); return; }
+    items.forEach(function(m){
+      list.appendChild(drillItem([el('b', null, label(m.r.s)), el('span', 'w', invName(m.d[0]) + ' · since ' + m.d[6][3]),
+        el('span', 'a a' + m.d[1], ACT[m.d[1]]), el('span', 'r neg', rpct(m.d[6][0]))], function(){ openStock(m.r.s.c); }));
+    });
+  }
+  var bySize = function(a, b){ return Math.abs(b.d[4]) - Math.abs(a.d[4]); };
+  section('Biggest sales at a loss · by size of the sale', all.filter(function(m){ return m.v === 'loss'; }).sort(bySize).slice(0, 8),
+    'No sale in this view was clearly below the investor’s cost.');
+  section('Averaging down · bought more below cost', lossMoves(C, false).filter(function(m){ return m.v === 'loss'; }).sort(bySize).slice(0, 5),
+    'Nobody in this view added to a position below their cost.');
+}
+function renderCharts(C){ renderCapMap(C); renderPosMap(C); renderPnl(C); renderInvMap(); }
 
 /* ---------- tables ---------- */
 var LAST = null;
@@ -1684,6 +1812,8 @@ function detailNode(r){
     m.appendChild(el('span', 'r ' + cls(d[2]), shares(d[2]) + ' sh'));
     m.appendChild(el('span', 'r ' + cls(d[3]), money(d[3])));
     m.appendChild(el('span', 'r pct ' + cls(d[4]), pct(d[4]) + ' of port.'));
+    var x = estLine(d);
+    if (x) m.appendChild(el('span', 'pl' + (verdict(d[6]) === 'loss' ? ' loss' : ''), x));
     td.appendChild(m);
   });
   var tr = el('tr', 'drowx'); tr.id = 'd-' + r.s.c; tr.appendChild(td);
@@ -1863,6 +1993,15 @@ def render(dataset: dict[str, Any]) -> str:
       <div class="foot" id="posmap-note"></div></div></section>
 </div>
 <div class="grid2 wrap-gap">
+  <section class="card"><h2>Sold at a loss? <span class="hint">estimated · dot = one sale</span></h2>
+    <div class="body"><div class="chart" id="pnlmap"></div>
+      <div class="legend"><span><i class="dot sell"></i>below est. cost (at a loss)</span><span><i class="dot gain"></i>above cost (profit)</span><span><i class="dot mixed"></i>too close to call</span><span><i class="dia"></i>held longer than our history</span></div>
+      <div class="foot">Across: estimated sale price vs the investor’s average cost (log scale). Up: size of the sale, % of the portfolio (√ scale). 13F filings don’t show what was paid — costs are rebuilt from up to 10 years of past filings at quarter-end prices, so read these as estimates. A sale below cost can also be tax-loss selling.</div>
+      <div class="foot" id="pnlmap-note"></div></div></section>
+  <section class="card"><h2>Selling below cost <span class="hint">click for details</span></h2>
+    <div class="body plist" id="pnl-list"></div></section>
+</div>
+<div class="grid2 wrap-gap">
   <section class="card"><h2>Trade-size pyramid <span class="hint">trades by % of portfolio · click a row to list</span></h2><div class="body" id="pyr-size"></div></section>
   <section class="card"><h2>Company-size pyramid <span class="hint" id="pyr-cap-h"></span></h2><div class="body" id="pyr-cap"></div></section>
 </div>
@@ -1921,6 +2060,11 @@ def render(dataset: dict[str, Any]) -> str:
   <b>Position size before → after</b> backs each position's weight out of the share counts at the filing's price, as a %
   of the larger of the investor's two quarterly portfolios. Market caps (bubble chart, company-size pyramid) come from the
   Yahoo Finance snapshot and are missing for some stocks — those are left out of those two charts only.</p>
+  <p><b>Sold at a loss?</b> 13F filings show holdings, not prices paid or profits. For the stock-pickers we rebuild each
+  position from up to 10 years of their past 13Fs: shares bought in a quarter are costed at the midpoint of that quarter's
+  start and end prices (average cost; splits detected), and a sale is compared the same way. "At a loss" means the sale was
+  below the estimated cost even at the better of the two quarter-end prices. Positions older than the history we have are
+  compared with the oldest price we have instead (◇). Estimates only — the real trade prices aren't public.</p>
   <p>13F filings are quarterly, due 45 days after quarter end, and show US-listed long positions only (no shorts; options
   excluded). Investors file on different days, so near a deadline some are a quarter behind — each one's quarter is shown
   above. Filers more than a quarter behind are marked stale and excluded. Prices in the company cards come from Yahoo

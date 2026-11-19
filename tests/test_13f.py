@@ -3,6 +3,7 @@
 Live SEC/OpenFIGI calls can't run in CI sandboxes, so these exercise the
 pure logic against XML fixtures via STOCKMON_USE_FIXTURE=1.
 """
+import json
 import os
 import sys
 from pathlib import Path
@@ -314,6 +315,11 @@ def test_history_backfill_breadth_first():
         calls.clear()
         hh.backfill(invs, cache, budget_sec=60)                        # nothing left to fetch
         assert calls == []
+        # An investor without a filing list this run is left alone (no blind pruning).
+        before = json.dumps(cache["1"], sort_keys=True)
+        invs[0].filings = []
+        hh.backfill(invs[:1], cache, budget_sec=60)
+        assert json.dumps(cache["1"], sort_keys=True) == before
     finally:
         hh._fetch_infotable = saved
 

@@ -183,6 +183,8 @@ def backfill(pickers: list, cache: dict, budget_sec: float) -> dict:
 
     plans = []
     for inv in pickers:
+        if not inv.filings:
+            continue   # no filing list this run: nothing to fetch, and never prune blind
         e = cache.setdefault(str(inv.cik), {})
         q, x = e.setdefault("q", {}), e.setdefault("x", [])
         _seed(inv, q)

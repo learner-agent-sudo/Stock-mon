@@ -76,6 +76,11 @@ class InvestorHoldings:
     style: str = "picker"       # picker | diversified (see super_investors.json)
     short: str = ""             # compact chart label, e.g. "Buffett"
     units_note: str = ""        # set when a filing's values were in $ thousands
+    # Every 13F-HR the investor filed (newest first, one per report date) and
+    # EDGAR's links to older submission pages — used by holdings_history to
+    # reconstruct positions over past quarters.
+    filings: list[dict] = field(default_factory=list)
+    filing_pages: list[dict] = field(default_factory=list)
 
 
 def quarter_label(date_str: str | None) -> str:
@@ -172,30 +177,43 @@ def _strip_ns(tag: str) -> str:
 # EDGAR: locate and parse 13F information tables
 # --------------------------------------------------------------------------
 
-def _latest_two_13f(cik: int) -> tuple[str | None, list[dict]]:
-    """Return (entity_name, [latest_filing, prior_filing]) for 13F-HR forms.
+def filings_13f(block: dict) -> list[dict]:
+    """13F-HR filings in one EDGAR submissions block (the `recent` object or
+    an older page), newest first, one per report date (the latest filing
+    wins if a period was filed twice). Each: {accession, filing_date, report_date}."""
+    forms = block.get("form", [])
+    accs = block.get("accessionNumber", [])
+    fdates = block.get("filingDate", [])
+    rdates = block.get("reportDate", [])
+    filings = [
+        {"accession": accs[i], "filing_date": fdates[i], "report_date": rdates[i]}
+        for i, f in enumerate(forms)
+        if f == "13F-HR" and i < len(accs) and i < len(fdates) and i < len(rdates) and rdates[i]
+    ]
+    filings.sort(key=lambda x: x["filing_date"], reverse=True)
+    seen, out = set(), []
+    for f in filings:
+        if f["report_date"] not in seen:
+            seen.add(f["report_date"])
+            out.append(f)
+    out.sort(key=lambda x: x["report_date"], reverse=True)
+    return out
 
-    Each filing dict: {accession, filing_date, report_date}.
+
+def _latest_two_13f(cik: int) -> tuple[str | None, list[dict], list[dict]]:
+    """Return (entity_name, filings, older_pages) for 13F-HR forms.
+
+    `filings` holds every 13F-HR in EDGAR's recent block, newest report date
+    first ([0] = latest, [1] = prior); `older_pages` are EDGAR's links to
+    older submission pages ({name, filingFrom, filingTo}).
     """
     resp = _sec_get(SUBMISSIONS_URL.format(cik=cik))
     if resp is None or resp.status_code != 200:
         code = resp.status_code if resp is not None else "no-response"
         raise RuntimeError(f"submissions HTTP {code}")
     data = resp.json()
-    name = data.get("name")
-    recent = data.get("filings", {}).get("recent", {})
-    forms = recent.get("form", [])
-    accs = recent.get("accessionNumber", [])
-    fdates = recent.get("filingDate", [])
-    rdates = recent.get("reportDate", [])
-    filings = [
-        {"accession": accs[i], "filing_date": fdates[i], "report_date": rdates[i]}
-        for i, f in enumerate(forms)
-        if f == "13F-HR"
-    ]
-    # recent[] is newest-first, but sort defensively by filing date.
-    filings.sort(key=lambda x: x["filing_date"], reverse=True)
-    return name, filings[:2]
+    filings_block = data.get("filings", {})
+    return data.get("name"), filings_13f(filings_block.get("recent", {})), filings_block.get("files") or []
 
 
 def _find_infotable_xml(cik: int, accession: str) -> str | None:
@@ -301,11 +319,12 @@ def fetch_investor_holdings(name: str, cik: int, manager: str = "",
     if os.environ.get(FIXTURE_ENV) == "1":
         return _fixture_investor(name, cik, manager)
     try:
-        entity_name, filings = _latest_two_13f(cik)
+        entity_name, filings, pages = _latest_two_13f(cik)
     except Exception as exc:  # noqa: BLE001
         inv.status = "error"
         inv.detail = str(exc)[:120]
         return inv
+    inv.filings, inv.filing_pages = filings, pages
     if entity_name and not _name_matches(name, entity_name):
         inv.status = "mismatch"
         inv.detail = f"CIK resolves to '{entity_name}', expected '{name}'"
@@ -490,15 +509,19 @@ def estimated_flow(shares_delta: int, cur: dict, prv: dict) -> int:
 
 
 def aggregate(investors: list[InvestorHoldings], cusip_to_ticker: dict[str, str],
-              watchlist: set[str], categories: dict[str, str] | None = None) -> list[dict]:
+              watchlist: set[str], categories: dict[str, str] | None = None,
+              estimates: dict[str, dict[str, dict]] | None = None) -> list[dict]:
     """Per-stock net flow across investors, comparing each investor's latest
     vs prior filing.
 
     `categories` maps TICKER -> 'HOLDING' | 'WATCHLIST' so the page can mark
     each stock accordingly. `watchlist` stays as the membership set used for
     the page's watchlist toggle (holdings + watchlist combined).
+    `estimates` ({investor name: {cusip: estimate}}, see holdings_history)
+    adds each trade's estimated price vs the investor's average cost.
     """
     cats = categories or {}
+    estimates = estimates or {}
     stocks: dict[str, dict] = {}
     for inv in investors:
         if inv.status not in ("ok",):
@@ -557,6 +580,11 @@ def aggregate(investors: list[InvestorHoldings], cusip_to_ticker: dict[str, str]
                 "shares_now": cur_sh,
                 "shares_prior": prv_sh,
             })
+            est = estimates.get(inv.name, {}).get(cusip)
+            if est:
+                # Estimated trade price vs the investor's average cost, rebuilt
+                # from past 13Fs (13F itself carries no cost or P&L).
+                st["detail"][-1]["cost"] = est
     out = []
     for st in stocks.values():
         st["net_investors"] = st["buyers"] - st["sellers"]
@@ -637,12 +665,26 @@ def build_dataset(watchlist_tickers: set[str] | None = None,
     for inv in mark_stale(investors):
         print(f"  [13f] {inv.name}: STALE — {inv.detail}")
 
+    # Past filings -> estimated cost basis, so the page can tell a sale at a
+    # loss from profit-taking. Shares the SEC phase deadline; leaves at least
+    # 7 minutes of the build for the enrichment phases below.
+    estimates: dict[str, dict[str, dict]] = {}
+    try:
+        from . import holdings_history
+        hist_budget = max(0.0, min(holdings_history.BUDGET_SEC,
+                                   _sec_phase_deadline - time.monotonic(), remaining() - 420))
+        estimates = holdings_history.build_estimates(investors, budget_sec=hist_budget)
+    except Exception as exc:  # noqa: BLE001 — cost estimates are a nice-to-have
+        import traceback
+        print(f"  [13f] history: CRASHED: {type(exc).__name__}: {exc}")
+        traceback.print_exc()
+
     all_cusips: set[str] = set()
     for inv in investors:
         all_cusips |= set(inv.latest) | set(inv.prior)
     cusip_to_ticker = resolve_cusip_tickers(all_cusips, max_budget_sec=max(0.0, remaining() - 240))
 
-    stocks = aggregate(investors, cusip_to_ticker, watchlist, cats)
+    stocks = aggregate(investors, cusip_to_ticker, watchlist, cats, estimates)
 
     # Attach brief company info + price for each mapped ticker (build-time
     # snapshot; the page is static). Fetching for ALL ~8000 unique stocks is

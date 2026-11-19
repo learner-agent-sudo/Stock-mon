@@ -176,7 +176,7 @@ def test_page_payload_and_render():
     # Every move carries the prior position weight; a NEW position starts at 0.
     for s in payload["stk"]:
         for m in s["d"]:
-            assert len(m) == 6 and (m[5] is None or m[5] >= 0)
+            assert len(m) == 7 and (m[5] is None or m[5] >= 0)
             if m[1] == 0:
                 assert m[5] == 0
     html = page.render(dataset)
@@ -211,8 +211,129 @@ def test_prior_weight_and_market_cap():
                       "detail": [{"investor": "A", "action": "ADD", "shares_delta": 5,
                                   "value_delta": 7, "pct": 0.5}]}]}
     stk = {s["c"]: s for s in page.build_payload(ds)["stk"]}
-    assert stk["C1"]["mc"] == 5e9 and stk["C1"]["d"][0] == [0, 2, -25, -10, -1.0, 4.0]
-    assert "mc" not in stk["C2"] and stk["C2"]["d"][0] == [0, 1, 5, 7, 0.5, None]
+    assert stk["C1"]["mc"] == 5e9 and stk["C1"]["d"][0] == [0, 2, -25, -10, -1.0, 4.0, None]
+    assert "mc" not in stk["C2"] and stk["C2"]["d"][0] == [0, 1, 5, 7, 0.5, None, None]
+
+
+def test_history_cost_walk():
+    from src.data_layer import holdings_history as hh
+    D = ["2025-03-31", "2025-06-30", "2025-09-30", "2025-12-31"]
+    # New in Q2 (quarter-end prices 10 -> 10: cost 10), doubled in Q3
+    # (10 -> 6, bought at the midpoint 8: average cost 9), sold out in Q4
+    # (6 -> 4, midpoint 5): about -44%, between -56% and -33%.
+    hold = {D[0]: {}, D[1]: {"C": (100, 10.0)}, D[2]: {"C": (200, 6.0)}, D[3]: {}}
+    price = {("C", D[0]): 10.0, ("C", D[1]): 10.0, ("C", D[2]): 6.0, ("C", D[3]): 4.0}
+    e = hh.estimate(D, hold, "C", price, {})
+    assert abs(e["basis"] - 9) < 1e-9 and abs(e["pnl"] - (5 / 9 - 1)) < 1e-9
+    assert abs(e["lo"] - (4 / 9 - 1)) < 1e-9 and abs(e["hi"] - (6 / 9 - 1)) < 1e-9
+    assert e["since"] == D[1] and e["pre"] is False and e["held_q"] == 2
+    # A brand-new position has no cost to compare with.
+    assert hh.estimate(D[:2], {D[0]: {}, D[1]: {"C": (5, 1.0)}}, "C", {}, {}) is None
+    # Held before the oldest filing we have: that filing's price stands in, flagged.
+    held = {D[0]: {"C": (100, 20.0)}, D[1]: {"C": (100, 30.0)}, D[2]: {"C": (40, 40.0)}}
+    e = hh.estimate(D[:3], held, "C", {}, {})
+    assert e["pre"] is True and e["basis"] == 20.0 and abs(e["pnl"] - 0.75) < 1e-9
+
+
+def test_history_splits_vs_crashes():
+    from src.data_layer import holdings_history as hh
+    D = ["2025-03-31", "2025-06-30", "2025-09-30"]
+    price = {("C", D[0]): 100.0, ("C", D[1]): 50.0}
+    # 2-for-1 split: shares x2, price /2, and the other holders' counts doubled too.
+    hold = {D[0]: {"C": (100, 100.0)}, D[1]: {"C": (200, 50.0)}, D[2]: {"C": (150, 60.0)}}
+    e = hh.estimate(D, hold, "C", price, {("C", D[1]): [2.0, 2.0, 1.98]})
+    assert abs(e["basis"] - 50) < 1e-9 and abs(e["pnl"] - 0.1) < 1e-9   # sold at ~55 vs 50
+    # Same numbers, but the other holders' counts didn't move: a crash the
+    # investor doubled into (bought at ~75), not a split.
+    e = hh.estimate(D, hold, "C", price, {("C", D[1]): [1.0, 1.0, 2.0]})
+    assert abs(e["basis"] - 87.5) < 1e-9
+    # 1-for-10 reverse split.
+    price = {("C", D[0]): 2.0, ("C", D[1]): 20.0}
+    hold = {D[0]: {"C": (1000, 2.0)}, D[1]: {"C": (100, 20.0)}, D[2]: {"C": (50, 18.0)}}
+    e = hh.estimate(D, hold, "C", price, {("C", D[1]): [0.1]})
+    assert abs(e["basis"] - 20) < 1e-9 and abs(e["pnl"] - (19 / 20 - 1)) < 1e-9
+    assert hh.split_factor("C", D[0], D[1], {("C", D[0]): 10.0, ("C", D[1]): 9.0}, {}) == 1.0
+
+
+def test_history_series_and_helpers():
+    from src.data_layer import holdings_history as hh
+    assert hh.qend_back("2026-09-30", 4) == "2025-09-30"
+    assert hh.qend_back("2026-03-31", 1) == "2025-12-31"
+    block = {"form": ["13F-HR", "4", "13F-HR", "13F-HR", "13F-HR/A"],
+             "accessionNumber": ["a3", "x", "a2", "a2b", "a1"],
+             "filingDate": ["2026-08-14", "2026-08-01", "2026-05-15", "2026-05-20", "2026-02-10"],
+             "reportDate": ["2026-06-30", "", "2026-03-31", "2026-03-31", "2025-12-31"]}
+    f = h.filings_13f(block)
+    # One per report date, the later re-filing wins; amendments are ignored.
+    assert [(x["report_date"], x["accession"]) for x in f] == [("2026-06-30", "a3"), ("2026-03-31", "a2b")]
+    inv = h.InvestorHoldings(name="A", cik=1)
+    inv.as_of, inv.prior_as_of = "2026-06-30", "2026-03-31"
+    inv.latest = {"C": {"shares": 10, "value": 100}}
+    inv.prior = {"C": {"shares": 5, "value": 40}}
+    entry = {"q": {"2025-06-30": {"h": {"C": [1, 7]}},            # gap before 2025-12-31
+                   "2025-12-31": {"h": {"C": [2, 16]}}}}
+    dates, hold = hh.series(inv, entry)
+    assert dates == ["2025-12-31", "2026-03-31", "2026-06-30"]
+    assert hold["2026-06-30"]["C"] == (10, 10.0)
+    # A CUSIP change looks like an exit + a new position of the same issuer.
+    inv.prior = {"OLD": {"issuer": "ACME CORP", "shares": 5, "value": 50}}
+    inv.latest = {"NEW": {"issuer": "ACME CORP NEW", "shares": 5, "value": 50}}
+    assert hh.reidentified(inv) == {"OLD"}
+
+
+def test_history_backfill_breadth_first():
+    from src.data_layer import holdings_history as hh
+    calls = []
+
+    def fake_fetch(cik, acc):
+        calls.append(acc)
+        if acc.endswith("x"):
+            return "none", None
+        return "ok", ('<informationTable><infoTable><nameOfIssuer>A</nameOfIssuer><cusip>C</cusip>'
+                      '<value>100</value><shrsOrPrnAmt><sshPrnamt>10</sshPrnamt></shrsOrPrnAmt>'
+                      '</infoTable></informationTable>')
+    saved = hh._fetch_infotable
+    hh._fetch_infotable = fake_fetch
+    try:
+        invs = []
+        for cik in (1, 2):
+            inv = h.InvestorHoldings(name=f"I{cik}", cik=cik)
+            inv.as_of, inv.prior_as_of = "2026-06-30", "2026-03-31"
+            inv.latest = {"C": {"shares": 1, "value": 1}}
+            inv.prior = {"C": {"shares": 1, "value": 1}}
+            inv.filings = [{"report_date": hh.qend_back("2026-06-30", k), "accession": f"{cik}-{k}" + ("x" if k == 3 else ""),
+                            "filing_date": hh.qend_back("2026-09-30", k)} for k in range(5)]
+            invs.append(inv)
+        cache = {"1": {"q": {"2010-03-31": {"a": "old", "h": {}}}, "x": []}}
+        stats = hh.backfill(invs, cache, budget_sec=60)
+        # Latest two are seeded (no download); then quarter 2 for both, then 3, then 4.
+        assert calls == ["1-2", "2-2", "1-3x", "2-3x", "1-4", "2-4"]
+        assert stats == {"fetched": 4, "no_xml": 2, "errors": 0, "pending": 0}
+        assert "2010-03-31" not in cache["1"]["q"]                     # outside the window
+        assert cache["1"]["x"] == ["1-3x"] and cache["2"]["q"]["2025-06-30"]["h"] == {"C": [10, 100]}
+        calls.clear()
+        hh.backfill(invs, cache, budget_sec=60)                        # nothing left to fetch
+        assert calls == []
+    finally:
+        hh._fetch_infotable = saved
+
+
+def test_cost_estimates_reach_dataset_and_page():
+    from src.data_layer import holdings_history as hh
+    from src.output import holdings_13f_page as page
+    berk = h.fetch_investor_holdings("Berkshire Hathaway", 1067983, "Warren Buffett")
+    est = hh.build_estimates([berk])
+    # Fixture: only two quarters, so every sale is of a position held at the
+    # start of the series ("pre") and priced against that quarter.
+    ko = est["Berkshire Hathaway"]["191216100"]
+    assert ko["pre"] is True and ko["held_q"] == 1
+    stocks = {s["cusip"]: s for s in h.aggregate([berk], {}, set(), estimates=est)}
+    assert stocks["191216100"]["detail"][0]["cost"] == ko
+    ds = {"investors": [{"name": "Berkshire Hathaway", "status": "ok"}], "stocks": list(stocks.values())}
+    moves = {s["c"]: s["d"][0] for s in page.build_payload(ds)["stk"]}
+    m = moves["191216100"]
+    assert len(m) == 7 and m[6][0] == ko["pnl"] and m[6][3] == "Q4'25" and m[6][4] == 1
+    assert moves["594918104"][6] is None                               # NEW: no cost
 
 
 if __name__ == "__main__":
@@ -225,4 +346,9 @@ if __name__ == "__main__":
     test_mark_stale_and_quarter_label()
     test_page_payload_and_render()
     test_prior_weight_and_market_cap()
+    test_history_cost_walk()
+    test_history_splits_vs_crashes()
+    test_history_series_and_helpers()
+    test_history_backfill_breadth_first()
+    test_cost_estimates_reach_dataset_and_page()
     print("all 13F tests passed")

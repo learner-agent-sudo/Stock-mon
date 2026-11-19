@@ -208,13 +208,30 @@ def _market_cap(info: dict) -> float | None:
     return None
 
 
+def _num(x) -> bool:
+    return isinstance(x, (int, float)) and not isinstance(x, bool) and math.isfinite(x)
+
+
+def _cost_est(d: dict) -> list | None:
+    """[pnl, lo, hi, since, pre, held_q, basis, px] — the trade's estimated
+    price vs the investor's average cost (see holdings_history), or None."""
+    c = d.get("cost")
+    if not isinstance(c, dict) or not all(_num(c.get(k)) for k in ("pnl", "lo", "hi")):
+        return None
+    return [_sig4(c["pnl"]), _sig4(c["lo"]), _sig4(c["hi"]), quarter_label(c.get("since")),
+            1 if c.get("pre") else 0, int(c.get("held_q") or 0),
+            _sig4(c["basis"]) if _num(c.get("basis")) else 0,
+            _sig4(c["px"]) if _num(c.get("px")) else 0]
+
+
 def build_payload(dataset: dict[str, Any]) -> dict[str, Any]:
     """Compact, client-side-aggregatable view of the dataset.
 
     inv:  [{n,m,s,st,status,ok,det,q,pq,h,tv}]  (index = investor id)
-    stk:  [{c,t,n,k,sec,mc?,d:[[inv_id, action_code, shares_delta, flow, pct, w0]]}]
-          w0 = position size before the trade, % of the book (null if unknown)
-          mc = market cap in dollars, only when known
+    stk:  [{c,t,n,k,sec,mc?,d:[[inv_id, action_code, shares_delta, flow, pct, w0, est]]}]
+          w0  = position size before the trade, % of the book (null if unknown)
+          est = estimated trade price vs average cost, see _cost_est (or null)
+          mc  = market cap in dollars, only when known
     cards: {cusip: escaped HTML snapshot card}
     """
     investors = dataset.get("investors", [])
@@ -251,7 +268,7 @@ def build_payload(dataset: dict[str, Any]) -> dict[str, Any]:
             # pct to 4 significant figures, not fixed decimals: a 1e-5 % trim
             # must stay negative, not round to 0.
             moves.append([ii, ac, int(d.get("shares_delta", 0)), int(flow),
-                          _sig4(float(d.get("pct", 0.0))), _prior_weight(d)])
+                          _sig4(float(d.get("pct", 0.0))), _prior_weight(d), _cost_est(d)])
         if not moves:
             continue
         cat = s.get("category") or ""

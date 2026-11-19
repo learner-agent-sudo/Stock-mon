@@ -28,6 +28,7 @@ Everything here is an estimate, and the page labels it that way.
 from __future__ import annotations
 
 import json
+import math
 import os
 import time
 from datetime import date
@@ -41,12 +42,22 @@ BUDGET_SEC = 300               # per run; the first backfill spans a few runs
 XML_ERA_START = "2013-06-30"   # 13F information tables are XML from Q2 2013
 SUBMISSIONS_PAGE_URL = "https://data.sec.gov/submissions/{name}"
 MAX_GAP_DAYS = 100             # consecutive quarter-ends are 90-92 days apart
-# Split detection: the quarter-end price moved by ~1/k and the holders'
-# share counts by ~k. Ratios k cover the splits and reverse splits seen in
-# practice; the tolerances absorb price drift inside the quarter.
+# Split detection. A k-for-1 split shows as a quarter-end price ~1/k of the
+# one before (times whatever the stock did that quarter) and share counts
+# that are exactly k times bigger for every holder who didn't trade. A
+# holder whose count is exactly unchanged is evidence of *no* split. Splits
+# often land in big-move quarters (AMZN 20:1 in a -35% quarter, NVDA 10:1
+# in a +37% one) and the other holders trade around them, so neither a tight
+# price match nor the median share ratio is required when an untouched
+# holder shows the exact multiple. 1-for-2 reverse splits are left out:
+# halving a stake after the price doubled is far more common.
 SPLITS = (2, 3, 4, 5, 6, 8, 10, 15, 20, 25, 30, 40, 50, 100)
-SPLIT_PRICE_TOL = 0.15
-SPLIT_SHARES_TOL = 0.30
+SPLIT_EXACT_TOL = 0.001        # an untraded holding: shares x k to the share
+SPLIT_MOVE = (0.5, 2.0)        # the quarter's own price move, split-adjusted
+SPLIT_MOVE_2 = (0.67, 1.5)     # tighter for 2:1, the ratio a doubling shares
+SPLIT_PRICE_TOL = 0.15         # without exact evidence: the price must fit closely,
+SPLIT_SHARES_TOL = 0.30        # and the holders' median share ratio be near k
+SPLIT_SHARES_TOL_BIG = 0.60    # (looser for k >= 3, which trades rarely mimic)
 # A "trade price vs cost" outside this band means a broken price series
 # (e.g. a row filed in $ thousands inside a dollar filing), not a real trade.
 PNL_SANE = (-0.999, 50.0)
@@ -282,17 +293,36 @@ def split_factor(cusip: str, d_prev: str, d: str, price: dict, ratios: dict) -> 
     p0, p1 = price.get((cusip, d_prev)), price.get((cusip, d))
     if not p0 or not p1:
         return 1.0
-    r = p1 / p0
-    if 0.55 <= r <= 1.8:
-        return 1.0
     rs = ratios.get((cusip, d))
     if not rs:
         return 1.0
-    m = median(rs)
+    r, m = p1 / p0, median(rs)
+    unmoved = sum(1 for x in rs if abs(x - 1) <= SPLIT_EXACT_TOL)
+    exact_best, loose, fits = None, [], False
     for k in SPLITS:
         for mult in (float(k), 1.0 / k):    # k-for-1 split, or 1-for-k reverse split
-            if abs(r * mult - 1) <= SPLIT_PRICE_TOL and abs(m / mult - 1) <= SPLIT_SHARES_TOL:
-                return mult
+            if mult == 0.5:
+                continue
+            adj = r * mult                  # the stock's own move if this was the split
+            lo, hi = SPLIT_MOVE_2 if k == 2 else SPLIT_MOVE
+            if not lo <= adj <= hi or m <= 0:
+                continue
+            exact = sum(1 for x in rs if abs(x / mult - 1) <= SPLIT_EXACT_TOL)
+            dist = abs(math.log(m / mult))
+            miss = dist + abs(math.log(adj))
+            if exact > unmoved:
+                if exact_best is None or (exact, -miss) > exact_best[0]:
+                    exact_best = ((exact, -miss), mult)
+            elif exact == unmoved and dist <= math.log(1 + (SPLIT_SHARES_TOL if k == 2 else SPLIT_SHARES_TOL_BIG)):
+                loose.append((miss, mult))
+                fits = fits or abs(adj - 1) <= SPLIT_PRICE_TOL
+    if exact_best:
+        return exact_best[1]
+    # No untouched holder either way: a split only if some ratio fits the
+    # price closely; which ratio, by the best joint fit of price and shares
+    # (AAPL 4:1 in Q3'20: Berkshire also sold, x3.85, in a +27% quarter).
+    if fits:
+        return min(loose)[1]
     return 1.0
 
 

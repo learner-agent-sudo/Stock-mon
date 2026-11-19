@@ -255,6 +255,28 @@ def test_history_splits_vs_crashes():
     assert abs(e["basis"] - 20) < 1e-9 and abs(e["pnl"] - (19 / 20 - 1)) < 1e-9
     assert hh.split_factor("C", D[0], D[1], {("C", D[0]): 10.0, ("C", D[1]): 9.0}, {}) == 1.0
 
+    def sf(p0, p1, rs):
+        return hh.split_factor("C", D[0], D[1], {("C", D[0]): p0, ("C", D[1]): p1}, {("C", D[1]): rs})
+    # NVDA 10:1 (Q2'24) in a +37% quarter: one untouched holder at exactly x10,
+    # the others traded around the split, so the median says ~1.6.
+    assert sf(903.56, 123.54, [690000 / 442000, 214060 / 175943, 9683550 / 968355]) == 10.0
+    # AMZN 20:1 (Q2'22) in a -35% quarter.
+    assert sf(3259.95, 106.21, [18.0, 20.0, 15.2, 19.7]) == 20.0
+    # O'Reilly 15:1 (Q2'25): the only holder also trimmed (x10.9), but the price fits.
+    assert sf(911.0, 57.6, [10.893]) == 15.0
+    # A stock that more than doubled while the holder halved: not a 1-for-2 reverse split.
+    assert sf(173.39, 397.22, [33228 / 67644]) == 1.0
+    # A -50% crash that one holder exactly doubled into while another held still.
+    assert sf(100.0, 50.0, [2.0, 1.0]) == 1.0
+    # Ordinary trading near a 2:1 price move without an exact multiple: only a
+    # close price fit counts (the -23%/+54% ambiguity stays "no split").
+    assert sf(425.44, 328.59, [0.70, 2.0075, 2.50, 6.3]) == 1.0
+    # The best-fitting ratio wins when several fit the price band.
+    assert sf(100.0, 11.0, [10.0, 9.7]) == 10.0
+    # AAPL 4:1 (Q3'20): Berkshire sold some (x3.85) in a +27% quarter; 3:1 fits
+    # the price alone better, 4:1 fits price and shares together.
+    assert sf(364.80, 115.81, [944295872 / 245155566]) == 4.0
+
 
 def test_history_series_and_helpers():
     from src.data_layer import holdings_history as hh

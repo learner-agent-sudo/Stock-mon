@@ -28,8 +28,9 @@ jobs:
   briefing:
     runs-on: ubuntu-latest
     # Cap the run so a slow/hanging data source fails fast instead of
-    # burning the 6-hour default. A healthy run finishes in a few minutes.
-    timeout-minutes: 20
+    # burning the 6-hour default. A healthy run finishes in ~5 minutes (slow
+    # days ~13); 30 leaves room for up to three 4-minute deploy attempts.
+    timeout-minutes: 30
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url || steps.deployment_retry.outputs.page_url || steps.deployment_final.outputs.page_url }}
@@ -102,6 +103,8 @@ jobs:
         id: deployment
         continue-on-error: true
         uses: actions/deploy-pages@v4
+        with:
+          timeout: 240000   # 4 min per attempt (default 10) so retries fit the job limit
 
       - name: Wait before retrying deploy
         if: steps.deployment.outcome == 'failure'
@@ -112,6 +115,8 @@ jobs:
         if: steps.deployment.outcome == 'failure'
         continue-on-error: true
         uses: actions/deploy-pages@v4
+        with:
+          timeout: 240000   # 4 min per attempt (default 10) so retries fit the job limit
 
       - name: Wait before final deploy attempt
         if: steps.deployment.outcome == 'failure' && steps.deployment_retry.outcome == 'failure'
@@ -121,6 +126,8 @@ jobs:
         id: deployment_final
         if: steps.deployment.outcome == 'failure' && steps.deployment_retry.outcome == 'failure'
         uses: actions/deploy-pages@v4
+        with:
+          timeout: 240000   # 4 min per attempt (default 10) so retries fit the job limit
 
       # Inline content check — fails the job loudly (and triggers the
       # default GitHub workflow-failure email) if the build "succeeded"
@@ -144,8 +151,10 @@ jobs:
             echo "HEALTHCHECKS_BRIEFING_URL secret not set — skipping ping."
           fi
 
+      # cancelled() too: a job that hits timeout-minutes is cancelled, not
+      # failed, and would otherwise reach healthchecks.io only by silence.
       - name: Ping healthchecks.io (failure)
-        if: failure()
+        if: failure() || cancelled()
         env:
           HC_URL: ${{ secrets.HEALTHCHECKS_BRIEFING_URL }}
         run: |

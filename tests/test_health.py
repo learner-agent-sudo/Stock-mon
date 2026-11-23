@@ -90,10 +90,16 @@ def test_content_checks_run_on_newest_archive():
 
 def test_13f_archives_are_not_mistaken_for_briefings():
     with Repo() as r:
-        r.briefing(t("2026-11-20 22:57"))
-        r.thirteen_f("2026-11-22")          # newer, but not a briefing
+        # "13f-…" sorts before "2…", so only a folder with no briefing at all
+        # proves the name filter runs (unfiltered, this would crash on None).
+        r.thirteen_f("2026-11-22")
         problems = ch.check_briefing(now=t("2026-11-23 00:03"))
-        assert problems and "2026-11-20-2257.json" in problems[0]
+        assert len(problems) == 1 and "No briefing archive at all" in problems[0], problems
+        # A name that matches the glob but isn't a timestamp, sorting last,
+        # must be skipped too.
+        r.briefing(t("2026-11-22 22:19"))
+        (ch.HISTORY / "2026-11-23-notes.json").write_text("{}")
+        assert ch.check_briefing(now=t("2026-11-23 00:03")) == []
 
 
 def test_no_archive_at_all():

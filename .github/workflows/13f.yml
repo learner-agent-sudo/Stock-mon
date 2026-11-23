@@ -3,9 +3,11 @@ name: 13F Net Flow
 on:
   workflow_dispatch:
   schedule:
-    # Weekly, Saturdays 12:00 UTC. 13F data is quarterly with a ~45-day lag,
-    # so weekly is plenty to catch new filings without wasted runs.
-    - cron: "0 12 * * 6"
+    # Weekly, Saturdays ~11:47 UTC (GitHub often starts it hours late).
+    # 13F data is quarterly with a ~45-day lag, so weekly is plenty to catch
+    # new filings. Minute :47 rather than :00 — GitHub's docs name the top
+    # of the hour as peak load for scheduled runs.
+    - cron: "47 11 * * 6"
 
 permissions:
   contents: write
@@ -24,7 +26,7 @@ jobs:
     timeout-minutes: 20
     environment:
       name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
+      url: ${{ steps.deployment.outputs.page_url || steps.deployment_retry.outputs.page_url || steps.deployment_final.outputs.page_url }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -80,8 +82,34 @@ jobs:
         with:
           path: docs
 
+      # Same artifact-lookup race as in briefing.yml (actions/deploy-pages
+      # issue #451): pause, then retry only the deploy step. Only the last
+      # attempt can fail the job.
+      - name: Let the artifact register
+        run: sleep 5
+
       - name: Deploy to GitHub Pages
         id: deployment
+        continue-on-error: true
+        uses: actions/deploy-pages@v4
+
+      - name: Wait before retrying deploy
+        if: steps.deployment.outcome == 'failure'
+        run: sleep 20
+
+      - name: Deploy to GitHub Pages (retry)
+        id: deployment_retry
+        if: steps.deployment.outcome == 'failure'
+        continue-on-error: true
+        uses: actions/deploy-pages@v4
+
+      - name: Wait before final deploy attempt
+        if: steps.deployment.outcome == 'failure' && steps.deployment_retry.outcome == 'failure'
+        run: sleep 60
+
+      - name: Deploy to GitHub Pages (final attempt)
+        id: deployment_final
+        if: steps.deployment.outcome == 'failure' && steps.deployment_retry.outcome == 'failure'
         uses: actions/deploy-pages@v4
 
       # Inline content check — fails loudly if the run wrote a 13F page

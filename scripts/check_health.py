@@ -8,8 +8,8 @@ Designed to be called two ways:
 1. As the final step of the build workflows (catches degraded but
    "successful" runs — e.g. workflow completed but all news sources
    returned empty, or no signals matched).
-2. As a watchdog workflow that runs *after* the build windows
-   (catches "the build didn't run at all today").
+2. As a watchdog workflow that runs once a day (catches "no build has
+   produced output for a whole day").
 """
 from __future__ import annotations
 
@@ -25,6 +25,12 @@ HISTORY = REPO_ROOT / "docs" / "history"
 # Tunables — easy to adjust later if you want stricter/looser alerts.
 MIN_PRICES_OK = 100              # sane lower bound for the daily run
 MIN_PRICE_SUCCESS_PCT = 70.0     # alert if >30% of tickers fail to price
+# The briefing is scheduled 3x a day, so a newest archive older than this
+# means a whole day's runs produced nothing. This is an age, not a "file
+# dated today (UTC)" test: GitHub starts scheduled runs hours late, so the
+# watchdog often lands just after midnight UTC, before that day's first
+# briefing. A same-date test then cried wolf almost every night.
+BRIEFING_MAX_AGE_HOURS = 24
 TF13F_FRESHNESS_DAYS = 9         # 13F runs weekly; >9d means a missed run
 MIN_HEALTHY_NEWS_SOURCES = 1     # at least one news source must work
 REQUIRED_NEWS_SOURCE = "yahoo"   # primary source — others are nice-to-have
@@ -52,18 +58,20 @@ def _briefing_date_from_name(p: Path) -> datetime | None:
         return None
 
 
-def check_briefing() -> list[str]:
+def check_briefing(now: datetime | None = None) -> list[str]:
     problems: list[str] = []
-    today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
-    today_files = sorted(HISTORY.glob(f"{today}-*.json"))
-    if not today_files:
-        latest = _latest_briefing_json()
-        latest_name = latest.name if latest else "none"
+    now = now or datetime.now(timezone.utc)
+    latest = _latest_briefing_json()
+    if latest is None:
+        return ["**No briefing archive at all** in `docs/history/` — the briefing "
+                "workflow has never produced output."]
+    age = now - _briefing_date_from_name(latest)
+    if age > timedelta(hours=BRIEFING_MAX_AGE_HOURS):
         return [
-            f"**No briefing for today ({today})** — the daily cron didn't produce "
-            f"output. Latest archive is `{latest_name}`."
+            f"**No briefing in the last {BRIEFING_MAX_AGE_HOURS}h** — the newest archive, "
+            f"`{latest.name}`, is {age.total_seconds() / 3600:.0f}h old. The scheduled "
+            f"runs are being skipped or are failing before they write output."
         ]
-    latest = today_files[-1]
 
     try:
         payload = json.loads(latest.read_text())
@@ -116,8 +124,9 @@ def check_briefing() -> list[str]:
     return problems
 
 
-def check_13f() -> list[str]:
+def check_13f(now: datetime | None = None) -> list[str]:
     problems: list[str] = []
+    now = now or datetime.now(timezone.utc)
     latest = _latest_13f_json()
     if latest is None:
         return ["**13F**: no archive in `docs/history/`. Run the 13F workflow at least once."]
@@ -129,7 +138,7 @@ def check_13f() -> list[str]:
         when = None
 
     if when is not None:
-        age = datetime.now(timezone.utc) - when
+        age = now - when
         if age > timedelta(days=TF13F_FRESHNESS_DAYS):
             days = int(age.total_seconds() // 86400)
             problems.append(

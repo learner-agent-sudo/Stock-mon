@@ -1,15 +1,18 @@
 name: Health Watchdog
 
-# Runs after all backstop briefing windows. If something's broken
-# (no briefing today, all news sources down, 13F stale, etc.), opens or
-# updates a single sticky GitHub issue — GitHub then emails the repo
-# owner automatically. If everything's healthy and a previous alert
-# issue is open, it closes it.
+# Runs once a day. If something's broken (no briefing in the last 24h,
+# all news sources down, 13F stale, etc.), opens or updates a single
+# sticky GitHub issue — GitHub then emails the repo owner automatically.
+# If everything's healthy and a previous alert issue is open, it closes it.
+#
+# Freshness is judged by the newest archive's AGE, not "is there a file
+# dated today", because GitHub starts this run hours late (often after
+# midnight UTC, before that day's first briefing has run).
 
 on:
   workflow_dispatch:
   schedule:
-    - cron: "0 19 * * *"   # 19:00 UTC = after all 3 briefing windows
+    - cron: "47 18 * * *"   # nominally after the 3 briefing windows; :47 avoids GitHub's top-of-hour peak
 
 permissions:
   contents: read
@@ -72,7 +75,7 @@ jobs:
       # Independent content-freshness dead-man's-switch. This watchdog is
       # separate from the briefing workflow, so it's a SECOND alert path for
       # "the page isn't updating": it pings healthchecks.io green only when
-      # today's content is actually fresh, and /fail when it isn't. If the
+      # a briefing has been built in the last 24h, and /fail when not. If the
       # watchdog itself stops running, the missed daily ping trips the
       # dead-man's-switch. Optional — skipped cleanly when the secret is unset.
       - name: Ping healthchecks.io — content fresh

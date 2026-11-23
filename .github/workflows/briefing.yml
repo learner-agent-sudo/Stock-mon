@@ -3,17 +3,15 @@ name: Stock Briefing
 on:
   workflow_dispatch:
   schedule:
-    # GitHub Actions cron is best-effort and frequently delayed 30-90 min
-    # (sometimes dropped). Three windows spaced ~3h apart give both
-    # reliability (if one is dropped, the next still runs) and genuinely
-    # fresher prices at three points across the US trading day:
-    #   11:00 UTC ~ pre-open, 14:00 ~ market open, 17:00 ~ early afternoon.
-    # Each window builds fresh — the concurrency group below serializes any
-    # overlap with a manual run, and the commit step is a no-op when nothing
-    # changed, so re-running is cheap and safe.
-    - cron: "0 11 * * *"   # ~07:00 EDT / 06:00 EST
-    - cron: "0 14 * * *"   # ~10:00 EDT — market open
-    - cron: "0 17 * * *"   # ~13:00 EDT — early afternoon
+    # GitHub Actions cron is best-effort: since late Aug 2026 these runs have
+    # started 4-9 HOURS late (worst on Mondays), and some are dropped. Three
+    # windows spaced ~3h apart mean a dropped one is covered by the next,
+    # and the commit step is a no-op when nothing changed, so extra runs are
+    # cheap and safe. Minute :47 rather than :00 on purpose — GitHub's docs
+    # name the top of the hour as peak load and advise another minute.
+    - cron: "47 10 * * *"   # ~06:47 EDT / 05:47 EST — pre-open
+    - cron: "47 13 * * *"   # ~09:47 EDT — market open
+    - cron: "47 16 * * *"   # ~12:47 EDT — early afternoon
 
 # Allow committing the history archive AND deploying to Pages directly.
 permissions:
@@ -34,7 +32,7 @@ jobs:
     timeout-minutes: 20
     environment:
       name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
+      url: ${{ steps.deployment.outputs.page_url || steps.deployment_retry.outputs.page_url || steps.deployment_final.outputs.page_url }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -89,8 +87,39 @@ jobs:
         with:
           path: docs
 
+      # deploy-pages looks the artifact up by name, and GitHub's artifact API
+      # sometimes lists nothing for a moment after the upload has finished
+      # ("No artifacts named github-pages were found" — actions/deploy-pages
+      # issue #451). That failed 4 of 12 runs in a week whose build was fine,
+      # and each one pinged healthchecks.io /fail. So: pause, then retry the
+      # deploy (only the deploy — uploading again would make a duplicate
+      # artifact, which is a different error). Only the last attempt can
+      # fail the job.
+      - name: Let the artifact register
+        run: sleep 5
+
       - name: Deploy to GitHub Pages
         id: deployment
+        continue-on-error: true
+        uses: actions/deploy-pages@v4
+
+      - name: Wait before retrying deploy
+        if: steps.deployment.outcome == 'failure'
+        run: sleep 20
+
+      - name: Deploy to GitHub Pages (retry)
+        id: deployment_retry
+        if: steps.deployment.outcome == 'failure'
+        continue-on-error: true
+        uses: actions/deploy-pages@v4
+
+      - name: Wait before final deploy attempt
+        if: steps.deployment.outcome == 'failure' && steps.deployment_retry.outcome == 'failure'
+        run: sleep 60
+
+      - name: Deploy to GitHub Pages (final attempt)
+        id: deployment_final
+        if: steps.deployment.outcome == 'failure' && steps.deployment_retry.outcome == 'failure'
         uses: actions/deploy-pages@v4
 
       # Inline content check — fails the job loudly (and triggers the

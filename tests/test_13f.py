@@ -382,6 +382,14 @@ def test_filing_deadlines_and_quarters():
     assert h.next_quarter_end(date(2026, 9, 30)) == date(2026, 12, 31)
     assert h.next_quarter_end(date(2026, 12, 31)) == date(2027, 3, 31)
     assert h.next_quarter_end(date(2027, 3, 31)) == date(2027, 6, 30)
+    # Business days: weekends and holidays between don't count.
+    assert h.business_days_early(date(2026, 11, 16), date(2026, 11, 16)) == 0
+    assert h.business_days_early(date(2026, 11, 13), date(2026, 11, 16)) == 1   # Fri -> Mon
+    assert h.business_days_early(date(2026, 2, 18), date(2026, 2, 17)) == -1    # a day late
+    assert h.business_days_early(date(2026, 10, 30), date(2026, 11, 16)) == 10  # Nov 11 holiday
+    assert h.business_days_before(date(2027, 2, 16), 0) == date(2027, 2, 16)
+    assert h.business_days_before(date(2027, 2, 16), 1) == date(2027, 2, 12)    # skips Presidents' Day
+    assert h.business_days_before(date(2027, 2, 16), -1) == date(2027, 2, 17)
 
 
 def test_filing_timing_uses_first_filing():
@@ -440,8 +448,16 @@ def test_filing_calendar_payload():
     # Days before each quarter's own deadline: Nov 16 filing = 0, Aug 14 = 0.
     assert [f[2] for f in rows[0]["fl"]] == [0, 0, 0] and rows[0]["ue"] == 0
     assert rows[0]["nx"] == ["exp", "2027-02-16"]
-    assert rows[1]["fl"][0] == ["Q3'26", "2026-10-30", 17] and rows[1]["nx"] == ["exp", "2027-01-30"]
+    # Gayner files 10 business days early (Nov 11 is a holiday); 10 business
+    # days before Tue Feb 16 is Mon Feb 1 — not a calendar-day Saturday.
+    assert rows[1]["fl"][0] == ["Q3'26", "2026-10-30", 17] and rows[1]["nx"] == ["exp", "2027-02-01"]
     assert rows[2]["nx"] == ["stale"]
+    # "The business day before the deadline" (Fri Nov 13 for Mon Nov 16; Thu
+    # Aug 13 for Fri Aug 14) means Fri Feb 12 — Mon Feb 15 is Presidents' Day.
+    akre = page.filing_calendar({"generated_at": "2026-11-24T03:00:00+00:00", "as_of": "2026-09-30",
+                                 "investors": [inv("Akre", "2026-09-30", [["2026-09-30", 44],
+                                                                          ["2026-06-30", 44]])]})
+    assert akre["rows"][0]["nx"] == ["exp", "2027-02-12"]
     # Mid-window: Gayner has filed Q4, Buffett not yet.
     investors[1] = inv("Gayner", "2026-12-31", [["2026-12-31", 30], ["2026-09-30", 30]])
     opened = page.filing_calendar({"generated_at": "2027-02-01T12:00:00+00:00",

@@ -25,8 +25,8 @@ from datetime import date, datetime, timedelta, timezone
 from html import escape
 from typing import Any
 
-from ..data_layer.holdings_13f import (filing_deadline, next_quarter_end, quarter_end_on_or_before,
-                                       quarter_label)
+from ..data_layer.holdings_13f import (business_days_before, business_days_early, filing_deadline,
+                                       next_quarter_end, quarter_end_on_or_before, quarter_label)
 from .timefmt import fmt_et
 
 ACTIONS = ["NEW", "ADD", "TRIM", "EXIT"]  # index = action code in the payload
@@ -303,8 +303,11 @@ def filing_calendar(dataset: dict[str, Any]) -> dict | None:
       scan      = the first Saturday rebuild after the deadline
       fl        = [[quarter, filed date, days before that quarter's deadline]], newest first
       ue        = median days before the deadline they file (negative = late)
-      nx        = ["filed", date] for the upcoming quarter, ["exp", date] =
-                  deadline - ue, or ["stale"] for a filer that seems to have stopped
+      nx        = ["filed", date] for the upcoming quarter, ["exp", date] = the
+                  deadline minus their median lead in *business* days (filing
+                  "the business day before" lands on a Friday when the deadline
+                  is a Tuesday after a holiday Monday), ["stale"] for a filer
+                  that seems to have stopped, or ["none"]
     """
     investors = dataset.get("investors", [])
     try:
@@ -317,14 +320,16 @@ def filing_calendar(dataset: dict[str, Any]) -> dict | None:
     due = filing_deadline(upcoming)
     rows = {}
     for n, i in enumerate(investors):
-        fl = []
+        fl, bd = [], []
         for q, lag in i.get("lags") or []:
             try:
                 qd = date.fromisoformat(q)
+                filed = qd + timedelta(days=int(lag))
             except (TypeError, ValueError):
                 continue
-            filed = qd + timedelta(days=int(lag))
-            fl.append([quarter_label(q), filed.isoformat(), (filing_deadline(qd) - filed).days])
+            q_due = filing_deadline(qd)
+            fl.append([quarter_label(q), filed.isoformat(), (q_due - filed).days])
+            bd.append(business_days_early(filed, q_due))
         if not fl:
             continue
         early = sorted(f[2] for f in fl)
@@ -334,7 +339,7 @@ def filing_calendar(dataset: dict[str, Any]) -> dict | None:
         elif i.get("status") != "ok":
             nx = ["stale" if i.get("status") == "stale" else "none"]
         else:
-            nx = ["exp", (due - timedelta(days=ue)).isoformat()]
+            nx = ["exp", business_days_before(due, sorted(bd)[len(bd) // 2]).isoformat()]
         rows[n] = {"fl": fl, "ue": ue, "nx": nx}
     if not rows:
         return None

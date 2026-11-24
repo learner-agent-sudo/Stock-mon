@@ -249,12 +249,43 @@ def us_federal_holidays(year: int) -> set[date]:
     return days
 
 
+def is_business_day(d: date) -> bool:
+    return d.weekday() < 5 and d not in _holidays(d.year)
+
+
+def business_days_early(filed: date, due: date) -> int:
+    """Business days between a filing and its deadline: 0 = filed on the
+    deadline, 1 = the business day before (whatever weekend or holiday lies
+    between), negative = that many business days late."""
+    lo, hi, sign = (filed, due, 1) if filed <= due else (due, filed, -1)
+    return sign * sum(1 for k in range(1, (hi - lo).days + 1) if is_business_day(lo + timedelta(days=k)))
+
+
+def business_days_before(due: date, n: int) -> date:
+    """The date n business days before `due` (after it, for negative n)."""
+    d, step = due, (-1 if n >= 0 else 1)
+    for _ in range(abs(n)):
+        d += timedelta(days=step)
+        while not is_business_day(d):
+            d += timedelta(days=step)
+    return d
+
+
+_HOLIDAY_CACHE: dict[int, set[date]] = {}
+
+
+def _holidays(year: int) -> set[date]:
+    if year not in _HOLIDAY_CACHE:
+        _HOLIDAY_CACHE[year] = us_federal_holidays(year)
+    return _HOLIDAY_CACHE[year]
+
+
 def filing_deadline(quarter_end: date) -> date:
     """45 days after quarter end, rolled to the next business day when that
     falls on a weekend or federal holiday (e.g. Q4'26 -> Tue Feb 16, 2027:
     Feb 14 is a Sunday and Feb 15 is Presidents' Day)."""
     d = quarter_end + timedelta(days=FILING_WINDOW_DAYS)
-    while d.weekday() >= 5 or d in us_federal_holidays(d.year):
+    while not is_business_day(d):
         d += timedelta(days=1)
     return d
 

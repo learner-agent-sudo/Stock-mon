@@ -1880,10 +1880,12 @@ function calTip(i){
 function renderTiming(){
   if (!CAL || !$('c-cal')) return;
   var ids = calIds(), lead = clear($('cal-lead'));
+  var cur = ids.filter(function(i){ return INV[i].ok; });  // current filers (not stale)
+  clear($('cal-tbody'));
   function add(txt, bold){ lead.appendChild(bold ? el('b', null, txt) : document.createTextNode(txt)); }
   if (CAL.open) {
-    var nf = ids.filter(function(i){ return CAL.rows[i].nx[0] === 'filed'; }).length;
-    add(CAL.q + ' filings are coming in: ', true); add(nf + ' of ' + ids.length, true);
+    var nf = cur.filter(function(i){ return CAL.rows[i].nx[0] === 'filed'; }).length;
+    add(CAL.q + ' filings are coming in: ', true); add(nf + ' of ' + cur.length, true);
     add(' of these investors have filed; the rest are due by '); add(fmtD(CAL.due, true, true), true);
     add(' (' + rel(daysFrom(CAL.due)) + ').');
   } else {
@@ -1893,9 +1895,9 @@ function renderTiming(){
   }
   add(' The page rebuilds on Saturdays, so expect the full set here by about '); add(fmtD(CAL.scan, true), true); add('.');
   var sub = clear($('cal-sub'));
-  if (ids.length) {
-    var last3 = ids.filter(function(i){ return CAL.rows[i].ue <= 3; }).length, first = ids[0];
-    sub.textContent = 'They don’t all file on the same day, but close: ' + last3 + ' of ' + ids.length +
+  if (cur.length) {
+    var last3 = cur.filter(function(i){ return CAL.rows[i].ue <= 3; }).length, first = cur[0];
+    sub.textContent = 'They don’t all file on the same day, but close: ' + last3 + ' of ' + cur.length +
       ' usually file in the last 3 days before the deadline' +
       (CAL.rows[first].ue > 3 ? '; the earliest is ' + INV[first].m + ', usually ' + earlyTxt(CAL.rows[first].ue) + '.' : '.');
   }
@@ -1933,7 +1935,7 @@ function renderTiming(){
     stext(F.svg, F.W - 2, y + 3.5, nextTxt(r.nx), 'rr' + (r.nx[0] === 'filed' ? ' done' : ''), 'end');
   });
   // Hover / tap a row for that investor's filing history; click focuses them.
-  var cur = -1, tapped = -1;
+  var hov = -1, tapped = -1;
   function rowAt(ev){
     var rc = F.svg.getBoundingClientRect(), k = F.W / (rc.width || F.W);
     var n = Math.floor(((ev.clientY - rc.top) * k - F.T) / rowH);
@@ -1946,11 +1948,11 @@ function renderTiming(){
   F.svg.addEventListener('pointermove', function(ev){
     if (ev.pointerType && ev.pointerType !== 'mouse' && ev.pointerType !== 'pen') return;
     var n = rowAt(ev);
-    if (n !== cur) { cur = n; mark(n); if (n >= 0) showTip(ev, calTip(ids[n])); else hideTip(); }
+    if (n !== hov) { hov = n; mark(n); if (n >= 0) showTip(ev, calTip(ids[n])); else hideTip(); }
     else if (n >= 0) placeTip(ev.clientX + 14, ev.clientY + 14);
     F.svg.style.cursor = n >= 0 && INV[ids[n]].ok ? 'pointer' : '';
   });
-  F.svg.addEventListener('pointerleave', function(){ cur = -1; mark(-1); hideTip(); });
+  F.svg.addEventListener('pointerleave', function(){ hov = -1; mark(-1); hideTip(); });
   F.svg.addEventListener('click', function(ev){
     var n = rowAt(ev);
     if (n < 0) { tapped = -1; mark(-1); hideTip(); return; }

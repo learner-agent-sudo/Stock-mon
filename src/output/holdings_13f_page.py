@@ -21,11 +21,12 @@ from __future__ import annotations
 
 import json
 import math
-from datetime import datetime, timezone
+from datetime import date, datetime, timedelta, timezone
 from html import escape
 from typing import Any
 
-from ..data_layer.holdings_13f import quarter_label
+from ..data_layer.holdings_13f import (filing_deadline, next_quarter_end, quarter_end_on_or_before,
+                                       quarter_label)
 from .timefmt import fmt_et
 
 ACTIONS = ["NEW", "ADD", "TRIM", "EXIT"]  # index = action code in the payload
@@ -288,7 +289,63 @@ def build_payload(dataset: dict[str, Any]) -> dict[str, Any]:
         card = _render_info_card(s) + _render_insider(s)
         if card:
             cards[s.get("cusip", "")] = card
-    return {"inv": inv_out, "stk": stk_out, "cards": cards}
+    return {"inv": inv_out, "stk": stk_out, "cards": cards, "cal": filing_calendar(dataset)}
+
+
+def filing_calendar(dataset: dict[str, Any]) -> dict | None:
+    """Payload for the "When do they file?" card, or None for archives
+    built before filing dates were recorded.
+
+    {q, end, due, open, built, scan, rows: {investor id: {fl, ue, nx}}}
+      q/end/due = the next quarter to be reported, its quarter end and its
+                  13F deadline (weekends and federal holidays rolled forward)
+      open      = its filing window is open now (some may have filed it)
+      scan      = the first Saturday rebuild after the deadline
+      fl        = [[quarter, filed date, days before that quarter's deadline]], newest first
+      ue        = median days before the deadline they file (negative = late)
+      nx        = ["filed", date] for the upcoming quarter, ["exp", date] =
+                  deadline - ue, or ["stale"] for a filer that seems to have stopped
+    """
+    investors = dataset.get("investors", [])
+    try:
+        built = datetime.fromisoformat(dataset["generated_at"]).date()
+    except (KeyError, TypeError, ValueError):
+        built = datetime.now(timezone.utc).date()
+    recent = quarter_end_on_or_before(built)
+    is_open = built <= filing_deadline(recent)
+    upcoming = recent if is_open else next_quarter_end(recent)
+    due = filing_deadline(upcoming)
+    rows = {}
+    for n, i in enumerate(investors):
+        fl = []
+        for q, lag in i.get("lags") or []:
+            try:
+                qd = date.fromisoformat(q)
+            except (TypeError, ValueError):
+                continue
+            filed = qd + timedelta(days=int(lag))
+            fl.append([quarter_label(q), filed.isoformat(), (filing_deadline(qd) - filed).days])
+        if not fl:
+            continue
+        early = sorted(f[2] for f in fl)
+        ue = early[len(early) // 2]
+        if (i.get("as_of") or "")[:10] == upcoming.isoformat():
+            nx = ["filed", fl[0][1]]
+        elif i.get("status") != "ok":
+            nx = ["stale" if i.get("status") == "stale" else "none"]
+        else:
+            nx = ["exp", (due - timedelta(days=ue)).isoformat()]
+        rows[n] = {"fl": fl, "ue": ue, "nx": nx}
+    if not rows:
+        return None
+    asof = (dataset.get("as_of") or "")[:10] or None
+    if not asof:
+        return None
+    return {"asof": asof, "asq": quarter_label(asof),
+            "q": quarter_label(upcoming.isoformat()), "end": upcoming.isoformat(), "due": due.isoformat(),
+            "open": is_open, "built": built.isoformat(),
+            "scan": (due + timedelta(days=(5 - due.weekday()) % 7 or 7)).isoformat(),
+            "rows": rows}
 
 
 def _payload_json(payload: dict) -> str:
@@ -555,6 +612,23 @@ table.tbl{width:100%;border-collapse:separate;border-spacing:0;font-size:.78rem}
 .legend .dot.buy{background:var(--buy)} .legend .dot.sell{background:var(--sell)} .legend .dot.flat{background:var(--muted)}
 .legend .ln{width:16px;height:0;border-top:1px solid var(--axis);border-radius:0}
 .foot{color:var(--muted);font-size:.64rem;margin-top:.3rem}
+/* Filing calendar */
+.cal-lead{font-size:.76rem;color:var(--ink2);margin-bottom:.25rem} .cal-lead b{color:var(--ink)}
+.cal-sub{font-size:.7rem;color:var(--muted);margin-bottom:.4rem}
+.chart .rl{fill:var(--ink2);font-size:10.5px} .chart .rl.dim{fill:var(--faint)}
+.chart .rl.sel{fill:var(--accent);font-weight:700}
+.chart .rr{fill:var(--muted);font-size:10px;font-variant-numeric:tabular-nums} .chart .rr.done{fill:var(--ink2)}
+.chart .dl{stroke:var(--ink2);stroke-width:1;stroke-dasharray:3 3}
+.chart .cal-now{fill:var(--accent);stroke:var(--card);stroke-width:1.5}
+.chart .cal-past{fill:var(--ink2);opacity:.45}
+.chart .hrow{fill:var(--line2);pointer-events:none}
+.legend .dot.now{background:var(--accent)} .legend .dot.past{background:var(--ink2);opacity:.45}
+.legend .ln.dl{border-top:1px dashed var(--ink2)}
+.cal-tbl{margin-top:.5rem;font-size:.7rem} .cal-tbl summary{cursor:pointer;color:var(--ink2)}
+.tscroll{overflow-x:auto}
+.ctbl{width:100%;border-collapse:collapse;margin-top:.35rem}
+.ctbl th,.ctbl td{text-align:left;padding:.2rem .4rem;border-bottom:1px dotted var(--line2);white-space:nowrap}
+.ctbl th{color:var(--muted);font-weight:400}
 /* Pyramids: stacked halves + click-to-list drill-down */
 .half .bar.soft{opacity:.5}
 .half.r .bar.gap{box-shadow:inset 2px 0 0 var(--card)}
@@ -1760,7 +1834,147 @@ function renderPnl(C){
   section('Averaging down · bought more below cost', lossMoves(C, false).filter(function(m){ return m.v === 'loss'; }).sort(bySize).slice(0, 5),
     'Nobody in this view added to a position below their cost.');
 }
-function renderCharts(C){ renderCapMap(C); renderPosMap(C); renderPnl(C); renderInvMap(); }
+function renderCharts(C){ renderCapMap(C); renderPosMap(C); renderPnl(C); renderInvMap(); renderTiming(); }
+
+/* ---------- filing calendar: when each investor files ---------- */
+var CAL = D.cal || null;
+var MON = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+var WDAY = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+function pd(iso){ var p = iso.split('-'); return Date.UTC(+p[0], +p[1] - 1, +p[2]); }
+function fmtD(iso, wd, yr){
+  var t = new Date(pd(iso));
+  return (wd ? WDAY[t.getUTCDay()] + ' ' : '') + MON[t.getUTCMonth()] + ' ' + t.getUTCDate() + (yr ? ', ' + t.getUTCFullYear() : '');
+}
+function daysFrom(iso){  // whole days from the viewer's today to iso
+  var n = new Date();
+  return Math.round((pd(iso) - Date.UTC(n.getFullYear(), n.getMonth(), n.getDate())) / 864e5);
+}
+function rel(n){ return n === 0 ? 'today' : n === 1 ? 'tomorrow' : n === -1 ? 'yesterday' : n > 0 ? 'in ' + n + ' days' : -n + ' days ago'; }
+function earlyTxt(e){
+  if (e === 0) return 'on deadline day';
+  var a = Math.abs(e), d = a + (a === 1 ? ' day' : ' days');
+  return e > 0 ? d + ' before the deadline' : d + ' late';
+}
+function nextTxt(nx){ return nx[0] === 'filed' ? 'filed ' + fmtD(nx[1]) : nx[0] === 'exp' ? '≈ ' + fmtD(nx[1]) : nx[0] === 'stale' ? 'stopped?' : '—'; }
+function calIds(){  // the investor group picked above, incl. stale filers, earliest filers first
+  var ids = [];
+  INV.forEach(function(v, i){
+    if (CAL.rows[i] && (v.ok || v.status === 'stale') && (st.group === 'all' || v.st === 'picker')) ids.push(i);
+  });
+  // Current filers first (earliest on top), then the stale ones.
+  return ids.sort(function(a, b){
+    return (INV[b].ok - INV[a].ok) || (CAL.rows[b].ue - CAL.rows[a].ue) || INV[a].s.localeCompare(INV[b].s);
+  });
+}
+function calTip(i){
+  return function(t){
+    var v = INV[i], r = CAL.rows[i];
+    t.appendChild(el('div', 'tv', v.m));
+    t.appendChild(el('div', 'tl', v.n + ' · usually files ' + earlyTxt(r.ue)));
+    r.fl.forEach(function(f){ t.appendChild(el('div', 'tr', f[0] + ' · filed ' + fmtD(f[1], true, true) + ' · ' + earlyTxt(f[2]))); });
+    if (r.nx[0] === 'exp') t.appendChild(el('div', 'tr', 'Next (' + CAL.q + '): expected ' + fmtD(r.nx[1], true) + ', due ' + fmtD(CAL.due, true)));
+    else if (r.nx[0] === 'filed') t.appendChild(el('div', 'tr', CAL.q + ' already filed ' + fmtD(r.nx[1], true)));
+    if (!v.ok) t.appendChild(el('div', 'tr', v.det));
+  };
+}
+function renderTiming(){
+  if (!CAL || !$('c-cal')) return;
+  var ids = calIds(), lead = clear($('cal-lead'));
+  function add(txt, bold){ lead.appendChild(bold ? el('b', null, txt) : document.createTextNode(txt)); }
+  if (CAL.open) {
+    var nf = ids.filter(function(i){ return CAL.rows[i].nx[0] === 'filed'; }).length;
+    add(CAL.q + ' filings are coming in: ', true); add(nf + ' of ' + ids.length, true);
+    add(' of these investors have filed; the rest are due by '); add(fmtD(CAL.due, true, true), true);
+    add(' (' + rel(daysFrom(CAL.due)) + ').');
+  } else {
+    add('Positions on this page are as of '); add(fmtD(CAL.asof, false, true), true);
+    add(' (' + CAL.asq + ', ' + rel(daysFrom(CAL.asof)) + '). The next batch — '); add(CAL.q + ' holdings, to ' + fmtD(CAL.end, false, true), true);
+    add(' — is due by '); add(fmtD(CAL.due, true, true), true); add(' (' + rel(daysFrom(CAL.due)) + ').');
+  }
+  add(' The page rebuilds on Saturdays, so expect the full set here by about '); add(fmtD(CAL.scan, true), true); add('.');
+  var sub = clear($('cal-sub'));
+  if (ids.length) {
+    var last3 = ids.filter(function(i){ return CAL.rows[i].ue <= 3; }).length, first = ids[0];
+    sub.textContent = 'They don’t all file on the same day, but close: ' + last3 + ' of ' + ids.length +
+      ' usually file in the last 3 days before the deadline' +
+      (CAL.rows[first].ue > 3 ? '; the earliest is ' + INV[first].m + ', usually ' + earlyTxt(CAL.rows[first].ue) + '.' : '.');
+  }
+
+  var box = clear($('calmap'));
+  if (!ids.length) { box.appendChild(el('div', 'empty', 'No filing dates for this group.')); return; }
+  var rowH = 19, svgTmp = S('svg', null, box), lw = 0, rw = 0;
+  ids.forEach(function(i){
+    lw = Math.max(lw, textW(svgTmp, INV[i].s, 'rl', 6.3));
+    rw = Math.max(rw, textW(svgTmp, nextTxt(CAL.rows[i].nx), 'rr', 6));
+  });
+  rw = Math.max(rw, textW(svgTmp, 'next ' + CAL.q, 'rr', 6));
+  box.removeChild(svgTmp);
+  var F = makeFrame(box, 22 + ids.length * rowH + 24, [22, Math.ceil(rw) + 12, 24, Math.ceil(lw) + 10],
+                    'When each investor filed their recent 13Fs, in days before each deadline');
+  var EMAX = 46, EMIN = -4;  // left edge ≈ the quarter end; right edge = a few days late
+  function X(e){ return F.L + (EMAX - Math.max(EMIN, Math.min(EMAX, e))) / (EMAX - EMIN) * (F.R - F.L); }
+  [45, 30, 15].forEach(function(e){
+    S('line', {x1: X(e), x2: X(e), y1: F.T - 4, y2: F.B, 'class': 'gl'}, F.svg);
+    stext(F.svg, X(e), F.B + 14, e + ' days', 'tick', 'middle');
+  });
+  S('line', {x1: X(0), x2: X(0), y1: F.T - 4, y2: F.B, 'class': 'dl'}, F.svg);
+  stext(F.svg, X(0), F.B + 14, 'deadline', 'tick', 'middle');
+  stext(F.svg, F.W - 2, 12, 'next ' + CAL.q, 'tick', 'end');
+  // Row highlight (hidden until hover; the SVG draws overflow, so it can't
+  // just be parked off-canvas).
+  var hl = S('rect', {x: 0, y: F.T, width: F.W, height: rowH, 'class': 'hrow', visibility: 'hidden'}, F.svg);
+  ids.forEach(function(i, k){
+    var r = CAL.rows[i], v = INV[i], y = F.T + k * rowH + rowH / 2;
+    S('line', {x1: F.L, x2: F.R, y1: y, y2: y, 'class': 'gl'}, F.svg);
+    stext(F.svg, F.L - 8, y + 3.5, v.s, 'rl' + (v.ok ? '' : ' dim') + (st.inv === i ? ' sel' : ''), 'end');
+    for (var j = r.fl.length - 1; j >= 0; j--)   // older first, so the latest sits on top
+      S('circle', {cx: X(r.fl[j][2]), cy: y, r: j ? 3.5 : 5,
+                   'class': (j ? 'cal-past' : 'cal-now') + (v.ok ? '' : ' pt-dim')}, F.svg);
+    stext(F.svg, F.W - 2, y + 3.5, nextTxt(r.nx), 'rr' + (r.nx[0] === 'filed' ? ' done' : ''), 'end');
+  });
+  // Hover / tap a row for that investor's filing history; click focuses them.
+  var cur = -1, tapped = -1;
+  function rowAt(ev){
+    var rc = F.svg.getBoundingClientRect(), k = F.W / (rc.width || F.W);
+    var n = Math.floor(((ev.clientY - rc.top) * k - F.T) / rowH);
+    return n >= 0 && n < ids.length ? n : -1;
+  }
+  function mark(n){
+    hl.setAttribute('visibility', n < 0 ? 'hidden' : 'visible');
+    if (n >= 0) hl.setAttribute('y', F.T + n * rowH);
+  }
+  F.svg.addEventListener('pointermove', function(ev){
+    if (ev.pointerType && ev.pointerType !== 'mouse' && ev.pointerType !== 'pen') return;
+    var n = rowAt(ev);
+    if (n !== cur) { cur = n; mark(n); if (n >= 0) showTip(ev, calTip(ids[n])); else hideTip(); }
+    else if (n >= 0) placeTip(ev.clientX + 14, ev.clientY + 14);
+    F.svg.style.cursor = n >= 0 && INV[ids[n]].ok ? 'pointer' : '';
+  });
+  F.svg.addEventListener('pointerleave', function(){ cur = -1; mark(-1); hideTip(); });
+  F.svg.addEventListener('click', function(ev){
+    var n = rowAt(ev);
+    if (n < 0) { tapped = -1; mark(-1); hideTip(); return; }
+    if (ev.pointerType === 'touch' && tapped !== n) { tapped = n; mark(n); showTipAt(ev.clientX + 14, ev.clientY + 14, calTip(ids[n])); return; }
+    tapped = -1; hideTip();
+    var i = ids[n];
+    if (!INV[i].ok) return;
+    st.inv = (st.inv === i) ? -1 : i; resetPaging(); renderAll();
+  });
+
+  // The same data as a table (keyboard / screen-reader friendly).
+  var tb = clear($('cal-tbody'));
+  ids.forEach(function(i){
+    var r = CAL.rows[i], v = INV[i], tr = el('tr');
+    tr.appendChild(el('td', null, v.m));
+    tr.appendChild(el('td', null, r.fl[0][0] + (v.ok ? '' : ' (' + v.status + ')')));
+    tr.appendChild(el('td', null, fmtD(r.fl[0][1], true, true)));
+    tr.appendChild(el('td', null, earlyTxt(r.fl[0][2])));
+    tr.appendChild(el('td', null, earlyTxt(r.ue)));
+    tr.appendChild(el('td', null, nextTxt(r.nx)));
+    tb.appendChild(tr);
+  });
+  $('cal-next-h').textContent = 'Next (' + CAL.q + ')';
+}
 
 /* ---------- tables ---------- */
 var LAST = null;
@@ -1955,6 +2169,22 @@ def render(dataset: dict[str, Any]) -> str:
             chips.append(f'<span class="chip err" title="{escape(i.get("name", ""))}: {escape(i.get("detail", "") or status)}">'
                          f'<span class="ic">✗</span> {escape(label)}<span class="q">{escape(status)}</span></span>')
 
+    cal = payload.get("cal")
+    next_due = ""
+    cal_card = ""
+    if cal:
+        d = date.fromisoformat(cal["due"])
+        next_due = (f' &middot; next: <strong>{escape(cal["q"])} filings due '
+                    f'{d:%a %b} {d.day}, {d.year}</strong>')
+        cal_card = """<section class="card" id="c-cal"><h2>When do they file? <span class="hint">13F timing · row = an investor · dot = one quarter’s filing · hover or tap</span></h2>
+  <div class="body"><p class="cal-lead" id="cal-lead"></p><p class="cal-sub" id="cal-sub"></p>
+    <div class="chart" id="calmap"></div>
+    <div class="legend"><span><i class="dot now"></i>latest 13F</span><span><i class="dot past"></i>earlier quarters (up to 8)</span><span><i class="ln dl"></i>filing deadline</span></div>
+    <div class="foot">Each dot is placed by how many days before that quarter’s deadline it was filed. The deadline is 45 days after quarter end, moved to the next business day when it falls on a weekend or US federal holiday. “Next” = that deadline minus the investor’s usual (median) lead time. A fund can also get SEC permission to hold back a position for a while (confidential treatment) and report it later in an amendment.</div>
+    <details class="cal-tbl"><summary>Show as a table</summary><div class="tscroll"><table class="ctbl"><thead><tr><th>Investor</th><th>Latest 13F</th><th>Filed</th><th>Timing</th><th>Usually</th><th id="cal-next-h">Next</th></tr></thead><tbody id="cal-tbody"></tbody></table></div></details>
+  </div></section>
+"""
+
     n_pick = sum(1 for i in dataset.get("investors", []) if i.get("status") == "ok" and i.get("style") != "diversified")
     n_all = sum(1 for i in dataset.get("investors", []) if i.get("status") == "ok")
 
@@ -1976,7 +2206,7 @@ def render(dataset: dict[str, Any]) -> str:
 <div class="kpis" id="kpis"></div>
 <section class="card"><h2>Key takeaways <span class="hint">auto-generated from the filings · click a ticker for details</span></h2>
   <div class="body"><ul class="takeaways" id="takeaways"></ul></div></section>
-<div class="grid2 wrap-gap">
+{cal_card}<div class="grid2 wrap-gap">
   <section class="card"><h2>Most bought <span class="hint" id="m-unit"></span></h2><div class="body bars" id="m-buy"></div></section>
   <section class="card"><h2>Most sold <span class="hint">hover for who · click for details</span></h2><div class="body bars" id="m-sell"></div></section>
 </div>
@@ -2045,7 +2275,7 @@ def render(dataset: dict[str, Any]) -> str:
 <header>
   <h1>13F Net Flow</h1>
   <div class="meta">What famous investors bought &amp; sold last quarter &middot;
-    latest filings <strong>{escape(mix or 'n/a')}</strong> &middot; built <strong>{escape(when)}</strong></div>
+    latest filings <strong>{escape(mix or 'n/a')}</strong> &middot; built <strong>{escape(when)}</strong>{next_due}</div>
   <div class="strip" aria-label="Investors">{"".join(chips)}</div>
   <nav><a href="./index.html">&larr; Daily briefing</a><a href="./manage.html">Manage tickers</a></nav>
 </header>

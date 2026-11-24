@@ -17,7 +17,7 @@ import os
 import time
 import xml.etree.ElementTree as ET
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
 
@@ -60,6 +60,9 @@ BUILD_BUDGET_SEC = 14 * 60
 # 120 days = more than one quarter behind; a filer exactly one quarter
 # behind (still inside the 45-day filing window) is kept.
 STALE_AFTER_DAYS = 120
+# A filing made after 5:30 pm ET is dated the next business day, and a few
+# filers run a day or two late; only after this grace is a deadline missed.
+LATE_GRACE_DAYS = 3
 
 
 @dataclass
@@ -100,11 +103,14 @@ def portfolio_value(holdings: dict[str, dict]) -> int:
 
 
 def mark_stale(investors: list[InvestorHoldings],
-               stale_after_days: int = STALE_AFTER_DAYS) -> list[InvestorHoldings]:
+               stale_after_days: int = STALE_AFTER_DAYS,
+               today: date | None = None) -> list[InvestorHoldings]:
     """Flag ok investors whose latest filing lags the newest one in the set.
 
     Their status becomes 'stale' so aggregate() skips them and the page
-    shows why. Returns the investors that were flagged.
+    shows why. Returns the investors that were flagged. With `today`, an
+    investor one quarter behind is also stale once the newest quarter's
+    filing deadline (plus LATE_GRACE_DAYS) has passed: they missed it.
     """
     dated = []
     for inv in investors:
@@ -117,6 +123,9 @@ def mark_stale(investors: list[InvestorHoldings],
     if not dated:
         return []
     newest = max(d for _, d in dated)
+    newest_q = quarter_label(newest.strftime('%Y-%m-%d'))
+    due = filing_deadline(newest.date())
+    missed = today is not None and today > due + timedelta(days=LATE_GRACE_DAYS)
     flagged = []
     for inv, d in dated:
         lag = (newest - d).days
@@ -125,7 +134,12 @@ def mark_stale(investors: list[InvestorHoldings],
             inv.status = "stale"
             inv.detail = (f"latest 13F found is {quarter_label(inv.as_of)}, "
                           f"{behind} quarter{'s' if behind != 1 else ''} behind the newest "
-                          f"({quarter_label(newest.strftime('%Y-%m-%d'))}) — excluded from totals")
+                          f"({newest_q}) — excluded from totals")
+            flagged.append(inv)
+        elif missed and d < newest:
+            inv.status = "stale"
+            inv.detail = (f"no {newest_q} 13F by the {due:%b} {due.day} deadline — latest found is "
+                          f"{quarter_label(inv.as_of)}; excluded from totals")
             flagged.append(inv)
     return flagged
 
@@ -191,13 +205,93 @@ def filings_13f(block: dict) -> list[dict]:
         if f == "13F-HR" and i < len(accs) and i < len(fdates) and i < len(rdates) and rdates[i]
     ]
     filings.sort(key=lambda x: x["filing_date"], reverse=True)
+    # The earliest filing for a period is when its holdings became public —
+    # what "when does this investor file" means, even if it was re-filed.
+    first: dict[str, str] = {}
+    for f in filings:
+        first[f["report_date"]] = f["filing_date"]
     seen, out = set(), []
     for f in filings:
         if f["report_date"] not in seen:
             seen.add(f["report_date"])
-            out.append(f)
+            out.append({**f, "first_filed": first[f["report_date"]]})
     out.sort(key=lambda x: x["report_date"], reverse=True)
     return out
+
+
+# --------------------------------------------------------------------------
+# Filing calendar: when each quarter's 13Fs are due and when investors file
+# --------------------------------------------------------------------------
+
+FILING_WINDOW_DAYS = 45   # 13F-HR is due within 45 days after quarter end
+
+
+def _nth_weekday(year: int, month: int, weekday: int, n: int) -> date:
+    """n-th (1-based; -1 = last) given weekday (Mon=0) of a month."""
+    if n > 0:
+        d = date(year, month, 1)
+        d += timedelta(days=(weekday - d.weekday()) % 7 + 7 * (n - 1))
+        return d
+    d = date(year + month // 12, month % 12 + 1, 1) - timedelta(days=1)
+    return d - timedelta(days=(d.weekday() - weekday) % 7)
+
+
+def us_federal_holidays(year: int) -> set[date]:
+    """US federal holidays (observed dates), when SEC filings aren't due."""
+    fixed = [date(year, 1, 1), date(year, 6, 19), date(year, 7, 4),
+             date(year, 11, 11), date(year, 12, 25)]
+    days = {_nth_weekday(year, 1, 0, 3), _nth_weekday(year, 2, 0, 3),   # MLK, Presidents
+            _nth_weekday(year, 5, 0, -1), _nth_weekday(year, 9, 0, 1),  # Memorial, Labor
+            _nth_weekday(year, 10, 0, 2), _nth_weekday(year, 11, 3, 4)}  # Columbus, Thanksgiving
+    for d in fixed:  # Saturday -> observed Friday, Sunday -> Monday
+        days.add(d - timedelta(days=1) if d.weekday() == 5 else
+                 d + timedelta(days=1) if d.weekday() == 6 else d)
+    return days
+
+
+def filing_deadline(quarter_end: date) -> date:
+    """45 days after quarter end, rolled to the next business day when that
+    falls on a weekend or federal holiday (e.g. Q4'26 -> Tue Feb 16, 2027:
+    Feb 14 is a Sunday and Feb 15 is Presidents' Day)."""
+    d = quarter_end + timedelta(days=FILING_WINDOW_DAYS)
+    while d.weekday() >= 5 or d in us_federal_holidays(d.year):
+        d += timedelta(days=1)
+    return d
+
+
+def quarter_end_on_or_before(d: date) -> date:
+    """Last calendar-quarter end on or before d."""
+    if d.month in (3, 6, 9, 12) and (d + timedelta(days=1)).day == 1:
+        return d
+    m = (d.month - 1) // 3 * 3   # 0, 3, 6, 9: months fully before this quarter
+    if m == 0:
+        return date(d.year - 1, 12, 31)
+    return date(d.year, m + 1, 1) - timedelta(days=1)
+
+
+def next_quarter_end(q_end: date) -> date:
+    m = q_end.month + 3
+    y = q_end.year + (m > 12)
+    m = m - 12 if m > 12 else m
+    return date(y + m // 12, m % 12 + 1, 1) - timedelta(days=1)
+
+
+def filing_timing(filings: list[dict], last_n: int = 8) -> dict:
+    """When this investor files: the latest quarter's first filing date and
+    how many days after quarter end each of their recent 13Fs came out."""
+    lags = []
+    for f in filings[:last_n]:
+        try:
+            filed = date.fromisoformat((f.get("first_filed") or f["filing_date"])[:10])
+            lags.append([f["report_date"][:10], (filed - date.fromisoformat(f["report_date"][:10])).days])
+        except (KeyError, TypeError, ValueError):
+            continue
+    days = sorted(lag for _, lag in lags)
+    return {
+        "filed": (filings[0].get("first_filed") or filings[0].get("filing_date")) if filings else None,
+        "lags": lags,                                   # [[quarter end, days after]], newest first
+        "usual_lag": days[len(days) // 2] if days else None,   # median (upper)
+    }
 
 
 def _latest_two_13f(cik: int) -> tuple[str | None, list[dict], list[dict]]:
@@ -662,7 +756,7 @@ def build_dataset(watchlist_tickers: set[str] | None = None,
         print(f"  [13f] SEC phase budget ({SEC_PHASE_BUDGET_SEC}s) exhausted — "
               "remaining investors will show as errors.")
 
-    for inv in mark_stale(investors):
+    for inv in mark_stale(investors, today=datetime.now(timezone.utc).date()):
         print(f"  [13f] {inv.name}: STALE — {inv.detail}")
 
     # Past filings -> estimated cost basis, so the page can tell a sale at a
@@ -769,7 +863,10 @@ def build_dataset(watchlist_tickers: set[str] | None = None,
              "detail": i.detail, "as_of": i.as_of, "prior_as_of": i.prior_as_of,
              "holdings": len(i.latest),
              "total_value": portfolio_value(i.latest),
-             "prior_total_value": portfolio_value(i.prior)}
+             "prior_total_value": portfolio_value(i.prior),
+             # When they file: latest filing date + days-after-quarter-end
+             # of their recent 13Fs (drives the page's filing calendar).
+             **filing_timing(i.filings)}
             for i in investors
         ],
         "stocks": stocks,

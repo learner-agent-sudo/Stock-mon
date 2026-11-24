@@ -364,7 +364,105 @@ def test_cost_estimates_reach_dataset_and_page():
     assert moves["594918104"][6] is None                               # NEW: no cost
 
 
+def test_filing_deadlines_and_quarters():
+    from datetime import date
+    # Real 13F deadlines: 45 days after quarter end, rolled past weekends and
+    # federal holidays (Presidents' Day in February).
+    assert h.filing_deadline(date(2025, 12, 31)) == date(2026, 2, 17)   # Sat 14 -> Mon 16 holiday
+    assert h.filing_deadline(date(2026, 9, 30)) == date(2026, 11, 16)   # Sat 14
+    assert h.filing_deadline(date(2026, 12, 31)) == date(2027, 2, 16)   # Sun 14 -> Mon 15 holiday
+    assert h.filing_deadline(date(2026, 6, 30)) == date(2026, 8, 14)    # a Friday, as is
+    assert h.filing_deadline(date(2027, 3, 31)) == date(2027, 5, 17)    # Sat 15
+    hol = h.us_federal_holidays(2027)
+    assert date(2027, 2, 15) in hol and date(2027, 7, 5) in hol and date(2027, 12, 24) in hol
+    assert date(2027, 11, 25) in hol and date(2027, 5, 31) in hol      # Thanksgiving, Memorial
+    assert h.quarter_end_on_or_before(date(2026, 11, 24)) == date(2026, 9, 30)
+    assert h.quarter_end_on_or_before(date(2026, 12, 31)) == date(2026, 12, 31)
+    assert h.quarter_end_on_or_before(date(2027, 1, 2)) == date(2026, 12, 31)
+    assert h.next_quarter_end(date(2026, 9, 30)) == date(2026, 12, 31)
+    assert h.next_quarter_end(date(2026, 12, 31)) == date(2027, 3, 31)
+    assert h.next_quarter_end(date(2027, 3, 31)) == date(2027, 6, 30)
+
+
+def test_filing_timing_uses_first_filing():
+    block = {"form": ["13F-HR", "13F-HR", "13F-HR/A", "13F-HR"],
+             "accessionNumber": ["a", "b", "c", "d"],
+             "filingDate": ["2026-12-01", "2026-11-13", "2026-11-20", "2026-08-14"],
+             "reportDate": ["2026-09-30", "2026-09-30", "2026-09-30", "2026-06-30"]}
+    f = h.filings_13f(block)
+    # The re-filed period keeps the newest accession for holdings, but its
+    # holdings became public on the first filing date.
+    assert [(x["accession"], x["first_filed"]) for x in f] == [("a", "2026-11-13"), ("d", "2026-08-14")]
+    t = h.filing_timing(f)
+    assert t["filed"] == "2026-11-13" and t["lags"] == [["2026-09-30", 44], ["2026-06-30", 45]]
+    assert t["usual_lag"] == 45
+    assert h.filing_timing([]) == {"filed": None, "lags": [], "usual_lag": None}
+
+
+def test_mark_stale_after_missed_deadline():
+    from datetime import date
+
+    def inv(name, as_of):
+        i = h.InvestorHoldings(name=name, cik=0)
+        i.as_of = as_of
+        return i
+    # Oaktree-style: one quarter behind is fine while the window is open...
+    a, b = inv("A", "2026-09-30"), inv("B", "2026-06-30")
+    assert h.mark_stale([a, b], today=date(2026, 11, 10)) == []
+    assert h.mark_stale([a, b], today=date(2026, 11, 19)) == []         # grace: late filers
+    # ...but not once the Q3 deadline (Nov 16) plus grace has passed.
+    assert h.mark_stale([a, b], today=date(2026, 11, 21)) == [b]
+    assert b.status == "stale" and "no Q3'26 13F by the Nov 16 deadline" in b.detail
+    assert a.status == "ok"
+    # Without a date (old callers) only the 120-day rule applies.
+    c, d = inv("C", "2026-09-30"), inv("D", "2026-06-30")
+    assert h.mark_stale([c, d]) == []
+
+
+def test_filing_calendar_payload():
+    from src.output import holdings_13f_page as page
+
+    def inv(name, as_of, lags, status="ok"):
+        return {"name": name, "manager": name, "short": name, "status": status,
+                "as_of": as_of, "lags": lags}
+    investors = [
+        inv("Buffett", "2026-09-30", [["2026-09-30", 47], ["2026-06-30", 45], ["2026-03-31", 45]]),
+        inv("Gayner", "2026-09-30", [["2026-09-30", 30], ["2026-06-30", 31]]),
+        inv("Marks", "2026-06-30", [["2026-06-30", 45]], status="stale"),
+        inv("NoDates", "2026-09-30", []),
+    ]
+    closed = page.filing_calendar({"generated_at": "2026-11-24T03:00:00+00:00",
+                                   "as_of": "2026-09-30", "investors": investors})
+    assert closed["q"] == "Q4'26" and closed["due"] == "2027-02-16" and not closed["open"]
+    assert closed["scan"] == "2027-02-20" and closed["asq"] == "Q3'26"   # first Saturday after
+    rows = closed["rows"]
+    assert set(rows) == {0, 1, 2}                                        # no dates -> no row
+    # Days before each quarter's own deadline: Nov 16 filing = 0, Aug 14 = 0.
+    assert [f[2] for f in rows[0]["fl"]] == [0, 0, 0] and rows[0]["ue"] == 0
+    assert rows[0]["nx"] == ["exp", "2027-02-16"]
+    assert rows[1]["fl"][0] == ["Q3'26", "2026-10-30", 17] and rows[1]["nx"] == ["exp", "2027-01-30"]
+    assert rows[2]["nx"] == ["stale"]
+    # Mid-window: Gayner has filed Q4, Buffett not yet.
+    investors[1] = inv("Gayner", "2026-12-31", [["2026-12-31", 30], ["2026-09-30", 30]])
+    opened = page.filing_calendar({"generated_at": "2027-02-01T12:00:00+00:00",
+                                   "as_of": "2026-12-31", "investors": investors})
+    assert opened["open"] and opened["q"] == "Q4'26"
+    assert opened["rows"][1]["nx"] == ["filed", "2027-01-30"] and opened["rows"][0]["nx"][0] == "exp"
+    # Archives from before filing dates were recorded: no card.
+    assert page.filing_calendar({"generated_at": "2026-11-24T03:00:00+00:00", "as_of": "2026-09-30",
+                                 "investors": [inv("X", "2026-09-30", [])]}) is None
+    html = page.render({"generated_at": "2026-11-24T03:00:00+00:00", "as_of": "2026-09-30",
+                        "investors": investors, "stocks": [{"cusip": "1", "issuer": "X", "detail": [
+                            {"investor": "Buffett", "action": "ADD", "shares_delta": 1, "flow": 1,
+                             "pct": 0.1}]}]})
+    assert 'id="c-cal"' in html and "Q4&#x27;26 filings due Tue Feb 16, 2027" in html
+
+
 if __name__ == "__main__":
+    test_filing_deadlines_and_quarters()
+    test_filing_timing_uses_first_filing()
+    test_mark_stale_after_missed_deadline()
+    test_filing_calendar_payload()
     test_infotable_parse_skips_options()
     test_aggregate_net_flow()
     test_ranking_order()

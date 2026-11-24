@@ -1,0 +1,39 @@
+name: 13F filer lookup
+
+# Manual helper for editing data/super_investors.json: finds an investor's
+# SEC CIK by name, or checks a CIK, and lists its recent 13F-HR filings with
+# the date each was filed. Read-only — it changes nothing in the repo.
+# Actions -> "13F filer lookup" -> Run workflow, e.g.
+#   pershing square, greenlight capital, 1067983
+
+on:
+  workflow_dispatch:
+    inputs:
+      query:
+        description: "Names and/or CIKs, comma-separated"
+        required: true
+
+permissions:
+  contents: read
+
+jobs:
+  lookup:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: pip install --quiet requests
+
+      - name: Look up filers
+        env:
+          SEC_USER_AGENT: ${{ secrets.SEC_USER_AGENT }}
+          QUERY: ${{ inputs.query }}
+        run: python scripts/lookup_13f_filer.py "$QUERY"

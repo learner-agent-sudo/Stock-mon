@@ -16,18 +16,20 @@ is not reachable from your machine.
 """
 from __future__ import annotations
 
-import os
 import re
 import sys
 import time
 from datetime import date
+from pathlib import Path
 
 import requests
 
-SUBMISSIONS_URL = "https://data.sec.gov/submissions/CIK{cik:010d}.json"
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+# Same SEC identity as the weekly 13F build (SEC refuses anonymous clients).
+from src.data_layer.holdings_13f import SEC_USER_AGENT as UA, SUBMISSIONS_URL  # noqa: E402
+
 # Every EDGAR entity name with its CIK, one "NAME:CIK:" per line.
 CIK_LOOKUP_URL = "https://www.sec.gov/Archives/edgar/cik-lookup-data.txt"
-UA = os.environ.get("SEC_USER_AGENT") or "stock-mon 13F filer lookup"
 MAX_MATCHES = 60      # per name term; a broader name needs more words
 SHOW_FILINGS = 4
 
